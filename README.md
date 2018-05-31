@@ -1,19 +1,13 @@
-# sonar-css
+# SonarCSS
 SonarCSS: CSS Analyzer for SonarQube
 
 
 ## Building
 
 ```bash
-./gradlew build
+mvn package
 ```
-
-#### License headers
-
-Generate license headers for non-Go files with the command:
-
-    ./gradlew licenseFormat
-    
+   
     
 ## License
 

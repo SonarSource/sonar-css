@@ -1,5 +1,5 @@
 /*
- * SonarQube CSS Plugin
+ * SonarCSS
  * Copyright (C) 2018-2018 SonarSource SA
  * mailto:info AT sonarsource DOT com
  *
