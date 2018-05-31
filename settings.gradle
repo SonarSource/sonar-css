@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        maven {
+            url 'https://repox.sonarsource.com/plugins.gradle.org/'
+        }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'sonar-css'
+
+include 'sonar-css-plugin'

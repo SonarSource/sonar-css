@@ -1,0 +1,160 @@
+plugins {
+    id 'org.sonarqube' version '2.6.2'
+    id 'com.jfrog.artifactory' version '4.7.0'
+    id 'io.spring.dependency-management' version '1.0.4.RELEASE' apply false
+    id 'com.github.hierynomus.license' version "0.14.0"
+}
+
+sonarqube {
+    properties {
+        property 'sonar.projectName', projectTitle
+    }
+}
+
+
+allprojects {
+    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'maven-publish'
+
+    ext {
+        release = project.hasProperty('release') && project.getProperty('release')
+        buildNumber = System.getProperty("buildNumber")
+    }
+    // Replaces the version defined in sources, usually x.y-SNAPSHOT, by a version identifying the build.
+    if (version.endsWith('-SNAPSHOT') && ext.buildNumber != null) {
+        def versionSuffix = (version.toString().count('.') == 1 ? ".0.${ext.buildNumber}" : ".${ext.buildNumber}")
+        version = version.replace('-SNAPSHOT', versionSuffix)
+    }
+
+
+
+    repositories {
+        def repository = project.hasProperty('cix') ? 'sonarsource-qa' : 'sonarsource'
+        maven {
+            url "https://repox.sonarsource.com/${repository}"
+        }
+    }
+}
+
+subprojects {
+    // do not publish to Artifactory by default
+    artifactoryPublish.skip = true
+
+    apply plugin: 'com.github.hierynomus.license'
+    apply plugin: 'io.spring.dependency-management'
+    dependencyManagement {
+        dependencies {
+            dependency 'com.google.code.gson:gson:2.8.2'
+            dependency 'com.google.code.findbugs:jsr305:3.0.2'
+            dependency 'org.assertj:assertj-core:3.9.0'
+            dependencySet(group: 'org.junit.jupiter', version: '5.1.0') {
+                entry 'junit-jupiter-api'
+                entry 'junit-jupiter-engine'
+                entry 'junit-jupiter-params'
+                entry 'junit-jupiter-migrationsupport'
+            }
+            dependency 'org.junit.platform:junit-platform-launcher:1.1.0'
+            dependency('org.mockito:mockito-core:2.15.0') {
+                exclude 'org.hamcrest:hamcrest-core'
+            }
+            dependencySet(group: 'org.sonarsource.analyzer-commons', version: '1.7.0.243') {
+                entry 'sonar-analyzer-commons'
+                entry 'sonar-analyzer-test-commons'
+            }
+            dependency 'org.sonarsource.sonarqube:sonar-plugin-api:6.7'
+            dependency 'org.sonarsource.orchestrator:sonar-orchestrator:3.17.0.1491'
+        }
+    }
+
+    license {
+        header = rootProject.file('LICENSE.header')
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        strictCheck true
+        mapping {
+            java = 'SLASHSTAR_STYLE'
+            js = 'SLASHSTAR_STYLE'
+            ts = 'SLASHSTAR_STYLE'
+            tsx = 'SLASHSTAR_STYLE'
+            css = 'SLASHSTAR_STYLE'
+            less = 'SLASHSTAR_STYLE'
+        }
+        excludes(["**/*.txt", "**/*.properties", "**/*.xml", "**/*.xsd", "**/*.html", "**/*.json", "**/*.sql", "**/*.md", "**/*.gradle", "**/*.out"])
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                if (release) {
+                    pom.withXml {
+                        asNode().appendNode('name', projectTitle)
+                        asNode().appendNode('description', description)
+                        asNode().appendNode('url', 'http://www.sonarqube.org/')
+
+                        def organization = asNode().appendNode('organization')
+                        organization.appendNode('name', 'SonarSource')
+                        organization.appendNode('url', 'http://www.sonarsource.com')
+
+                        def licenses = asNode().appendNode('licenses')
+                        def license = licenses.appendNode('license')
+                        license.appendNode('name', 'GNU LGPL 3')
+                        license.appendNode('url', 'http://www.gnu.org/licenses/lgpl.txt')
+                        license.appendNode('distribution', 'repo')
+
+                        def scm = asNode().appendNode('scm')
+                        scm.appendNode('url', 'https://github.com/SonarSource/sonar-css')
+
+                        def developers = asNode().appendNode('developers')
+                        def developer = developers.appendNode('developer')
+                        developer.appendNode('id', 'alban-auzeill')
+                        developer.appendNode('name', 'Alban Auzeill')
+
+                        developer = developers.appendNode('developer')
+                        developer.appendNode('id', 'stylianos-agapiou-sonarsource')
+                        developer.appendNode('name', 'Stylianos Agapiou')
+
+                        developer = developers.appendNode('developer')
+                        developer.appendNode('id', 'saberduck')
+                        developer.appendNode('name', 'Tibor Blenessy')
+
+                        developer = developers.appendNode('developer')
+                        developer.appendNode('id', 'vilchik-elena')
+                        developer.appendNode('name', 'Elena Vilchik')
+                    }
+                }
+            }
+        }
+    }
+}
+
+artifactory {
+    clientConfig.setIncludeEnvVars(true)
+    clientConfig.setEnvVarsExcludePatterns('*password*,*PASSWORD*,*secret*,*MAVEN_CMD_LINE_ARGS*,sun.java.command,*token*,*TOKEN*,*LOGIN*,*login*')
+    contextUrl = System.getenv('ARTIFACTORY_URL')
+    publish {
+        repository {
+            repoKey = System.getenv('ARTIFACTORY_DEPLOY_REPO')
+            username = System.getenv('ARTIFACTORY_DEPLOY_USERNAME')
+            password = System.getenv('ARTIFACTORY_DEPLOY_PASSWORD')
+        }
+        defaults {
+            properties = [
+                    'build.name': 'sonar-css',
+                    'build.number': (System.getenv('BUILD_ID') ?: System.getenv('BUILD_NUMBER')),
+                    'pr.branch.target': System.getenv('PULL_REQUEST_BRANCH_TARGET'),
+                    'pr.number': System.getenv('PULL_REQUEST_NUMBER'),
+                    'vcs.branch': System.getenv('GIT_BRANCH'),
+                    'vcs.revision': System.getenv('GIT_COMMIT'),
+                    'version': version
+            ]
+            publications('mavenJava')
+            publishPom = true
+            publishIvy = false
+        }
+    }
+    clientConfig.info.setBuildNumber(System.getenv('BUILD_NUMBER'))
+    // Define the artifacts to be deployed to https://sonarsource.bintray.com on releases
+    clientConfig.info.addEnvironmentProperty('ARTIFACTS_TO_PUBLISH', "${project.group}:sonar-css-plugin:jar")
+    // The name of this variable is important because it's used by the delivery process when extracting version from Artifactory build info.
+    clientConfig.info.addEnvironmentProperty('PROJECT_VERSION', "${version}")
+}
+

@@ -1,0 +1,101 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+}
+
+compileJava {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    options.encoding = "UTF-8"
+}
+
+compileTestJava.options.encoding = "UTF-8"
+
+dependencies {
+    compileOnly 'com.google.code.findbugs:jsr305'
+    compile     'org.sonarsource.analyzer-commons:sonar-analyzer-commons'
+    compile     'org.sonarsource.sonarqube:sonar-plugin-api'
+
+    testCompile 'org.mockito:mockito-core'
+    testCompile 'org.assertj:assertj-core'
+    testCompile 'org.junit.jupiter:junit-jupiter-api'
+    testCompile 'org.junit.jupiter:junit-jupiter-migrationsupport'
+    testCompile 'org.awaitility:awaitility:3.1.0'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        exceptionFormat 'full' // log the full stack trace (default is the 1st line of the stack trace)
+        events "skipped", "failed" // verbose log for failed and skipped tests (by default the name of the tests are not logged)
+    }
+}
+
+jar {
+    manifest {
+        def displayVersion = (project.buildNumber == null ? version : version.substring(0, version.lastIndexOf('.')) + " (build ${project.buildNumber})")
+        def buildDate = new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        attributes(
+                'Build-Time': buildDate,
+                'Implementation-Build': 'git rev-parse HEAD'.execute().text.trim(),
+                'Plugin-BuildDate': buildDate,
+                'Plugin-ChildFirstClassLoader': 'false',
+                'Plugin-Class': 'org.sonar.css.plugin.CssPlugin',
+                'Plugin-Description': 'Code Analyzer for CSS, Less and Sass',
+                'Plugin-Developers': 'Stylianos Agapiou, Tibor Blenessy, Elena Vilchik',
+                'Plugin-Display-Version': displayVersion,
+                'Plugin-Homepage': 'http://redirect.sonarsource.com/plugins/css.html',
+                'Plugin-IssueTrackerUrl': 'https://github.com/SonarSource/sonar-css/issues',
+                'Plugin-Key': 'css',
+                'Plugin-License': 'GNU LGPL 3',
+                'Plugin-Name': 'SonarCSS',
+                'Plugin-Organization': 'SonarSource',
+                'Plugin-OrganizationUrl': 'http://www.sonarsource.com',
+                'Plugin-SourcesUrl': 'https://github.com/SonarSource/sonar-css',
+                'Plugin-Version': version,
+                'Sonar-Version': '6.7',
+                'SonarLint-Supported': 'false',
+                'Version': "${version}",
+        )
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+shadowJar {
+    exclude 'META-INF/**/*'
+    dependencies {
+        exclude(dependency('org.sonarsource.sonarqube:sonar-plugin-api'))
+        exclude(dependency('org.codehaus.woodstox:.*'))
+        exclude(dependency('org.codehaus.staxmate:.*'))
+        exclude(dependency('com.google.code.findbugs:jsr305'))
+    }
+}
+
+artifacts {
+    archives shadowJar
+}
+
+artifactoryPublish.skip false
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact source: shadowJar, classifier: null
+            if (release) {
+                artifact sourcesJar
+                artifact javadocJar
+            }
+        }
+    }
+}
