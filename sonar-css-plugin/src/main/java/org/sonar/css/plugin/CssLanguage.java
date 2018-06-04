@@ -17,30 +17,25 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.its;
+package org.sonar.css.plugin;
 
-import com.sonar.orchestrator.Orchestrator;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.sonar.api.config.Configuration;
+import org.sonar.api.resources.AbstractLanguage;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class CssLanguage extends AbstractLanguage {
 
-public class MetricsTest {
+  public static final String KEY = "css";
 
-  private static String PROJECT_KEY = "FIXME";
+  private Configuration configuration;
 
-  @ClassRule
-  public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
-
-  @BeforeClass
-  public static void prepare() {
-    orchestrator.executeBuild(Tests.createScanner("projects/sample", PROJECT_KEY));
+  public CssLanguage(Configuration configuration) {
+    super(KEY, "CSS");
+    this.configuration = configuration;
   }
 
-  @Test
-  public void should_have_loaded_issues_into_project_and_ignore_issue_with_nosonar() {
-    assertThat(1).isEqualTo(1);
+  @Override
+  public String[] getFileSuffixes() {
+    return configuration.getStringArray(CssPlugin.FILE_SUFFIXES_KEY);
   }
 
 }

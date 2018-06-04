@@ -50,7 +50,6 @@
 
     <modules>
         <module>sonar-css-plugin</module>
-        <module>its</module>
     </modules>
 
     <scm>
@@ -167,9 +166,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <!--
-    TODO: enable when ITs are added
-
     <profiles>
         <profile>
             <id>its</id>
@@ -178,6 +174,4 @@
             </modules>
         </profile>
     </profiles>
-    -->
-
 </project>

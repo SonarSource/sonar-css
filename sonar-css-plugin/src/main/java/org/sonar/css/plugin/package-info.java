@@ -17,30 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.its;
-
-import com.sonar.orchestrator.Orchestrator;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class MetricsTest {
-
-  private static String PROJECT_KEY = "FIXME";
-
-  @ClassRule
-  public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
-
-  @BeforeClass
-  public static void prepare() {
-    orchestrator.executeBuild(Tests.createScanner("projects/sample", PROJECT_KEY));
-  }
-
-  @Test
-  public void should_have_loaded_issues_into_project_and_ignore_issue_with_nosonar() {
-    assertThat(1).isEqualTo(1);
-  }
-
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonar.css.plugin;
