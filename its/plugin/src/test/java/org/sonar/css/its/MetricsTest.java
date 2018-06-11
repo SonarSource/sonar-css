@@ -20,27 +20,29 @@
 package org.sonar.css.its;
 
 import com.sonar.orchestrator.Orchestrator;
+import java.io.File;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.css.its.Tests.getProjectMeasureAsDouble;
 
 public class MetricsTest {
 
-  private static String PROJECT_KEY = "FIXME";
+  private static String PROJECT_KEY = "css-plugin-test-project";
 
   @ClassRule
   public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
 
   @BeforeClass
   public static void prepare() {
-    orchestrator.executeBuild(Tests.createScanner("projects/sample", PROJECT_KEY));
+    orchestrator.executeBuild(Tests.createScanner("projects" + File.separator + PROJECT_KEY, PROJECT_KEY));
   }
 
   @Test
-  public void should_have_loaded_issues_into_project_and_ignore_issue_with_nosonar() {
-    assertThat(1).isEqualTo(1);
+  public void test() {
+    assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(27);
   }
 
 }
