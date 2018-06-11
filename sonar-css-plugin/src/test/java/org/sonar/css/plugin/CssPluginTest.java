@@ -19,33 +19,24 @@
  */
 package org.sonar.css.plugin;
 
+import org.junit.Test;
 import org.sonar.api.Plugin;
-import org.sonar.api.config.PropertyDefinition;
-import org.sonar.api.resources.Qualifiers;
+import org.sonar.api.SonarQubeSide;
+import org.sonar.api.SonarRuntime;
+import org.sonar.api.internal.SonarRuntimeImpl;
+import org.sonar.api.utils.Version;
 
-public class CssPlugin implements Plugin {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  static final String FILE_SUFFIXES_KEY = "sonar.css.file.suffixes";
-  public static final String FILE_SUFFIXES_DEFVALUE = ".css,.less,.scss";
 
-  private static final String CSS_CATEGORY = "CSS";
-  private static final String GENERAL_SUBCATEGORY = "General";
+public class CssPluginTest {
 
-  @Override
-  public void define(Context context) {
-    context.addExtensions(
-      CssLanguage.class,
-      SonarWayProfile.class,
-
-      PropertyDefinition.builder(FILE_SUFFIXES_KEY)
-        .defaultValue(FILE_SUFFIXES_DEFVALUE)
-        .name("File Suffixes")
-        .description("List of suffixes for files to analyze.")
-        .subCategory(GENERAL_SUBCATEGORY)
-        .category(CSS_CATEGORY)
-        .onQualifiers(Qualifiers.PROJECT)
-        .multiValues(true)
-        .build()
-    );
+  @Test
+  public void count_extensions() throws Exception {
+    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER);
+    Plugin.Context context = new Plugin.Context(runtime);
+    Plugin underTest = new CssPlugin();
+    underTest.define(context);
+    assertThat(context.getExtensions()).hasSize(3);
   }
 }
