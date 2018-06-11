@@ -1,4 +1,4 @@
-@Library('SonarSource@1.6') _
+@Library('SonarSource@1.11') _
 
 pipeline {
     agent {
@@ -64,7 +64,9 @@ pipeline {
                         label 'windows'
                     }
                     steps {
-                        bat 'mvn clean test'
+                        withMaven(maven: MAVEN_TOOL) {
+                            sh 'mvn.cmd clean test'
+                        }
                     }
                 }
             }
@@ -104,7 +106,7 @@ def runITsWindows(String sqRuntimeVersion) {
         withMaven(maven: MAVEN_TOOL) {
             mavenSetBuildVersion()
             dir('its') {
-                bat "mvn -Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
+                sh "mvn.cmd -Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
                         "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
             }
         }
