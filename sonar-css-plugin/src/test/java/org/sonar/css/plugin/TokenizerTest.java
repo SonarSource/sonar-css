@@ -19,104 +19,80 @@
  */
 package org.sonar.css.plugin;
 
-import java.io.FileNotFoundException;
 import java.util.List;
 import javax.script.ScriptException;
 import org.junit.Test;
+import org.sonar.css.plugin.Token.Type;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TokenizerTest {
 
   private final static Tokenizer tokenizer = new Tokenizer();
-
+  
   @Test
-  public void should_parse_word() throws ScriptException, FileNotFoundException {
-    List<Token> tokenList = tokenizer.tokenize("body {margin: 0;}");
-    assertThat(tokenList).hasSize(7);
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.WORD);
-    assertThat(tokenList.get(0).text).isEqualTo("body");
-    assertThat(tokenList.get(0).startLine).isEqualTo(1);
-    assertThat(tokenList.get(0).startColumn).isEqualTo(1);
-    assertThat(tokenList.get(0).endLine).isEqualTo(1);
-    assertThat(tokenList.get(0).endColumn).isEqualTo(4);
+  public void word() throws ScriptException {
+    assertToken("bar { }", 0, "bar", Type.WORD, 1, 1);
+    assertToken("bar: foo { }", 0, "bar", Type.WORD, 1, 1);
+    assertToken("bar: foo-baz { }", 2, "foo-baz", Type.WORD, 1, 6);
+    assertToken("foo bar { }", 1, "bar", Type.WORD, 1, 5);
+    assertToken("#bar { }", 0, "#bar", Type.WORD, 1, 1);
+    assertToken("foo.bar { }", 0, "foo.bar", Type.WORD, 1, 1);
+    assertToken(".bar { }", 0, ".bar", Type.WORD, 1, 1);
+    assertToken("bar { foo: 42; }", 2, "foo", Type.WORD, 1, 7);
+    assertToken("bar { foo: baz; }", 4, "baz", Type.WORD, 1, 12);
+    assertToken("foo , bar { }", 2, "bar", Type.WORD, 1, 7);
   }
 
   @Test
-  public void should_parse_number_to_word() throws ScriptException, FileNotFoundException {
-    List<Token> tokenList = tokenizer.tokenize("input { "
-      + "line-height: 1.15;"
-      + "}");
-    assertThat(tokenList.get(4).type).isEqualTo(Token.Type.WORD);
-    assertThat(tokenList.get(4).text).isEqualTo("1.15");
-    assertThat(tokenList.get(4).startLine).isEqualTo(1);
-    assertThat(tokenList.get(4).startColumn).isEqualTo(22);
-    assertThat(tokenList.get(4).endLine).isEqualTo(1);
-    assertThat(tokenList.get(4).endColumn).isEqualTo(25);
+  public void punctuators() throws ScriptException {
+    assertToken("bar: foo { }", 1, ":", Type.PUNCTUATOR, 1, 4);
+    assertToken("bar { foo; }", 3, ";", Type.PUNCTUATOR, 1, 10);
   }
 
   @Test
-  public void should_parse_brackets_to_brackets() throws FileNotFoundException, ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("input.grow { "
-      + "-webkit-animation: grow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
-      + "-moz-animation: grow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
-      + "animation: grow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); "
-      + "}");
-    assertThat(tokenList.get(7).type).isEqualTo(Token.Type.BRACKETS);
-    assertThat(tokenList.get(7).text).isEqualTo("(0.175, 0.885, 0.32, 1.275)");
-    assertThat(tokenList.get(7).startLine).isEqualTo(1);
-    assertThat(tokenList.get(7).startColumn).isEqualTo(55);
-    assertThat(tokenList.get(7).endLine).isEqualTo(1);
-    assertThat(tokenList.get(7).endColumn).isEqualTo(81);
+  public void comma() throws ScriptException {
+    assertToken("foo , bar { }", 1, ",", Type.PUNCTUATOR, 1, 5);
+// FIXME
+//    assertToken("foo, bar { }", 1, ",", Type.PUNCTUATOR, 1, 4);
   }
 
   @Test
-  public void should_parse_string_to_string() throws FileNotFoundException, ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("input {"
-      + "code: \"\";"
-      + "description: \"empty stylesheet\";"
-      + "}");
-    assertThat(tokenList.get(8).type).isEqualTo(Token.Type.STRING);
-    assertThat(tokenList.get(8).text).isEqualTo("\"empty stylesheet\"");
-    assertThat(tokenList.get(8).startLine).isEqualTo(1);
-    assertThat(tokenList.get(8).startColumn).isEqualTo(30);
-    assertThat(tokenList.get(8).endLine).isEqualTo(1);
-    assertThat(tokenList.get(8).endColumn).isEqualTo(47);
+  public void number_as_word() throws ScriptException {
+    assertToken("bar { foo: 1.15; }", 4, "1.15", Type.WORD, 1, 12);
+    assertToken("bar { foo: 1; }", 4, "1", Type.WORD, 1, 12);
+    assertToken("bar { foo: 1.15px; }", 4, "1.15px", Type.WORD, 1, 12);
+    assertToken("bar { foo: 1.15%; }", 4, "1.15%", Type.WORD, 1, 12);
+    assertToken("bar { foo: 1px; }", 4, "1px", Type.WORD, 1, 12);
   }
 
   @Test
-  public void should_parse_at_word_to_at_word() throws FileNotFoundException, ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("test {" +
-      "  code: @import \"foo.css\";" +
-      "  description: \"blockless statement\"" +
-      "}");
-    assertThat(tokenList.get(4).type).isEqualTo(Token.Type.AT_WORD);
-    assertThat(tokenList.get(4).text).isEqualTo("@import");
-    assertThat(tokenList.get(4).startLine).isEqualTo(1);
-    assertThat(tokenList.get(4).startColumn).isEqualTo(15);
-    assertThat(tokenList.get(4).endLine).isEqualTo(1);
-    assertThat(tokenList.get(4).endColumn).isEqualTo(21);
+  public void brackets() throws ScriptException {
+    assertToken("bar { foo: (1.15); }", 4, "(1.15)", Type.BRACKETS, 1, 12);
+    assertToken("bar { foo: (1.15 1 0px); }", 4, "(1.15 1 0px)", Type.BRACKETS, 1, 12);
+    assertToken("bar { foo: (1.15, 1, 0px); }", 4, "(1.15, 1, 0px)", Type.BRACKETS, 1, 12);
   }
 
   @Test
-  public void should_parse_comment_to_comment() throws FileNotFoundException, ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("test {"
-      + "{code: \"a {color: red;}\""
-      + ",description: \".\""
-      + "},"
-      + "{code: \"@mixin name ($p) {}\"}"
-      + "/* comment */"
-      + "}");
-    assertThat(tokenList.get(16).type).isEqualTo(Token.Type.COMMENT);
-    assertThat(tokenList.get(16).text).isEqualTo("/* comment */");
-    assertThat(tokenList.get(16).startLine).isEqualTo(1);
-    assertThat(tokenList.get(16).startColumn).isEqualTo(79);
-    assertThat(tokenList.get(16).endLine).isEqualTo(1);
-    assertThat(tokenList.get(16).endColumn).isEqualTo(91);
+  public void strings() throws ScriptException {
+    assertToken("bar { foo: \"\"; }", 4, "\"\"", Type.STRING, 1, 12);
+    assertToken("bar { foo: \"hello, world\"; }", 4, "\"hello, world\"", Type.STRING, 1, 12);
   }
 
   @Test
-  public void should_parse_less_variables_variable() throws FileNotFoundException, ScriptException {
+  public void at_word() throws ScriptException {
+    assertToken("@bar { }", 0, "@bar", Type.AT_WORD, 1, 1);
+  }
+
+  @Test
+  public void comment() throws ScriptException {
+    assertToken("/* foo */", 0, "/* foo */", Type.COMMENT, 1, 1);
+    assertToken("foo { a: /* foo */ 42; }", 4, "/* foo */", Type.COMMENT, 1, 10);
+    assertToken("foo { a: /* foo\\\nbar*/ 42; }", 4, "/* foo\\\nbar*/", Type.COMMENT, 1, 10, 2, 5);
+  }
+
+  @Test
+  public void should_parse_less_variables_variable() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@primary:  green;" +
       "@secondary: blue;" +
       "" +
@@ -136,7 +112,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_maths() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_maths() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(".test {" +
       "  grid-column: 3 / 6;" +
       "  width: 40px + 2px;" +
@@ -146,7 +122,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_variables() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_variables() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@link-color: #428bca;"
       + "@link-color-hover: darken(@link-color, 10%);"
       + "a," +
@@ -164,7 +140,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_lazy_eval() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_lazy_eval() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@var: 0;"
       + ".class {"
       + "  @var: 1;"
@@ -176,7 +152,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_properties_as_variables() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_properties_as_variables() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(".block { "
       + "  color: red;"
       + "  .inner {"
@@ -187,7 +163,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_parent_selectors() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_parent_selectors() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(".button {"
       + "  &-class1 {"
       + "    background-image: url(\"test.png\");"
@@ -201,7 +177,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_multiple_imports() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_multiple_imports() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@import \"t.css\";"
       + "@import \"test.css\";"
       + "@import url(\"path:t.css\");"
@@ -216,7 +192,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_extend_base_class() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_extend_base_class() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(".test {"
       + "  background-color: red;"
       + "}"
@@ -229,7 +205,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_mixins() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_mixins() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(".mixin(@color: red;) {"
       + "box-shadow+: inset 0 0 10px #555;"
       + "color: @color"
@@ -243,7 +219,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_namespaces() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_namespaces() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("#outer {"
       + "  .inner {"
       + "    color: red;"
@@ -259,13 +235,13 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_logical_operators() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_logical_operators() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(".mixin (@a) when (isstring(@a)) and (@a < 0) {}");
     assertThat(tokenList.get(4).type).isEqualTo(Token.Type.WORD);
   }
 
   @Test
-  public void should_parse_less_detached_ruleset() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_detached_ruleset() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@my-rules: {"
       + "    .my-selector {"
       + "      @media t {"
@@ -280,7 +256,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_new_scope_rules() throws FileNotFoundException, ScriptException {
+  public void should_parse_less_new_scope_rules() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@variable: global;"
       + "@detached-ruleset: {"
       + "  variable: @variable; "
@@ -293,7 +269,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_sass_font() throws FileNotFoundException, ScriptException {
+  public void should_parse_sass_font() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("$font-stack: Helvetica, sans-serif;"
       + "body {"
       + " font: 10% $font-stack;"
@@ -302,7 +278,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_sass_extend() throws FileNotFoundException, ScriptException {
+  public void should_parse_sass_extend() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(".test{" +
       "    color: #333;" +
       "   }" +
@@ -314,7 +290,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_scss_default_variable() throws FileNotFoundException, ScriptException {
+  public void should_parse_scss_default_variable() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("$default-color: red !default;" +
       "p.message {" +
       "    color: $default-color;" +
@@ -323,7 +299,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_scss_control_directives() throws FileNotFoundException, ScriptException {
+  public void should_parse_scss_control_directives() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@each $temp in 't1' 't2' {" +
       "    .icon-#{$temp} {" +
       "        background-image: url('/imgs/#{$temp}.png');" +
@@ -333,12 +309,26 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_scss_mixin_arguments() throws FileNotFoundException, ScriptException {
+  public void should_parse_scss_mixin_arguments() throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize("@mixin foo($topPadding: 10px, $bottomPadding: 20px) {" +
       "}" +
       "p {" +
       "    @include foo($bottomPadding: 50px);" +
       "}");
     assertThat(tokenList.get(0).type).isEqualTo(Token.Type.AT_WORD);
+  }
+
+  private static void assertToken(String input, int index, String value, Token.Type type, int line, int column) throws ScriptException {
+    assertToken(input, index, value, type, line, column, line, column + value.length() - 1);
+  }
+
+  private static void assertToken(String input, int index, String value, Token.Type type, int line, int column, int endLine, int endColumn) throws ScriptException {
+    List<Token> tokenList = tokenizer.tokenize(input);
+    assertThat(tokenList.get(index).type).isEqualTo(type);
+    assertThat(tokenList.get(index).text).isEqualTo(value);
+    assertThat(tokenList.get(index).startLine).isEqualTo(line);
+    assertThat(tokenList.get(index).startColumn).isEqualTo(column);
+    assertThat(tokenList.get(index).endLine).isEqualTo(endLine);
+    assertThat(tokenList.get(index).endColumn).isEqualTo(endColumn);
   }
 }

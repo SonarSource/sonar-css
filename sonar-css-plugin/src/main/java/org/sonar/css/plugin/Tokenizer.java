@@ -1,7 +1,15 @@
 package org.sonar.css.plugin;
 
-import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import org.sonar.css.plugin.Token.Type;
+
 /*
  * SonarCSS
  * Copyright (C) 2018-2018 SonarSource SA
@@ -21,20 +29,15 @@ import java.util.ArrayList;
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import java.util.List;
-import java.util.Map;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import org.sonar.css.plugin.Token.Type;
 
 public class Tokenizer {
 
-  public List<Token> tokenize(String css) throws FileNotFoundException, ScriptException {
+  public List<Token> tokenize(String css) throws ScriptException {
     ScriptEngineManager factory = new ScriptEngineManager();
     ScriptEngine engine = factory.getEngineByName("JavaScript");
-    engine.eval(new java.io.FileReader("/home/stylianos/sonar-css/sonar-css-plugin/src/main/java/org/sonar/css/plugin/tokenize.js"));
-    String cssInput = "tokenize('" + css + "')";
+    InputStream tokenizeScript = Tokenizer.class.getClassLoader().getResourceAsStream("tokenize.js");
+    engine.eval(new InputStreamReader(tokenizeScript));
+    String cssInput = "tokenize('" + css.replace("'", "\\'") + "')";
     Object tokens = engine.eval(cssInput);
     return extractTokens(tokens);
   }
@@ -52,7 +55,6 @@ public class Tokenizer {
         // skip whitespace
         continue;
       } else {
-        System.out.println("TYPE origin: " + tokenProperties.get("0").toString() + " TYPE: " + type + " TEXT: " + text);
         Integer startColumn = ((Double) tokenProperties.get("3")).intValue();
         // all cases except for punctuator type
         if (tokenProperties.size() == 6) {

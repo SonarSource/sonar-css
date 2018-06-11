@@ -24,7 +24,6 @@ public class Token {
   public enum Type {
     COMMENT,
     STRING,
-    NUMBER,
     WORD,
     AT_WORD,
     BRACKETS,
