@@ -92,7 +92,6 @@ def runITs(String sqRuntimeVersion) {
         withMaven(maven: MAVEN_TOOL) {
             mavenSetBuildVersion()
             dir('its') {
-                sh 'git submodule update --init --recursive'
                 sh "mvn -Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
                         "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
             }

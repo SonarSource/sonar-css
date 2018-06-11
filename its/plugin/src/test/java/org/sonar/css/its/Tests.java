@@ -50,9 +50,12 @@ public class Tests {
 
   static {
     String defaultRuntimeVersion = "true".equals(System.getenv("SONARSOURCE_QA")) ? null : "7.2.0.13185"; // TODO LATEST_RELEASE[7.2]
-    OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv();
-    orchestratorBuilder.addPlugin(PLUGIN_LOCATION);
-    orchestratorBuilder.setSonarVersion(System.getProperty("sonar.runtimeVersion", defaultRuntimeVersion));
+    System.out.println(defaultRuntimeVersion);
+    String sqVersion = System.getProperty("sonar.runtimeVersion", defaultRuntimeVersion);
+    System.out.println(sqVersion);
+    OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
+      .addPlugin(PLUGIN_LOCATION)
+      .setSonarVersion(sqVersion);
     ORCHESTRATOR = orchestratorBuilder.build();
   }
 
