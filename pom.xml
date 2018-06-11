@@ -119,12 +119,6 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.sonarsource.sonarqube</groupId>
-                <artifactId>sonar-testing-harness</artifactId>
-                <version>${sonar.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.sonarsource.orchestrator</groupId>
                 <artifactId>sonar-orchestrator</artifactId>
                 <version>${sonar-orchestrator.version}</version>
