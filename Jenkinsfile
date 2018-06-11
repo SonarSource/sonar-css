@@ -46,7 +46,7 @@ pipeline {
                         label 'windows'
                     }
                     steps {
-                        runITs "LATEST_RELEASE"
+                        runITsWindows "LATEST_RELEASE"
                     }
                 }
 
@@ -64,7 +64,7 @@ pipeline {
                         label 'windows'
                     }
                     steps {
-                        sh 'mvn clean test'
+                        bat 'mvn clean test'
                     }
                 }
             }
@@ -93,6 +93,18 @@ def runITs(String sqRuntimeVersion) {
             mavenSetBuildVersion()
             dir('its') {
                 sh "mvn -Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
+                        "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
+            }
+        }
+    }
+}
+
+def runITsWindows(String sqRuntimeVersion) {
+    withQAEnv {
+        withMaven(maven: MAVEN_TOOL) {
+            mavenSetBuildVersion()
+            dir('its') {
+                bat "mvn -Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
                         "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
             }
         }

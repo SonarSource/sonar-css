@@ -50,9 +50,7 @@ public class Tests {
 
   static {
     String defaultRuntimeVersion = "true".equals(System.getenv("SONARSOURCE_QA")) ? null : "7.2.0.13185"; // TODO LATEST_RELEASE[7.2]
-    System.out.println(defaultRuntimeVersion);
     String sqVersion = System.getProperty("sonar.runtimeVersion", defaultRuntimeVersion);
-    System.out.println(sqVersion);
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
       .addPlugin(PLUGIN_LOCATION)
       .setSonarVersion(sqVersion);
@@ -78,8 +76,8 @@ public class Tests {
     return measures.size() == 1 ? measures.get(0) : null;
   }
 
-  public static SonarScanner createScanner(String location, String projectKey) {
-    File projectDir = FileLocation.of(location).getFile();
+  public static SonarScanner createScanner(String projectKey) {
+    File projectDir = FileLocation.of("projects" + File.separator + projectKey).getFile();
 
     return SonarScanner.create()
       .setSourceEncoding("UTF-8")

@@ -20,7 +20,6 @@
 package org.sonar.css.its;
 
 import com.sonar.orchestrator.Orchestrator;
-import java.io.File;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -37,7 +36,7 @@ public class MetricsTest {
 
   @BeforeClass
   public static void prepare() {
-    orchestrator.executeBuild(Tests.createScanner("projects" + File.separator + PROJECT_KEY, PROJECT_KEY));
+    orchestrator.executeBuild(Tests.createScanner(PROJECT_KEY));
   }
 
   @Test
