@@ -32,64 +32,83 @@ public class TokenizerTest {
   
   @Test
   public void word() throws ScriptException {
-    assertToken("bar { }", 0, "bar", Type.WORD, 1, 1);
-    assertToken("bar: foo { }", 0, "bar", Type.WORD, 1, 1);
-    assertToken("bar: foo-baz { }", 2, "foo-baz", Type.WORD, 1, 6);
-    assertToken("foo bar { }", 1, "bar", Type.WORD, 1, 5);
-    assertToken("#bar { }", 0, "#bar", Type.WORD, 1, 1);
-    assertToken("foo.bar { }", 0, "foo.bar", Type.WORD, 1, 1);
-    assertToken(".bar { }", 0, ".bar", Type.WORD, 1, 1);
-    assertToken("bar { foo: 42; }", 2, "foo", Type.WORD, 1, 7);
-    assertToken("bar { foo: baz; }", 4, "baz", Type.WORD, 1, 12);
-    assertToken("foo , bar { }", 2, "bar", Type.WORD, 1, 7);
+    assertToken("bar { }", 0, "bar", Type.WORD);
+    assertToken("bar: foo { }", 0, "bar", Type.WORD);
+    assertToken("bar: foo-baz { }", 2, "foo-baz", Type.WORD);
+    assertToken("foo bar { }", 1, "bar", Type.WORD);
+    assertToken("#bar { }", 0, "#bar", Type.WORD);
+    assertToken("foo.bar { }", 0, "foo.bar", Type.WORD);
+    assertToken(".bar { }", 0, ".bar", Type.WORD);
+    assertToken("bar { foo: 42; }", 2, "foo", Type.WORD);
+    assertToken("bar { foo: baz; }", 4, "baz", Type.WORD);
+    assertToken("foo , bar { }", 2, "bar", Type.WORD);
   }
 
   @Test
-  public void punctuators() throws ScriptException {
-    assertToken("bar: foo { }", 1, ":", Type.PUNCTUATOR, 1, 4);
-    assertToken("bar { foo; }", 3, ";", Type.PUNCTUATOR, 1, 10);
+  public void semi_colon() throws ScriptException {
+    assertToken("bar: foo { }", 1, ":", Type.PUNCTUATOR);
+    assertToken("bar { foo; }", 3, ";", Type.PUNCTUATOR);
   }
 
   @Test
   public void comma() throws ScriptException {
-    assertToken("foo , bar { }", 1, ",", Type.PUNCTUATOR, 1, 5);
-// FIXME
-//    assertToken("foo, bar { }", 1, ",", Type.PUNCTUATOR, 1, 4);
+    assertToken("foo , bar { }", 1, ",", Type.PUNCTUATOR);
+    assertToken("foo, bar { }", 1, ",", Type.PUNCTUATOR);
   }
 
   @Test
   public void number_as_word() throws ScriptException {
-    assertToken("bar { foo: 1.15; }", 4, "1.15", Type.WORD, 1, 12);
-    assertToken("bar { foo: 1; }", 4, "1", Type.WORD, 1, 12);
-    assertToken("bar { foo: 1.15px; }", 4, "1.15px", Type.WORD, 1, 12);
-    assertToken("bar { foo: 1.15%; }", 4, "1.15%", Type.WORD, 1, 12);
-    assertToken("bar { foo: 1px; }", 4, "1px", Type.WORD, 1, 12);
-    assertToken("bar { foo: 1em/150%; }", 4, "1em/150%", Type.WORD, 1, 12);
+    assertToken("bar { foo: 1.15; }", 4, "1.15", Type.WORD);
+    assertToken("bar { foo: 1; }", 4, "1", Type.WORD);
+    assertToken("bar { foo: 1.15px; }", 4, "1.15px", Type.WORD);
+    assertToken("bar { foo: 1.15%; }", 4, "1.15%", Type.WORD);
+    assertToken("bar { foo: 1px; }", 4, "1px", Type.WORD);
+    assertToken("bar { foo: 1em/150%; }", 4, "1em/150%", Type.WORD);
   }
 
   @Test
   public void brackets() throws ScriptException {
-    assertToken("bar { foo: (1.15); }", 4, "(1.15)", Type.BRACKETS, 1, 12);
-    assertToken("bar { foo: (1.15 1 0px); }", 4, "(1.15 1 0px)", Type.BRACKETS, 1, 12);
-    assertToken("bar { foo: (1.15, 1, 0px); }", 4, "(1.15, 1, 0px)", Type.BRACKETS, 1, 12);
+    assertToken("bar { foo: (1.15); }", 4, "(1.15)", Type.BRACKETS);
+    assertToken("bar { foo: ( 1.15 ); }", 4, "( 1.15 )", Type.BRACKETS);
+    assertToken("bar { foo: (1.15 1 0px); }", 4, "(1.15 1 0px)", Type.BRACKETS);
+    assertToken("bar { foo: (1.15, 1, 0px); }", 4, "(1.15, 1, 0px)", Type.BRACKETS);
+    assertToken("bar { content: string(doctitle); }", 5, "(doctitle)", Type.BRACKETS);
+    assertToken("bar { string-set: booktitle content(); }", 6, "()", Type.BRACKETS);
+    assertToken("bar { a: b(attr(href, url), c) \")\"; }", 7, "(href, url)", Type.BRACKETS);
   }
 
   @Test
   public void strings() throws ScriptException {
-    assertToken("bar { foo: \"\"; }", 4, "\"\"", Type.STRING, 1, 12);
-    assertToken("bar { foo: \"hello, world\"; }", 4, "\"hello, world\"", Type.STRING, 1, 12);
+    assertToken("bar { foo: \"\"; }", 4, "\"\"", Type.STRING);
+    assertToken("bar { foo: \"hello, world\"; }", 4, "\"hello, world\"", Type.STRING);
   }
 
   @Test
   public void at_word() throws ScriptException {
-    assertToken("@bar { }", 0, "@bar", Type.AT_WORD, 1, 1);
+    assertToken("@bar { }", 0, "@bar", Type.AT_WORD);
   }
 
   @Test
   public void comment() throws ScriptException {
-    assertToken("/* foo */", 0, "/* foo */", Type.COMMENT, 1, 1);
-    assertToken("foo { a: /* foo */ 42; }", 4, "/* foo */", Type.COMMENT, 1, 10);
-    assertToken("foo { a: /* foo\\\nbar*/ 42; }", 4, "/* foo\\\nbar*/", Type.COMMENT, 1, 10, 2, 5);
+    assertToken("/* foo */", 0, "/* foo */", Type.COMMENT);
+    assertToken("foo { a: /* foo */ 42; }", 4, "/* foo */", Type.COMMENT);
+    assertToken("/* \n"
+      + "  this is a comment\n"
+      + "  and it is awesome because\n"
+      + "  it is multiline!\n"
+      + "*/", 0, "/* \n"
+      + "  this is a comment\n"
+      + "  and it is awesome because\n"
+      + "  it is multiline!\n"
+      + "*/", Type.COMMENT, 1, 1, 5, 2);
+    assertToken("foo { a: /* foo\nbar*/ 42; }", 4, "/* foo\nbar*/", Type.COMMENT, 1, 10, 2, 5);
+  }
+
+  @Test
+  public void hashtag() throws ScriptException {
+    assertToken("bar { color: #333; }", 4, "#333", Type.WORD);
+    assertToken("bar { color: #e535ab; }", 4, "#e535ab", Type.WORD);
+    assertToken("#table-of-contents + ul li { list-style: none; }", 0, "#table-of-contents", Type.WORD);
   }
 
   @Test
@@ -306,7 +325,7 @@ public class TokenizerTest {
       "        background-image: url('/imgs/#{$temp}.png');" +
       "    }" +
       "}");
-    // assertThat(tokenList.get(0).type).isEqualTo(Token.Type.WORD);
+    assertThat(tokenList.get(0).type).isEqualTo(Type.AT_WORD);
   }
 
   @Test
@@ -319,17 +338,21 @@ public class TokenizerTest {
     assertThat(tokenList.get(0).type).isEqualTo(Token.Type.AT_WORD);
   }
 
-  private static void assertToken(String input, int index, String value, Token.Type type, int line, int column) throws ScriptException {
-    assertToken(input, index, value, type, line, column, line, column + value.length() - 1);
-  }
-
-  private static void assertToken(String input, int index, String value, Token.Type type, int line, int column, int endLine, int endColumn) throws ScriptException {
+  private static List<Token> assertToken(String input, int index, String value, Token.Type type) throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(input);
     assertThat(tokenList.get(index).type).isEqualTo(type);
     assertThat(tokenList.get(index).text).isEqualTo(value);
+
+    return tokenList;
+  }
+
+  private static List<Token> assertToken(String input, int index, String value, Token.Type type, int line, int column, int endLine, int endColumn) throws ScriptException {
+    List<Token> tokenList = assertToken(input, index, value, type);
     assertThat(tokenList.get(index).startLine).isEqualTo(line);
     assertThat(tokenList.get(index).startColumn).isEqualTo(column);
     assertThat(tokenList.get(index).endLine).isEqualTo(endLine);
     assertThat(tokenList.get(index).endColumn).isEqualTo(endColumn);
+
+    return tokenList;
   }
 }
