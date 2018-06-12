@@ -36,6 +36,6 @@ public class CssPluginTest {
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin underTest = new CssPlugin();
     underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(4);
+    assertThat(context.getExtensions()).hasSize(7);
   }
 }

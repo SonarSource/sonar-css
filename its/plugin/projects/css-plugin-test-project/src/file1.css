@@ -2,7 +2,7 @@
   background-color: #2d5e8b;
 }
 .class1 .class2 {
-  background-color: #fff;
+  background-color: #ffw; /* issue here */
   color: #2d5e8b;
   foo: "some text";
 }

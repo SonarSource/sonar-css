@@ -19,21 +19,34 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import org.apache.commons.io.FileUtils;
 
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
+public class Zip {
 
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
+  private Zip() {
+    // utility class
+  }
 
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
-
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
+  public static void extract(InputStream bundle, File destination) throws IOException {
+    ZipInputStream zip = new ZipInputStream(bundle);
+    ZipEntry entry = zip.getNextEntry();
+    if (entry == null) {
+      throw new IllegalStateException("At least one entry expected.");
+    }
+    while (entry != null) {
+      File entryDestination = new File(destination, entry.getName());
+      if (entry.isDirectory()) {
+        entryDestination.mkdirs();
+      } else {
+        FileUtils.copyToFile(zip, entryDestination);
+      }
+      zip.closeEntry();
+      entry = zip.getNextEntry();
+    }
   }
 }
