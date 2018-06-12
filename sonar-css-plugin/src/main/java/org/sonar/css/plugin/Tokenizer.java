@@ -21,13 +21,13 @@ package org.sonar.css.plugin;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
 import org.sonar.api.internal.apachecommons.lang.StringEscapeUtils;
 import org.sonar.css.plugin.Token.Type;
 
@@ -37,7 +37,7 @@ public class Tokenizer {
     ScriptEngineManager factory = new ScriptEngineManager();
     ScriptEngine engine = factory.getEngineByName("JavaScript");
     InputStream tokenizeScript = Tokenizer.class.getClassLoader().getResourceAsStream("tokenize.js");
-    engine.eval(new InputStreamReader(tokenizeScript));
+    engine.eval(new InputStreamReader(tokenizeScript, StandardCharsets.UTF_8));
     String cssInput = "tokenize('" + StringEscapeUtils.escapeJavaScript(css) + "')";
     Object tokens = engine.eval(cssInput);
     return extractTokens(tokens);
