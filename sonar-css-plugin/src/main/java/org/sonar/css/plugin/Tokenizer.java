@@ -1,15 +1,3 @@
-package org.sonar.css.plugin;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import org.sonar.css.plugin.Token.Type;
-
 /*
  * SonarCSS
  * Copyright (C) 2018-2018 SonarSource SA
@@ -29,6 +17,17 @@ import org.sonar.css.plugin.Token.Type;
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.css.plugin;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import org.sonar.css.plugin.Token.Type;
 
 public class Tokenizer {
 
