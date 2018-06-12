@@ -19,33 +19,17 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.Plugin;
-import org.sonar.api.config.PropertyDefinition;
-import org.sonar.api.resources.Qualifiers;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 
-public class CssPlugin implements Plugin {
+public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
 
-  static final String FILE_SUFFIXES_KEY = "sonar.css.file.suffixes";
-  public static final String FILE_SUFFIXES_DEFVALUE = ".css,.less,.scss";
-
-  private static final String CSS_CATEGORY = "CSS";
-  private static final String GENERAL_SUBCATEGORY = "General";
+  public static final String PROFILE_NAME = "Sonar way";
+//  private static final String PROFILE_PATH = "org/sonar/l10n/css/rules/css/Sonar_way_profile.json";
 
   @Override
   public void define(Context context) {
-    context.addExtensions(
-      CssLanguage.class,
-      SonarWayProfile.class,
 
-      PropertyDefinition.builder(FILE_SUFFIXES_KEY)
-        .defaultValue(FILE_SUFFIXES_DEFVALUE)
-        .name("File Suffixes")
-        .description("List of suffixes for files to analyze.")
-        .subCategory(GENERAL_SUBCATEGORY)
-        .category(CSS_CATEGORY)
-        .onQualifiers(Qualifiers.PROJECT)
-        .multiValues(true)
-        .build()
-    );
+    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
+    profile.done();
   }
 }
