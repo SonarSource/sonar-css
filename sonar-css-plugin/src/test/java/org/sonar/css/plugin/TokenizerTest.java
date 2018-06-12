@@ -64,6 +64,7 @@ public class TokenizerTest {
     assertToken("bar { foo: 1.15px; }", 4, "1.15px", Type.WORD, 1, 12);
     assertToken("bar { foo: 1.15%; }", 4, "1.15%", Type.WORD, 1, 12);
     assertToken("bar { foo: 1px; }", 4, "1px", Type.WORD, 1, 12);
+    assertToken("bar { foo: 1em/150%; }", 4, "1em/150%", Type.WORD, 1, 12);
   }
 
   @Test
