@@ -66,12 +66,11 @@ public class Tokenizer {
           Integer endLine = convertToInt(tokenProperties.get("4"));
           Integer endColumn = ((Double) tokenProperties.get("5")).intValue();
 
-          // Javascript tokenizer is not returning 2 tokens for words ending with a comma (e.g. foo,) so we need to
-          // split the word into 2 tokens (1 word without the comma and 1 punctuator).
-          // For the sake of simplicity we don't handle words ending with ',' on a new line.
-          if (text.length() > 1 && text.endsWith(",") && startLine.equals(endLine)) {
-            resultList.add(new Token(type, text.substring(0, text.length() - 1), startLine, startColumn, endLine, endColumn - 1));
-            resultList.add(new Token(Type.PUNCTUATOR, ",", startLine, endColumn, endLine, endColumn));
+
+          if (isTokenWithPunctuator(text, ",", startLine, endLine)) {
+            resultList.addAll(splitTokenWithPunctuator(text, type, startLine, startColumn, endLine, endColumn));
+          } else if (isTokenWithPunctuator(text, ":", startLine, endLine)) {
+            resultList.addAll(splitTokenWithPunctuator(text, type, startLine, startColumn, endLine, endColumn));
           } else {
             resultList.add(new Token(type, text, startLine, startColumn, endLine, endColumn));
           }
@@ -83,6 +82,23 @@ public class Tokenizer {
     }
 
     return resultList;
+  }
+
+  // Javascript tokenizer is not returning 2 tokens for words ending with a comma (e.g. foo,) and for words starting
+  // with at symbol and endings with colon (e.g. @base:) so we need to split the word into 2 tokens (1 word without
+  // the punctuator and 1 punctuator).
+  // For the sake of simplicity we don't handle words ending with the punctuator on a new line.
+  private static Boolean isTokenWithPunctuator(String text, String punctuator, Integer startLine, Integer endLine) {
+    return text.length() > 1 && text.endsWith(punctuator) && startLine.equals(endLine);
+  }
+
+  private static List<Token> splitTokenWithPunctuator(String text, Type type, Integer startLine, Integer startColumn, Integer endLine, Integer endColumn) {
+    List<Token> tokenList = new ArrayList<>();
+
+    tokenList.add(new Token(type, text.substring(0, text.length() - 1), startLine, startColumn, endLine, endColumn - 1));
+    tokenList.add(new Token(Type.PUNCTUATOR, text.substring(text.length() - 1), startLine, endColumn, endLine, endColumn));
+
+    return tokenList;
   }
 
   private static Integer convertToInt(Object value) {

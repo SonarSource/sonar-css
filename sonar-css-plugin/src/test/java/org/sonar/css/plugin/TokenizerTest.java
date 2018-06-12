@@ -116,8 +116,22 @@ public class TokenizerTest {
   @Test
   public void scss_variable() throws ScriptException {
     assertToken("$font-stack: Helvetica;", 0, "$font-stack", Type.WORD);
-    assertToken("p.message-#{$alertClass} { color: red; }", 3, "$alertClass", Type.WORD);
     assertToken("$message-color: blue !default;", 3, "!default", Type.WORD);
+
+    List<Token> tokenList = tokenizer.tokenize("p.message-#{$alertClass} { color: red; }");
+    assertThat(tokenList.size()).isEqualTo(11);
+    assertToken(tokenList, 0, "p.message-", Type.WORD);
+    assertToken(tokenList, 1, "#", Type.WORD);
+    assertToken(tokenList, 2, "{", Type.PUNCTUATOR);
+    assertToken(tokenList, 3, "$alertClass", Type.WORD);
+    assertToken(tokenList, 4, "}", Type.PUNCTUATOR);
+    assertToken(tokenList, 5, "{", Type.PUNCTUATOR);
+    assertToken(tokenList, 6, "color", Type.WORD);
+    assertToken(tokenList, 7, ":", Type.PUNCTUATOR);
+    assertToken(tokenList, 8, "red", Type.WORD);
+    assertToken(tokenList, 9, ";", Type.PUNCTUATOR);
+    assertToken(tokenList, 10, "}", Type.PUNCTUATOR);
+
   }
 
   @Test
@@ -164,18 +178,18 @@ public class TokenizerTest {
 
   @Test
   public void less_variable() throws ScriptException {
-    assertToken("@nice-blue: #5B83AD;", 0, "@nice-blue:", Type.AT_WORD);
+    assertToken("@nice-blue: #5B83AD;", 0, "@nice-blue", Type.AT_WORD);
     assertToken("foo { color: @@color; }", 4, "@@color", Type.AT_WORD);
   }
 
   @Test
   public void less_operators() throws ScriptException {
-    assertToken("@base: 2cm * 3mm;", 2, "*", Type.WORD);
+    assertToken("@base: 2cm * 3mm;", 3, "*", Type.WORD);
   }
 
   @Test
   public void less_escaping() throws ScriptException {
-    assertToken("@min768: ~\"(min-width: 768px)\";", 1, "~", Type.WORD);
+    assertToken("@min768: ~\"(min-width: 768px)\";", 2, "~", Type.WORD);
   }
 
   @Test
