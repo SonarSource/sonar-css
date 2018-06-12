@@ -94,8 +94,7 @@ def runITs(String sqRuntimeVersion) {
         withMaven(maven: MAVEN_TOOL) {
             mavenSetBuildVersion()
             dir('its') {
-                sh "mvn -Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
-                        "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
+                sh "mvn ${itBuildArguments sqRuntimeVersion}"
             }
         }
     }
@@ -106,8 +105,7 @@ def runITsWindows(String sqRuntimeVersion) {
         withMaven(maven: MAVEN_TOOL) {
             mavenSetBuildVersion()
             dir('its') {
-                sh "mvn.cmd -Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
-                        "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
+                sh "mvn.cmd ${itBuildArguments sqRuntimeVersion}"
             }
         }
     }
@@ -121,4 +119,9 @@ def withQAEnv(def body) {
             body.call()
         }
     }
+}
+
+String itBuildArguments(String sqRuntimeVersion) {
+    "-Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
+         "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
 }
