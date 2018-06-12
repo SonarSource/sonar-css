@@ -45,10 +45,4 @@ public class Token {
     this.endLine = endLine;
     this.endColumn = endColumn;
   }
-
-  @Override
-  public String toString() {
-    return "Token [type=" + type + ", text=" + text + ", startLine=" + startLine + ", startColumn=" + startColumn + ", endLine=" + endLine + ", endColumn=" + endColumn + "]";
-  }
-
 }

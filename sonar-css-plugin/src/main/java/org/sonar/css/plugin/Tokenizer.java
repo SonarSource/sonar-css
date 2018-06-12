@@ -44,9 +44,8 @@ public class Tokenizer {
   }
 
   private static List<Token> extractTokens(Object tokens) {
-    // We receive an array of array of tokens from the JavaScript Tokenizer. When casted to java object the array is
-    // mapped as a map where the key is the index and the value is the actual value of the array for the given index.
-    // Keys are useless as we iterate through values (the array).
+    // tokens is result of call to javascript function tokenize(). It returns an array of arrays, where nested arrays
+    // correspond to tokens. These array javascript objects mapped in Java to Map objects where array index is key.
 
     List<Token> resultList = new ArrayList<>();
     for (Object tokenObject : ((Map<String, Object>) tokens).values()) {
@@ -67,7 +66,9 @@ public class Tokenizer {
           Integer endLine = convertToInt(tokenProperties.get("4"));
           Integer endColumn = ((Double) tokenProperties.get("5")).intValue();
 
-          // For the sake of simplicity we don't handle words ending with ',' on a new line
+          // Javascript tokenizer is not returning 2 tokens for words ending with a comma (e.g. foo,) so we need to
+          // split the word into 2 tokens (1 word without the comma and 1 punctuator).
+          // For the sake of simplicity we don't handle words ending with ',' on a new line.
           if (text.length() > 1 && text.endsWith(",") && startLine.equals(endLine)) {
             resultList.add(new Token(type, text.substring(0, text.length() - 1), startLine, startColumn, endLine, endColumn - 1));
             resultList.add(new Token(Type.PUNCTUATOR, ",", startLine, endColumn, endLine, endColumn));

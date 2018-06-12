@@ -20,6 +20,8 @@
 package org.sonar.css.plugin;
 
 import java.util.List;
+import java.util.Optional;
+
 import javax.script.ScriptException;
 import org.junit.Test;
 import org.sonar.css.plugin.Token.Type;
@@ -112,247 +114,99 @@ public class TokenizerTest {
   }
 
   @Test
-  public void should_parse_less_variables_variable() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@primary:  green;" +
-      "@secondary: blue;" +
-      "" +
-      ".section {" +
-      "  @color: primary;" +
-      "" +
-      "  .element {" +
-      "    color: @@color;" +
-      "  }" +
-      "}");
-    assertThat(tokenList.get(15).type).isEqualTo(Token.Type.AT_WORD);
-    assertThat(tokenList.get(15).text).isEqualTo("@@color");
-    assertThat(tokenList.get(15).startLine).isEqualTo(1);
-    assertThat(tokenList.get(15).startColumn).isEqualTo(86);
-    assertThat(tokenList.get(15).endLine).isEqualTo(1);
-    assertThat(tokenList.get(15).endColumn).isEqualTo(92);
+  public void scss_variable() throws ScriptException {
+    assertToken("$font-stack: Helvetica;", 0, "$font-stack", Type.WORD);
+    assertToken("p.message-#{$alertClass} { color: red; }", 3, "$alertClass", Type.WORD);
+    assertToken("$message-color: blue !default;", 3, "!default", Type.WORD);
   }
 
   @Test
-  public void should_parse_less_maths() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(".test {" +
-      "  grid-column: 3 / 6;" +
-      "  width: 40px + 2px;" +
-      "  height: 42px;" +
-      "}");
-    assertThat(tokenList.get(4).type).isEqualTo(Token.Type.WORD);
+  public void scss_import() throws ScriptException {
+    List<Token> tokenList = tokenizer.tokenize("@import 'base';");
+
+    assertThat(tokenList.size()).isEqualTo(3);
+    assertToken(tokenList, 0, "@import", Type.AT_WORD);
+    assertToken(tokenList, 1, "'base'", Type.STRING);
+    assertToken(tokenList, 2, ";", Type.PUNCTUATOR);
   }
 
   @Test
-  public void should_parse_less_variables() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@link-color: #428bca;"
-      + "@link-color-hover: darken(@link-color, 10%);"
-      + "a," +
-      ".link {" +
-      "  color: @link-color;"
-      + "}"
-      + "a:hover {"
-      + "  color: @link-color-hover;"
-      + "}"
-      + ".widget {"
-      + " color: #fff;" +
-      "  background: @link-color;"
-      + "}");
-    assertThat(tokenList.get(1).type).isEqualTo(Token.Type.WORD);
+  public void scss_role() throws ScriptException {
+    List<Token> tokenList = tokenizer.tokenize("article[role=\"main\"] { width: 1px; }");
+
+    assertThat(tokenList.size()).isEqualTo(11);
+    assertToken(tokenList, 0, "article", Type.WORD);
+    assertToken(tokenList, 1, "[", Type.PUNCTUATOR);
+    assertToken(tokenList, 2, "role=", Type.WORD);
+    assertToken(tokenList, 3, "\"main\"", Type.STRING);
+    assertToken(tokenList, 4, "]", Type.PUNCTUATOR);
   }
 
   @Test
-  public void should_parse_less_lazy_eval() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@var: 0;"
-      + ".class {"
-      + "  @var: 1;"
-      + "  .brass {"
-      + "    @var: 2;"
-      + "  }"
-      + "}");
-    assertThat(tokenList.get(5).type).isEqualTo(Token.Type.AT_WORD);
+  public void scss_operators() throws ScriptException {
+    assertToken("foo { width: 300px + 960px; }", 5, "+", Type.WORD);
+    assertToken("foo { width: 300px - 960px; }", 5, "-", Type.WORD);
+    assertToken("foo { width: 300px * 960px; }", 5, "*", Type.WORD);
+    assertToken("foo { width: 300px / 960px; }", 5, "/", Type.WORD);
   }
 
   @Test
-  public void should_parse_less_properties_as_variables() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(".block { "
-      + "  color: red;"
-      + "  .inner {"
-      + "    background-color: $color;"
-      + "  } "
-      + "} ");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.WORD);
+  public void scss_parent_selector() throws ScriptException {
+    assertToken("a { &:hover { color: red; } }", 2, "&", Type.WORD);
+    assertToken("p { body.no-touch & { display: none; } }", 3, "&", Type.WORD);
   }
 
   @Test
-  public void should_parse_less_parent_selectors() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(".button {"
-      + "  &-class1 {"
-      + "    background-image: url(\"test.png\");"
-      + "  }"
-      + "  &-class2 {"
-      + "    background-image: url(\"test.png\");"
-      + "  }"
-      + "}");
-    assertThat(tokenList.get(2).type).isEqualTo(Token.Type.WORD);
-    assertThat(tokenList.get(2).text).isEqualTo("&-class1");
+  public void scss_control_directives() throws ScriptException {
+    assertToken("@if ($debug) { }", 0, "@if", Type.AT_WORD);
+    assertToken("@each $name in 'save' 'cancel' { }", 0, "@each", Type.AT_WORD);
   }
 
   @Test
-  public void should_parse_less_multiple_imports() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@import \"t.css\";"
-      + "@import \"test.css\";"
-      + "@import url(\"path:t.css\");"
-      + "#header {"
-      + "  .rounded-corners;"
-      + "}"
-      + "#footer {"
-      + "  .rounded-corners(10px);"
-      + "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.AT_WORD);
-    assertThat(tokenList.get(0).text).isEqualTo("@import");
+  public void less_variable() throws ScriptException {
+    assertToken("@nice-blue: #5B83AD;", 0, "@nice-blue:", Type.AT_WORD);
+    assertToken("foo { color: @@color; }", 4, "@@color", Type.AT_WORD);
   }
 
   @Test
-  public void should_parse_less_extend_base_class() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(".test {"
-      + "  background-color: red;"
-      + "}"
-      + ".test2 {"
-      + "  &:extend(.test);"
-      + "  color: brown;"
-      + "}");
-    assertThat(tokenList.get(9).type).isEqualTo(Token.Type.WORD);
-    assertThat(tokenList.get(9).text).isEqualTo("&");
+  public void less_operators() throws ScriptException {
+    assertToken("@base: 2cm * 3mm;", 2, "*", Type.WORD);
   }
 
   @Test
-  public void should_parse_less_mixins() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(".mixin(@color: red;) {"
-      + "box-shadow+: inset 0 0 10px #555;"
-      + "color: @color"
-      + "}.myclass"
-      + "{"
-      + " .mixin();"
-      + "box-shadow+: 0 0 20px red;"
-      + "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.WORD);
-    assertThat(tokenList.get(0).text).isEqualTo(".mixin");
+  public void less_escaping() throws ScriptException {
+    assertToken("@min768: ~\"(min-width: 768px)\";", 1, "~", Type.WORD);
   }
 
   @Test
-  public void should_parse_less_namespaces() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("#outer {"
-      + "  .inner {"
-      + "    color: red;"
-      + "  }"
-      + "}"
-      + ".c {"
-      + "  #outer > .inner;"
-      + "}"
-      + "#namespace {"
-      + "  .mixin() when (@mode=huge) {}"
-      + "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.WORD);
+  public void less_comment() throws ScriptException {
+    // FIXME: Less allows // comment which are not supported by our current tokenizer
+    //assertToken("// Get in line!", 0, "Get in line!", Type.COMMENT);
+
+    assertToken("/* One heck of a block\n * style comment! */", 0, "/* One heck of a block\n * style comment! */", Type.COMMENT);
   }
 
-  @Test
-  public void should_parse_less_logical_operators() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(".mixin (@a) when (isstring(@a)) and (@a < 0) {}");
-    assertThat(tokenList.get(4).type).isEqualTo(Token.Type.WORD);
-  }
-
-  @Test
-  public void should_parse_less_detached_ruleset() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@my-rules: {"
-      + "    .my-selector {"
-      + "      @media t {"
-      + "        color: red;"
-      + "      }"
-      + "    }"
-      + "  };"
-      + "@media (orientation:portrait) {"
-      + "    @my-rules();"
-      + "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.AT_WORD);
-  }
-
-  @Test
-  public void should_parse_less_new_scope_rules() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@variable: global;"
-      + "@detached-ruleset: {"
-      + "  variable: @variable; "
-      + "};"
-      + "selector {"
-      + "  @detached-ruleset();"
-      + "  @variable: value;"
-      + "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.AT_WORD);
-  }
-
-  @Test
-  public void should_parse_sass_font() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("$font-stack: Helvetica, sans-serif;"
-      + "body {"
-      + " font: 10% $font-stack;"
-      + "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.WORD);
-  }
-
-  @Test
-  public void should_parse_sass_extend() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(".test{" +
-      "    color: #333;" +
-      "   }" +
-      "   .test2 {" +
-      "    @extend .test;" +
-      "    border-color: green;" +
-      "   }");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.WORD);
-  }
-
-  @Test
-  public void should_parse_scss_default_variable() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("$default-color: red !default;" +
-      "p.message {" +
-      "    color: $default-color;" +
-      "}");
-    assertThat(tokenList.get(3).type).isEqualTo(Token.Type.WORD);
-  }
-
-  @Test
-  public void should_parse_scss_control_directives() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@each $temp in 't1' 't2' {" +
-      "    .icon-#{$temp} {" +
-      "        background-image: url('/imgs/#{$temp}.png');" +
-      "    }" +
-      "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Type.AT_WORD);
-  }
-
-  @Test
-  public void should_parse_scss_mixin_arguments() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@mixin foo($topPadding: 10px, $bottomPadding: 20px) {" +
-      "}" +
-      "p {" +
-      "    @include foo($bottomPadding: 50px);" +
-      "}");
-    assertThat(tokenList.get(0).type).isEqualTo(Token.Type.AT_WORD);
-  }
-
-  private static List<Token> assertToken(String input, int index, String value, Token.Type type) throws ScriptException {
+  private static void assertToken(String input, int index, String value, Token.Type type) throws ScriptException {
     List<Token> tokenList = tokenizer.tokenize(input);
+    assertToken(tokenList, index, value, type);
+  }
+
+  private static void assertToken(String input, int index, String value, Token.Type type, int line, int column, int
+    endLine, int endColumn) throws ScriptException {
+    List<Token> tokenList = tokenizer.tokenize(input);
+    assertToken(tokenList, index, value, type, line, column, endLine, endColumn);
+  }
+
+  private static void assertToken(List<Token> tokenList, int index, String value, Token.Type type) {
     assertThat(tokenList.get(index).type).isEqualTo(type);
     assertThat(tokenList.get(index).text).isEqualTo(value);
-
-    return tokenList;
   }
 
-  private static List<Token> assertToken(String input, int index, String value, Token.Type type, int line, int column, int endLine, int endColumn) throws ScriptException {
-    List<Token> tokenList = assertToken(input, index, value, type);
+  private static void assertToken(List<Token> tokenList, int index, String value, Token.Type type, int line, int column, int endLine, int endColumn) {
+    assertToken(tokenList, index, value, type);
     assertThat(tokenList.get(index).startLine).isEqualTo(line);
     assertThat(tokenList.get(index).startColumn).isEqualTo(column);
     assertThat(tokenList.get(index).endLine).isEqualTo(endLine);
     assertThat(tokenList.get(index).endColumn).isEqualTo(endColumn);
-
-    return tokenList;
   }
 }
