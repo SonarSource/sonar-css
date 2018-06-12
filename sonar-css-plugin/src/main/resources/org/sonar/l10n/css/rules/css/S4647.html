@@ -1,0 +1,23 @@
+<p>An invalid color definition will by default be interpreted as black, which is likely to have unintended impacts on the expected look and feel of
+the website.</p>
+<p>This rule raises an issue when a color definition <code>color, background-color) is not valid. The color definition is considered valid when it is
+made of hexadecimal characters:</code></p>
+<code> <p>- longhand: 6 or 8 characters (when alpha is defined)</p> <p>- shorthand variant: 3 or 4 characters (when alpha is defined)</p> <h2>Noncompliant Code Example</h2> <pre>
+a {
+ color: #3c; // Noncompliant: shorthand should be made of 3 characters
+}
+div {
+  background-color: #3cb371a; // Noncompliant: alpha should have 2 characters
+}
+</pre> <h2>Compliant Solution</h2> <pre>
+a {
+ color: #3cc;
+}
+div {
+  background-color: #3cb371ac;
+}
+</pre> <h2>See</h2>
+  <ul>
+    <li> https://www.w3schools.com/css/css_colors.asp </li>
+  </ul> </code>
+

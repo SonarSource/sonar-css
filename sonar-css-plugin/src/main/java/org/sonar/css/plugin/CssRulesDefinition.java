@@ -19,21 +19,28 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.util.Collections;
+import org.sonar.api.server.rule.RulesDefinition;
+import org.sonar.css.plugin.rules.FirstRule;
+import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
+import static org.sonar.css.plugin.SonarWayProfile.PROFILE_PATH;
 
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
+public class CssRulesDefinition implements RulesDefinition {
 
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
+  public static final String REPOSITORY_KEY = "css";
+  public static final String RULE_REPOSITORY_NAME = "SonarAnalyzer";
+
+  public static final String RESOURCE_FOLDER = "org/sonar/l10n/css/rules/css";
 
   @Override
   public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
+    NewRepository repository = context
+      .createRepository(REPOSITORY_KEY, CssLanguage.KEY)
+      .setName(RULE_REPOSITORY_NAME);
+
+    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, PROFILE_PATH);
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, Collections.singletonList(FirstRule.class));
+    repository.done();
   }
 }

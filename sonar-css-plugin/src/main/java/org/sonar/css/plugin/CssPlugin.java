@@ -36,6 +36,9 @@ public class CssPlugin implements Plugin {
     context.addExtensions(
       CssLanguage.class,
       SonarWayProfile.class,
+      CssRulesDefinition.class,
+      CssBundleHandler.class,
+      CssRuleSensor.class,
 
       PropertyDefinition.builder(FILE_SUFFIXES_KEY)
         .defaultValue(FILE_SUFFIXES_DEFVALUE)
