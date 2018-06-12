@@ -33,8 +33,6 @@ public class CssPluginTest {
 
   @Test
   public void count_extensions() throws Exception {
-    Double.parseDouble("2");
-
     SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER);
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin underTest = new CssPlugin();
