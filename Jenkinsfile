@@ -104,8 +104,11 @@ def runITsWindows(String sqRuntimeVersion) {
     withQAEnv {
         withMaven(maven: MAVEN_TOOL) {
             mavenSetBuildVersion()
-            dir('its') {
-                sh "mvn.cmd ${itBuildArguments sqRuntimeVersion}"
+            nodejs('NodeJS 10.4.1') {
+                dir('its') {
+                    sh 'node -v'
+                    sh "mvn.cmd ${itBuildArguments sqRuntimeVersion}"
+                }
             }
         }
     }
