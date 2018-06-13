@@ -38,7 +38,8 @@ import org.sonarqube.ws.client.measures.ComponentRequest;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  MetricsTest.class
+  MetricsTest.class,
+  IssuesTest.class
 })
 public class Tests {
 

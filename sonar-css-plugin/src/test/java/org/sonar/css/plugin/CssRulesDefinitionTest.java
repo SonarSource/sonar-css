@@ -19,27 +19,25 @@
  */
 package org.sonar.css.plugin;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.rule.RuleKey;
-import org.sonar.css.plugin.rules.FirstRule;
+import org.junit.Test;
+import org.sonar.api.server.rule.RulesDefinition;
 
-public class CssRules {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public CssRules(CheckFactory checkFactory) {
+public class CssRulesDefinitionTest {
 
-  }
+  @Test
+  public void test() {
+    CssRulesDefinition rulesDefinition = new CssRulesDefinition();
+    RulesDefinition.Context context = new RulesDefinition.Context();
+    rulesDefinition.define(context);
+    RulesDefinition.Repository repository = context.repository("css");
 
-  public static List<Class> getRuleClasses() {
-    return Collections.unmodifiableList(Arrays.asList(
-      FirstRule.class
-    ));
-  }
+    assertThat(context.repositories()).hasSize(1);
 
-  public RuleKey getSonarKey(String rule) {
-    // fixme
-    return RuleKey.of("css", "S4647");
+    assertThat(repository.name()).isEqualTo("SonarAnalyzer");
+    assertThat(repository.language()).isEqualTo("css");
+    assertThat(repository.isExternal()).isEqualTo(false);
+    assertThat(repository.rules()).hasSize(CssRules.getRuleClasses().size());
   }
 }
