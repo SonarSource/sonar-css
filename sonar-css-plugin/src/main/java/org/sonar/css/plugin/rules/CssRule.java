@@ -17,26 +17,10 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.rules;
 
-import org.junit.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+public abstract class CssRule {
 
-import static org.assertj.core.api.Assertions.assertThat;
+  public abstract String stylelintKey();
 
-
-public class CssPluginTest {
-
-  @Test
-  public void count_extensions() throws Exception {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin underTest = new CssPlugin();
-    underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(7);
-  }
 }

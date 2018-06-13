@@ -19,24 +19,22 @@
  */
 package org.sonar.css.plugin;
 
-import org.junit.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+import java.io.File;
+import org.sonar.api.batch.ScannerSide;
 
-import static org.assertj.core.api.Assertions.assertThat;
+@ScannerSide
+public class StylelintExecution implements RulesExecution {
 
-
-public class CssPluginTest {
-
-  @Test
-  public void count_extensions() throws Exception {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin underTest = new CssPlugin();
-    underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(7);
+  @Override
+  public String[] commandElements(File deployDestination, File projectBaseDir) {
+    // fixme: node should be configurable
+    // fixme: add config with rules
+    return new String[]{
+      "node",
+      new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
+      projectBaseDir.getAbsolutePath(),
+      "--config", new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
+      "-f", "json"
+    };
   }
 }

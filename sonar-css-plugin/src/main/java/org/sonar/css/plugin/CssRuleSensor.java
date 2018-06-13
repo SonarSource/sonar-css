@@ -40,11 +40,13 @@ public class CssRuleSensor implements Sensor {
   private static final Logger LOG = Loggers.get(CssRuleSensor.class);
 
   private final BundleHandler bundleHandler;
-  private final CheckFactory checkFactory;
+  private final CssRules cssRules;
+  private final RulesExecution rulesExecution;
 
-  public CssRuleSensor(BundleHandler bundleHandler, CheckFactory checkFactory) {
+  public CssRuleSensor(BundleHandler bundleHandler, CheckFactory checkFactory, RulesExecution rulesExecution) {
     this.bundleHandler = bundleHandler;
-    this.checkFactory = checkFactory;
+    this.rulesExecution = rulesExecution;
+    this.cssRules = new CssRules(checkFactory);
   }
 
   @Override
@@ -59,25 +61,11 @@ public class CssRuleSensor implements Sensor {
   public void execute(SensorContext context) {
     File deployDestination = context.fileSystem().workDir();
     bundleHandler.deployBundle(deployDestination);
-    CssRules cssRules = new CssRules(checkFactory);
-
-    checkCompatibleNodeVersion();
 
     File projectBaseDir = context.fileSystem().baseDir();
 
-
-    // fixme: node should be configurable
-    // fixme: add config with rules
-    String[] commandLine = {
-      "node",
-      new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      projectBaseDir.getAbsolutePath(),
-      "--config", new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
-      "-f", "json"
-    };
-
-
-    ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+    String[] commandElements = rulesExecution.commandElements(deployDestination, projectBaseDir);
+    ProcessBuilder processBuilder = new ProcessBuilder(commandElements);
 
     try {
       Process process = processBuilder.start();
@@ -88,11 +76,12 @@ public class CssRuleSensor implements Sensor {
       }
 
     } catch (IOException e) {
-      throw new IllegalStateException(String.format("Failed to run external process `%s`. Run with -X for more information", String.join(" ",  commandLine)), e);
+      String command = String.join(" ", commandElements);
+      throw new IllegalStateException(String.format("Failed to run external process `%s`. Rerun analysis with -X for more information", command), e);
     }
   }
 
-  void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
+  private void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
     FileSystem fileSystem = context.fileSystem();
 
     for (IssuesPerFile issuesPerFile : issues) {
@@ -111,10 +100,6 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private void checkCompatibleNodeVersion() {
-    // fixme
-  }
-
   static class IssuesPerFile {
     String source;
     Issue[] warnings;
@@ -124,12 +109,6 @@ public class CssRuleSensor implements Sensor {
     int line;
     String rule;
     String text;
-
-    public Issue(int line, String rule, String text) {
-      this.line = line;
-      this.rule = rule;
-      this.text = text;
-    }
   }
 
 }
