@@ -4,4 +4,7 @@
 .class1 .class2 {
   background-color: #fff;
   color: #2d5e8b;
+  foo: "some text";
 }
+
+/* some comment */

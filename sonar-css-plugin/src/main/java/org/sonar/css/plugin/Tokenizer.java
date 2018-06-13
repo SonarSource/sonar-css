@@ -26,16 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import org.sonar.api.internal.apachecommons.lang.StringEscapeUtils;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.sonar.css.plugin.Token.Type;
 
 public class Tokenizer {
 
   public List<Token> tokenize(String css) throws ScriptException {
-    ScriptEngineManager factory = new ScriptEngineManager();
-    ScriptEngine engine = factory.getEngineByName("JavaScript");
+    ScriptEngine engine = new NashornScriptEngineFactory().getScriptEngine();
     InputStream tokenizeScript = Tokenizer.class.getClassLoader().getResourceAsStream("tokenize.js");
     engine.eval(new InputStreamReader(tokenizeScript, StandardCharsets.UTF_8));
     String cssInput = "tokenize('" + StringEscapeUtils.escapeJavaScript(css) + "')";
@@ -105,7 +104,7 @@ public class Tokenizer {
     if (value instanceof Double) {
       return ((Double) value).intValue();
     } else if (value instanceof Integer) {
-      return  (Integer) value;
+      return (Integer) value;
     } else {
       throw new IllegalStateException("Failed to convert to number: " + value);
     }
