@@ -28,15 +28,14 @@ import org.sonar.api.utils.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 public class CssPluginTest {
 
   @Test
-  public void count_extensions() throws Exception {
+  public void count_extensions() {
     SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER);
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin underTest = new CssPlugin();
     underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(3);
+    assertThat(context.getExtensions()).hasSize(4);
   }
 }
