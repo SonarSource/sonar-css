@@ -34,6 +34,7 @@ public class CssPlugin implements Plugin {
   @Override
   public void define(Context context) {
     context.addExtensions(
+      MetricSensor.class,
       CssLanguage.class,
       SonarWayProfile.class,
 

@@ -56,6 +56,11 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
         </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -111,7 +116,7 @@
                             <rules>
                                 <requireFilesSize>
                                     <minsize>10000</minsize>
-                                    <maxsize>50000</maxsize>
+                                    <maxsize>200000</maxsize>
                                     <files>
                                         <file>${project.build.directory}/${project.build.finalName}.jar</file>
                                     </files>

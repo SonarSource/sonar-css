@@ -19,6 +19,9 @@
  */
 package org.sonar.css.plugin;
 
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import org.apache.commons.lang.StringEscapeUtils;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -28,15 +31,29 @@ import java.util.Map;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import org.sonar.api.internal.apachecommons.lang.StringEscapeUtils;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.Token.Type;
 
 public class Tokenizer {
 
+  private static final Logger LOG = Loggers.get(Tokenizer.class);
+
   public List<Token> tokenize(String css) throws ScriptException {
     ScriptEngineManager factory = new ScriptEngineManager();
-    ScriptEngine engine = factory.getEngineByName("JavaScript");
+    //ScriptEngine engine = factory.getEngineByName("nashorn");
+    ScriptEngine engine = new NashornScriptEngineFactory().getScriptEngine();
     InputStream tokenizeScript = Tokenizer.class.getClassLoader().getResourceAsStream("tokenize.js");
+    if (tokenizeScript == null) {
+      LOG.info("tokenizeScript null");
+    } else {
+      LOG.info("tokenizeScript not null");
+    }
+    if (engine == null) {
+      LOG.info("engine null");
+    } else {
+      LOG.info("engine not null");
+    }
     engine.eval(new InputStreamReader(tokenizeScript, StandardCharsets.UTF_8));
     String cssInput = "tokenize('" + StringEscapeUtils.escapeJavaScript(css) + "')";
     Object tokens = engine.eval(cssInput);
