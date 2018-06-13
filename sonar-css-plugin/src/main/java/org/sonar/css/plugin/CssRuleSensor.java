@@ -32,12 +32,8 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 
 public class CssRuleSensor implements Sensor {
-
-  private static final Logger LOG = Loggers.get(CssRuleSensor.class);
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
@@ -81,7 +77,7 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
+  private static void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
     FileSystem fileSystem = context.fileSystem();
 
     for (IssuesPerFile issuesPerFile : issues) {

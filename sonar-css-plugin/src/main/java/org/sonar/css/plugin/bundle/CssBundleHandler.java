@@ -17,19 +17,22 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.bundle;
 
 import java.io.File;
 import java.io.InputStream;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
+import org.sonar.css.plugin.BundleHandler;
+import org.sonar.css.plugin.Zip;
 
 @ScannerSide
 public class CssBundleHandler implements BundleHandler {
 
   private static final String BUNDLE_LOCATION = "/css-bundle.zip";
   private static final Logger LOG = Loggers.get(CssBundleHandler.class);
+  String bundleLocation = BUNDLE_LOCATION;
 
   /**
    * Extracting "css-bundle.zip" (containing stylelint)
@@ -37,17 +40,16 @@ public class CssBundleHandler implements BundleHandler {
    */
   @Override
   public void deployBundle(File deployDestination) {
-    InputStream bundle = getClass().getResourceAsStream(BUNDLE_LOCATION);
+    InputStream bundle = getClass().getResourceAsStream(bundleLocation);
     if (bundle == null) {
-      throw new IllegalStateException("CSS bundle not found at " + BUNDLE_LOCATION);
+      throw new IllegalStateException("CSS bundle not found at " + bundleLocation);
     }
     try {
       LOG.debug("Deploying bundle to {}", deployDestination.getAbsolutePath());
       Zip.extract(bundle, deployDestination);
     } catch (Exception e) {
-      throw new IllegalStateException("Failed to deploy CSS bundle (with classpath '" + BUNDLE_LOCATION + "')", e);
+      throw new IllegalStateException("Failed to deploy CSS bundle (with classpath '" + bundleLocation + "')", e);
     }
   }
-
 
 }

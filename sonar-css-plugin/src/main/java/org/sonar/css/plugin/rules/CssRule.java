@@ -19,8 +19,8 @@
  */
 package org.sonar.css.plugin.rules;
 
-public abstract class CssRule {
+public interface CssRule {
 
-  public abstract String stylelintKey();
+  String stylelintKey();
 
 }
