@@ -46,6 +46,7 @@ pipeline {
                         label 'windows'
                     }
                     steps {
+                        sh 'node -v'
                         runITsWindows "LATEST_RELEASE"
                     }
                 }
