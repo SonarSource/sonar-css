@@ -44,7 +44,6 @@ public class CssBundleHandler implements BundleHandler {
     try {
       LOG.debug("Deploying bundle to {}", deployDestination.getAbsolutePath());
       Zip.extract(bundle, deployDestination);
-//      return new SonarTSCoreBundle(new File(deployDestination, "sonarts-bundle"), configuration);
     } catch (Exception e) {
       throw new IllegalStateException("Failed to deploy CSS bundle (with classpath '" + BUNDLE_LOCATION + "')", e);
     }
