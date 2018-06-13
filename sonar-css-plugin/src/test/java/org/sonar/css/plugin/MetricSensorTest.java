@@ -19,27 +19,20 @@
  */
 package org.sonar.css.plugin;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.measures.Metric;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
-import static org.mockito.Mockito.verify;
 
 public class MetricSensorTest {
 
@@ -64,17 +57,25 @@ public class MetricSensorTest {
 
   @Test
   public void empty_input() throws Exception {
-    highlight("");
+    highlight("foo");
 
     assertThat(sensorContext.highlightingTypeAt(inputFile.key(), 1, 0)).isEmpty();
   }
 
   @Test
+  public void singleline_multiline_comment() throws IOException {
+    highlight("/* some comment */");
+
+    assertHighlighting(1, 1, 17, TypeOfText.COMMENT);
+  }
+
+  @Test
   public void multiline_comment() throws IOException {
-    String content = "/* some comment */";
+    String content = "/* some comment\nmultiline */";
     highlight(content);
 
-    assertHighlighting(1, 1, content.length() - 1, TypeOfText.COMMENT);
+    assertHighlighting(1, 1, 15, TypeOfText.COMMENT);
+    assertHighlighting(1, 1, 12, TypeOfText.COMMENT);
   }
 
   @Test
@@ -98,10 +99,13 @@ public class MetricSensorTest {
   }
 
   private void assertHighlighting(int line, int column, int length, TypeOfText type) {
+    if (column < 1) {
+      throw new IllegalStateException("Column should be greater than or equal to 1");
+    }
+
     for (int i = column; i < column + length; i++) {
       List<TypeOfText> typeOfTexts = sensorContext.highlightingTypeAt(inputFile.key(), line, i);
-      assertThat(typeOfTexts).hasSize(1);
-      assertThat(typeOfTexts.get(0)).isEqualTo(type);
+      assertThat(typeOfTexts).containsOnly(type);
     }
   }
 }
