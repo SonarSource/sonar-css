@@ -41,7 +41,7 @@ public class MetricsTest {
 
   @Test
   public void test() {
-    assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(27);
+    assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(33);
   }
 
 }
