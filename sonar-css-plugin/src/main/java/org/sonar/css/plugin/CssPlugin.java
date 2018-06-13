@@ -22,6 +22,7 @@ package org.sonar.css.plugin;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
+import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 public class CssPlugin implements Plugin {
 

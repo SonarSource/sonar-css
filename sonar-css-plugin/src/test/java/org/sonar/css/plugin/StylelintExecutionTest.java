@@ -20,19 +20,25 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
-import org.sonar.api.batch.ScannerSide;
+import org.junit.Test;
 
-@ScannerSide
-public class StylelintExecution implements RulesExecution {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  @Override
-  public String[] commandElements(File deployDestination, File projectBaseDir) {
-    return new String[]{
+public class StylelintExecutionTest {
+
+  @Test
+  public void test() throws Exception {
+    StylelintExecution stylelintExecution = new StylelintExecution();
+    File deployDestination = new File("deploy_destination");
+    File baseDir = new File("base_dir");
+    assertThat(stylelintExecution.commandElements(deployDestination, baseDir)).containsExactly(
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      projectBaseDir.getAbsolutePath(),
-      "--config", new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
-      "-f", "json"
-    };
+      baseDir.getAbsolutePath(),
+      "--config",
+      new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
+      "-f",
+      "json"
+    );
   }
 }

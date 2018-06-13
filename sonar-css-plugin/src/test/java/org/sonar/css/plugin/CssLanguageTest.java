@@ -19,20 +19,20 @@
  */
 package org.sonar.css.plugin;
 
-import java.io.File;
-import org.sonar.api.batch.ScannerSide;
+import org.junit.Test;
+import org.sonar.api.config.internal.MapSettings;
 
-@ScannerSide
-public class StylelintExecution implements RulesExecution {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  @Override
-  public String[] commandElements(File deployDestination, File projectBaseDir) {
-    return new String[]{
-      "node",
-      new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      projectBaseDir.getAbsolutePath(),
-      "--config", new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
-      "-f", "json"
-    };
+public class CssLanguageTest {
+
+  @Test
+  public void test() throws Exception {
+    MapSettings settings = new MapSettings();
+    settings.setProperty(CssPlugin.FILE_SUFFIXES_KEY, CssPlugin.FILE_SUFFIXES_DEFVALUE);
+    CssLanguage language = new CssLanguage(settings.asConfig());
+    assertThat(language.getKey()).isEqualTo("css");
+    assertThat(language.getName()).isEqualTo("CSS");
+    assertThat(language.getFileSuffixes()).containsOnly(".css", ".less", ".scss");
   }
 }
