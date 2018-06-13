@@ -19,27 +19,26 @@
  */
 package org.sonar.css.plugin;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.rule.RuleKey;
-import org.sonar.css.plugin.rules.FirstRule;
+import org.junit.Test;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition.BuiltInQualityProfile;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition.Context;
 
-public class CssRules {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public CssRules(CheckFactory checkFactory) {
+public class SonarWayProfileTest {
 
+  @Test
+  public void should_create_sonar_way_profile() {
+    SonarWayProfile definition = new SonarWayProfile();
+    Context context = new Context();
+    definition.define(context);
+
+    BuiltInQualityProfile profile = context.profile("css", SonarWayProfile.PROFILE_NAME);
+
+    assertThat(profile.language()).isEqualTo(CssLanguage.KEY);
+    assertThat(profile.name()).isEqualTo(SonarWayProfile.PROFILE_NAME);
+    assertThat(profile.rules()).extracting("repoKey").containsOnly(CssRulesDefinition.REPOSITORY_KEY);
+    assertThat(profile.rules()).extracting("ruleKey").contains("S4647");
   }
 
-  public static List<Class> getRuleClasses() {
-    return Collections.unmodifiableList(Arrays.asList(
-      FirstRule.class
-    ));
-  }
-
-  public RuleKey getSonarKey(String rule) {
-    // fixme
-    return RuleKey.of("css", "S4647");
-  }
 }

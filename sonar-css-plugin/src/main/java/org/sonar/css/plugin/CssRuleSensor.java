@@ -59,8 +59,6 @@ public class CssRuleSensor implements Sensor {
   public void execute(SensorContext context) {
     File deployDestination = context.fileSystem().workDir();
     bundleHandler.deployBundle(deployDestination);
-
-    FileSystem fileSystem = context.fileSystem();
     CssRules cssRules = new CssRules(checkFactory);
 
     checkCompatibleNodeVersion();
@@ -86,19 +84,7 @@ public class CssRuleSensor implements Sensor {
 
       try (InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
         IssuesPerFile[] issues = new Gson().fromJson(inputStreamReader, IssuesPerFile[].class);
-        for (IssuesPerFile issuesPerFile : issues) {
-          InputFile inputFile = fileSystem.inputFile(fileSystem.predicates().hasAbsolutePath(issuesPerFile.source));
-          if (inputFile != null) {
-            for (Issue issue : issuesPerFile.warnings) {
-              NewIssue sonarIssue = context.newIssue();
-              NewIssueLocation location = sonarIssue.newLocation().on(inputFile).at(inputFile.selectLine(issue.line));
-              location.message(issue.text);
-              sonarIssue.at(location);
-              sonarIssue.forRule(cssRules.getSonarKey(issue.rule));
-              sonarIssue.save();
-            }
-          }
-        }
+        saveIssues(context, cssRules, issues);
       }
 
     } catch (IOException e) {
@@ -106,19 +92,44 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
+  void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
+    FileSystem fileSystem = context.fileSystem();
+
+    for (IssuesPerFile issuesPerFile : issues) {
+      InputFile inputFile = fileSystem.inputFile(fileSystem.predicates().hasAbsolutePath(issuesPerFile.source));
+
+      if (inputFile != null) {
+        for (Issue issue : issuesPerFile.warnings) {
+          NewIssue sonarIssue = context.newIssue();
+          NewIssueLocation location = sonarIssue.newLocation().on(inputFile).at(inputFile.selectLine(issue.line));
+          location.message(issue.text);
+          sonarIssue.at(location);
+          sonarIssue.forRule(cssRules.getSonarKey(issue.rule));
+          sonarIssue.save();
+        }
+      }
+    }
+  }
+
   private void checkCompatibleNodeVersion() {
     // fixme
   }
 
-  private static class IssuesPerFile {
+  static class IssuesPerFile {
     String source;
     Issue[] warnings;
   }
 
-  private static class Issue {
+  static class Issue {
     int line;
     String rule;
     String text;
+
+    public Issue(int line, String rule, String text) {
+      this.line = line;
+      this.rule = rule;
+      this.text = text;
+    }
   }
 
 }
