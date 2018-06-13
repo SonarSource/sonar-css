@@ -22,5 +22,10 @@ package org.sonar.css.plugin.rules;
 import org.sonar.check.Rule;
 
 @Rule(key = "S4647")
-public class FirstRule {
+public class ColorNoInvalidHex extends CssRule {
+
+  @Override
+  public String stylelintKey() {
+    return "color-no-invalid-hex";
+  }
 }

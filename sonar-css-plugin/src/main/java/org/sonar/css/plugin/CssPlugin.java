@@ -40,6 +40,7 @@ public class CssPlugin implements Plugin {
       CssRulesDefinition.class,
       CssBundleHandler.class,
       CssRuleSensor.class,
+      StylelintExecution.class,
 
       PropertyDefinition.builder(FILE_SUFFIXES_KEY)
         .defaultValue(FILE_SUFFIXES_DEFVALUE)

@@ -20,26 +20,32 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.InputFile.Type;
-import org.sonar.api.batch.rule.ActiveRules;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.css.plugin.CssRuleSensor.Issue;
-import org.sonar.css.plugin.CssRuleSensor.IssuesPerFile;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class CssRuleSensorTest {
 
-  private CheckFactory checkFactory = new CheckFactory(mock(ActiveRules.class));
+  private static CheckFactory checkFactory = new CheckFactory(new TestActiveRules("S4647"));
   private File BASE_DIR = new File("src/test/resources").getAbsoluteFile();
+
+  @Rule
+  public TemporaryFolder tmpDir = new TemporaryFolder();
 
   @Test
   public void test_descriptor() throws Exception {
-    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory);
+    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintExecution());
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     sensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
@@ -49,24 +55,70 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_execute() throws Exception {
-    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory);
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
+    context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
+    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
+    TestRulesExecution rulesExecution = TestRulesExecution.nodeScript("/executables/mockStylelint.js", inputFile.absolutePath());
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(1);
   }
 
-  @Test
-  public void test_save_issues() throws Exception {
-    IssuesPerFile issuesPerFile = new IssuesPerFile();
-    Issue issue1 = new Issue(2, "ruleKey1", "issue message1");
-    Issue issue2 = new Issue(1, "ruleKey2", "issue message2");
-    Issue[] issues = new Issue[]{ issue1, issue2 };
-    issuesPerFile.warnings = issues;
-    issuesPerFile.source = "foo";
+  private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
+    DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
+      .setModuleBaseDir(sensorContext.fileSystem().baseDirPath())
+      .setType(Type.MAIN)
+      .setLanguage(CssLanguage.KEY)
+      .setCharset(StandardCharsets.UTF_8)
+      .setContents(content)
+      .build();
 
-    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory);
-    SensorContextTester context = SensorContextTester.create(BASE_DIR);
-//    sensor.saveIssues(context, issuesPerFile);
+    sensorContext.fileSystem().add(inputFile);
+    return inputFile;
+  }
+
+  private static class TestRulesExecution implements RulesExecution {
+
+    private static String nodeExecutable = findNodeExecutable();
+
+    private String[] elements;
+
+    private static String findNodeExecutable() {
+      try {
+        String nodeFromMavenPlugin = "target/node/node";
+        Runtime.getRuntime().exec(nodeFromMavenPlugin);
+        return nodeFromMavenPlugin;
+      } catch (IOException e) {
+        return "node";
+      }
+    }
+
+    private static String resourceScript(String script) {
+      try {
+        return new File(TestRulesExecution.class.getResource(script).toURI()).getAbsolutePath();
+      } catch (URISyntaxException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+
+    static TestRulesExecution nodeScript(String script, String args) {
+      TestRulesExecution testRulesExecution = new TestRulesExecution();
+      testRulesExecution.elements = new String[]{ nodeExecutable, resourceScript(script), args};
+      return testRulesExecution;
+    }
+
+    @Override
+    public String[] commandElements(File deployDestination, File projectBaseDir) {
+      return elements;
+    }
+  }
+
+  private static class TestBundleHandler implements BundleHandler {
+
+    @Override
+    public void deployBundle(File deployDestination) {
+      // do nothing
+    }
   }
 }
