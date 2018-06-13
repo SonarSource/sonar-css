@@ -60,6 +60,7 @@ public class MetricSensorTest {
     highlight("foo");
 
     assertThat(sensorContext.highlightingTypeAt(inputFile.key(), 1, 0)).isEmpty();
+    assertThat(sensorContext.highlightingTypeAt(inputFile.key(), 1, 1)).isEmpty();
   }
 
   @Test
@@ -75,7 +76,7 @@ public class MetricSensorTest {
     highlight(content);
 
     assertHighlighting(1, 1, 15, TypeOfText.COMMENT);
-    assertHighlighting(1, 1, 12, TypeOfText.COMMENT);
+    assertHighlighting(2, 1, 11, TypeOfText.COMMENT);
   }
 
   @Test
