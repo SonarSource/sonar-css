@@ -19,30 +19,29 @@
  */
 package org.sonar.css.plugin;
 
-public class Token {
+import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.TokenType;
+import org.omg.CORBA.UNKNOWN;
 
-  public enum Type {
-    COMMENT,
-    STRING,
-    WORD,
-    AT_WORD,
-    BRACKETS,
-    PUNCTUATOR
+public enum CssTokenType implements TokenType {
+  UNKNOWN,
+  COMMENT,
+  PUNCTUATOR,
+  NUMBER, STRING,
+  AT_IDENTIFIER, HASH_IDENTIFIER, DOLLAR_IDENTIFIER, IDENTIFIER;
+
+  @Override
+  public String getName() {
+    return name();
   }
 
-  Type type;
-  String text;
-  Integer startLine;
-  Integer startColumn;
-  Integer endLine;
-  Integer endColumn;
+  @Override
+  public String getValue() {
+    return name();
+  }
 
-  public Token(Type type, String text, Integer startLine, Integer startColumn, Integer endLine, Integer endColumn) {
-    this.text = text;
-    this.type = type;
-    this.startLine = startLine;
-    this.startColumn = startColumn;
-    this.endLine = endLine;
-    this.endColumn = endColumn;
+  @Override
+  public boolean hasToBeSkippedFromAst(AstNode node) {
+    return false;
   }
 }
