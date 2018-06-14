@@ -17,23 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
-
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
-
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
-
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
-
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
-
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
-  }
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonar.css.plugin.bundle;

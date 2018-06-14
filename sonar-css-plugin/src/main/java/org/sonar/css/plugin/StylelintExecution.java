@@ -19,21 +19,20 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.io.File;
+import org.sonar.api.batch.ScannerSide;
 
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
-
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
-
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
+@ScannerSide
+public class StylelintExecution implements LinterCommandProvider {
 
   @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
+  public String[] commandParts(File deployDestination, File projectBaseDir) {
+    return new String[]{
+      "node",
+      new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
+      projectBaseDir.getAbsolutePath(),
+      "--config", new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
+      "-f", "json"
+    };
   }
 }

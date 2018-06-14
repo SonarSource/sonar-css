@@ -19,21 +19,26 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.io.File;
+import org.junit.Test;
 
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
+public class StylelintExecutionTest {
 
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
-
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
+  @Test
+  public void test() throws Exception {
+    StylelintExecution stylelintExecution = new StylelintExecution();
+    File deployDestination = new File("deploy_destination");
+    File baseDir = new File("base_dir");
+    assertThat(stylelintExecution.commandParts(deployDestination, baseDir)).containsExactly(
+      "node",
+      new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
+      baseDir.getAbsolutePath(),
+      "--config",
+      new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
+      "-f",
+      "json"
+    );
   }
 }

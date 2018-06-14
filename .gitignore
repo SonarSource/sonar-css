@@ -37,3 +37,6 @@ build/
 
 # --- Maven and Orchestrator
 target/
+
+# npm
+node_modules/

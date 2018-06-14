@@ -19,21 +19,26 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.junit.Test;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition.BuiltInQualityProfile;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition.Context;
 
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
+public class SonarWayProfileTest {
 
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
+  @Test
+  public void should_create_sonar_way_profile() {
+    SonarWayProfile definition = new SonarWayProfile();
+    Context context = new Context();
+    definition.define(context);
 
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
+    BuiltInQualityProfile profile = context.profile("css", SonarWayProfile.PROFILE_NAME);
+
+    assertThat(profile.language()).isEqualTo(CssLanguage.KEY);
+    assertThat(profile.name()).isEqualTo(SonarWayProfile.PROFILE_NAME);
+    assertThat(profile.rules()).extracting("repoKey").containsOnly(CssRulesDefinition.REPOSITORY_KEY);
+    assertThat(profile.rules()).extracting("ruleKey").contains("S4647");
   }
+
 }

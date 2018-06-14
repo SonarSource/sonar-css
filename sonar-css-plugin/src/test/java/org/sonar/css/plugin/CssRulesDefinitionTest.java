@@ -19,21 +19,25 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.junit.Test;
+import org.sonar.api.server.rule.RulesDefinition;
 
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
+public class CssRulesDefinitionTest {
 
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
+  @Test
+  public void test() {
+    CssRulesDefinition rulesDefinition = new CssRulesDefinition();
+    RulesDefinition.Context context = new RulesDefinition.Context();
+    rulesDefinition.define(context);
+    RulesDefinition.Repository repository = context.repository("css");
 
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
+    assertThat(context.repositories()).hasSize(1);
+
+    assertThat(repository.name()).isEqualTo("SonarAnalyzer");
+    assertThat(repository.language()).isEqualTo("css");
+    assertThat(repository.isExternal()).isEqualTo(false);
+    assertThat(repository.rules()).hasSize(CssRules.getRuleClasses().size());
   }
 }

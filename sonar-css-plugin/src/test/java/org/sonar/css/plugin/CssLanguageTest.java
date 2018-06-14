@@ -19,21 +19,20 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.junit.Test;
+import org.sonar.api.config.internal.MapSettings;
 
-import static org.sonar.css.plugin.CssRulesDefinition.REPOSITORY_KEY;
-import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
+public class CssLanguageTest {
 
-  public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
-
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CssLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, REPOSITORY_KEY, PROFILE_PATH);
-    profile.done();
+  @Test
+  public void test() throws Exception {
+    MapSettings settings = new MapSettings();
+    settings.setProperty(CssPlugin.FILE_SUFFIXES_KEY, CssPlugin.FILE_SUFFIXES_DEFVALUE);
+    CssLanguage language = new CssLanguage(settings.asConfig());
+    assertThat(language.getKey()).isEqualTo("css");
+    assertThat(language.getName()).isEqualTo("CSS");
+    assertThat(language.getFileSuffixes()).containsOnly(".css", ".less", ".scss");
   }
 }
