@@ -23,10 +23,10 @@ import java.io.File;
 import org.sonar.api.batch.ScannerSide;
 
 @ScannerSide
-public class StylelintExecution implements RulesExecution {
+public class StylelintExecution implements LinterCommandProvider {
 
   @Override
-  public String[] commandElements(File deployDestination, File projectBaseDir) {
+  public String[] commandParts(File deployDestination, File projectBaseDir) {
     return new String[]{
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),

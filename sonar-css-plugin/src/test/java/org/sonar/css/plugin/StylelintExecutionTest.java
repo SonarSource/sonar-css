@@ -31,7 +31,7 @@ public class StylelintExecutionTest {
     StylelintExecution stylelintExecution = new StylelintExecution();
     File deployDestination = new File("deploy_destination");
     File baseDir = new File("base_dir");
-    assertThat(stylelintExecution.commandElements(deployDestination, baseDir)).containsExactly(
+    assertThat(stylelintExecution.commandParts(deployDestination, baseDir)).containsExactly(
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
       baseDir.getAbsolutePath(),

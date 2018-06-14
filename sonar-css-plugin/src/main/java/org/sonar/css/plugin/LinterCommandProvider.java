@@ -21,8 +21,8 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 
-public interface RulesExecution {
+public interface LinterCommandProvider {
 
-  String[] commandElements(File deployDestination, File projectBaseDir);
+  String[] commandParts(File deployDestination, File projectBaseDir);
 
 }

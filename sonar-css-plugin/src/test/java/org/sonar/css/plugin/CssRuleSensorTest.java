@@ -59,7 +59,7 @@ public class CssRuleSensorTest {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
-    TestRulesExecution rulesExecution = TestRulesExecution.nodeScript("/executables/mockStylelint.js", inputFile.absolutePath());
+    TestLinterCommandProvider rulesExecution = TestLinterCommandProvider.nodeScript("/executables/mockStylelint.js", inputFile.absolutePath());
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
     sensor.execute(context);
 
@@ -79,7 +79,7 @@ public class CssRuleSensorTest {
     return inputFile;
   }
 
-  private static class TestRulesExecution implements RulesExecution {
+  private static class TestLinterCommandProvider implements LinterCommandProvider {
 
     private static String nodeExecutable = findNodeExecutable();
 
@@ -97,20 +97,20 @@ public class CssRuleSensorTest {
 
     private static String resourceScript(String script) {
       try {
-        return new File(TestRulesExecution.class.getResource(script).toURI()).getAbsolutePath();
+        return new File(TestLinterCommandProvider.class.getResource(script).toURI()).getAbsolutePath();
       } catch (URISyntaxException e) {
         throw new IllegalStateException(e);
       }
     }
 
-    static TestRulesExecution nodeScript(String script, String args) {
-      TestRulesExecution testRulesExecution = new TestRulesExecution();
+    static TestLinterCommandProvider nodeScript(String script, String args) {
+      TestLinterCommandProvider testRulesExecution = new TestLinterCommandProvider();
       testRulesExecution.elements = new String[]{ nodeExecutable, resourceScript(script), args};
       return testRulesExecution;
     }
 
     @Override
-    public String[] commandElements(File deployDestination, File projectBaseDir) {
+    public String[] commandParts(File deployDestination, File projectBaseDir) {
       return elements;
     }
   }

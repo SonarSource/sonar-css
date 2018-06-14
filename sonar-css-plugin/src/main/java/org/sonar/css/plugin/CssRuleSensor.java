@@ -37,11 +37,11 @@ public class CssRuleSensor implements Sensor {
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
-  private final RulesExecution rulesExecution;
+  private final LinterCommandProvider linterCommandProvider;
 
-  public CssRuleSensor(BundleHandler bundleHandler, CheckFactory checkFactory, RulesExecution rulesExecution) {
+  public CssRuleSensor(BundleHandler bundleHandler, CheckFactory checkFactory, LinterCommandProvider linterCommandProvider) {
     this.bundleHandler = bundleHandler;
-    this.rulesExecution = rulesExecution;
+    this.linterCommandProvider = linterCommandProvider;
     this.cssRules = new CssRules(checkFactory);
   }
 
@@ -60,8 +60,8 @@ public class CssRuleSensor implements Sensor {
 
     File projectBaseDir = context.fileSystem().baseDir();
 
-    String[] commandElements = rulesExecution.commandElements(deployDestination, projectBaseDir);
-    ProcessBuilder processBuilder = new ProcessBuilder(commandElements);
+    String[] commandParts = linterCommandProvider.commandParts(deployDestination, projectBaseDir);
+    ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
 
     try {
       Process process = processBuilder.start();
@@ -72,8 +72,8 @@ public class CssRuleSensor implements Sensor {
       }
 
     } catch (IOException e) {
-      String command = String.join(" ", commandElements);
-      throw new IllegalStateException(String.format("Failed to run external process `%s`. Rerun analysis with -X for more information", command), e);
+      String command = String.join(" ", commandParts);
+      throw new IllegalStateException(String.format("Failed to run external process '%s'. Re-run analysis with debug option for more information.", command), e);
     }
   }
 
@@ -86,11 +86,16 @@ public class CssRuleSensor implements Sensor {
       if (inputFile != null) {
         for (Issue issue : issuesPerFile.warnings) {
           NewIssue sonarIssue = context.newIssue();
-          NewIssueLocation location = sonarIssue.newLocation().on(inputFile).at(inputFile.selectLine(issue.line));
-          location.message(issue.text);
-          sonarIssue.at(location);
-          sonarIssue.forRule(cssRules.getSonarKey(issue.rule));
-          sonarIssue.save();
+
+          NewIssueLocation location = sonarIssue.newLocation()
+            .on(inputFile)
+            .at(inputFile.selectLine(issue.line))
+            .message(issue.text);
+
+          sonarIssue
+            .at(location)
+            .forRule(cssRules.getSonarKey(issue.rule))
+            .save();
         }
       }
     }
