@@ -19,6 +19,9 @@
  */
 package org.sonar.css.plugin;
 
+import java.io.IOException;
+import java.util.List;
+import javax.script.ScriptException;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
@@ -28,11 +31,6 @@ import org.sonar.api.batch.sensor.highlighting.NewHighlighting;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-
-import javax.script.ScriptException;
-
-import java.io.IOException;
-import java.util.Optional;
 
 public class MetricSensor implements Sensor {
 
@@ -59,9 +57,45 @@ public class MetricSensor implements Sensor {
   private static void saveHighlights(SensorContext sensorContext, InputFile input, Tokenizer tokenizer) {
     try {
       NewHighlighting highlighting = sensorContext.newHighlighting().onFile(input);
-      tokenizer.tokenize(input.contents())
-        .forEach(token -> getHighlightingType(token).ifPresent(type ->
-          highlighting.highlight(token.startLine, token.startColumn, token.endLine, token.endColumn, type)));
+      List<Token> tokenList = tokenizer.tokenize(input.contents());
+
+      for (int i = 0; i < tokenList.size(); i++) {
+        Token currentToken = tokenList.get(i);
+        Token nextToken = i + 1 == tokenList.size() ? null : tokenList.get(i + 1);
+
+        TypeOfText highlightingType = null;
+        switch (currentToken.type) {
+          case COMMENT:
+            highlightingType = TypeOfText.COMMENT;
+            break;
+
+          case STRING:
+            highlightingType = TypeOfText.STRING;
+            break;
+
+          case WORD:
+            if (Character.isDigit(currentToken.text.charAt(0)) || currentToken.text.matches("^#[0-9a-fA-F]+$")) {
+              highlightingType = TypeOfText.CONSTANT;
+            } else if (nextToken != null && nextToken.text.equals(":")) {
+              highlightingType = TypeOfText.KEYWORD_LIGHT;
+            } else if (currentToken.text.startsWith(".") || (nextToken != null && nextToken.text.startsWith("{"))) {
+              highlightingType = TypeOfText.KEYWORD;
+            }
+            break;
+
+          case AT_WORD:
+            highlightingType = TypeOfText.ANNOTATION;
+            break;
+
+          default:
+            highlightingType = null;
+        }
+
+        if (highlightingType != null) {
+          highlighting.highlight(currentToken.startLine, currentToken.startColumn - 1, currentToken.endLine, currentToken.endColumn, highlightingType);
+        }
+      }
+
       highlighting.save();
 
     } catch (ScriptException e) {
@@ -71,16 +105,4 @@ public class MetricSensor implements Sensor {
     }
   }
 
-  private static Optional<TypeOfText> getHighlightingType(Token token) {
-    switch (token.type) {
-      case COMMENT:
-        return Optional.of(TypeOfText.COMMENT);
-
-      case STRING:
-        return Optional.of(TypeOfText.STRING);
-
-      default:
-        return Optional.empty();
-    }
-  }
 }
