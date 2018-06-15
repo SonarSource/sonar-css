@@ -22,7 +22,6 @@ package org.sonar.css.plugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -42,11 +41,6 @@ public class MetricSensorTest {
   @Rule
   public TemporaryFolder tempFolder = new TemporaryFolder();
 
-  @Before
-  public void setUp() {
-    sensorContext = SensorContextTester.create(tempFolder.getRoot());
-  }
-
   @Test
   public void should_describe() {
     DefaultSensorDescriptor desc = new DefaultSensorDescriptor();
@@ -58,33 +52,93 @@ public class MetricSensorTest {
   @Test
   public void empty_input() throws Exception {
     highlight("foo");
-
     assertThat(sensorContext.highlightingTypeAt(inputFile.key(), 1, 0)).isEmpty();
     assertThat(sensorContext.highlightingTypeAt(inputFile.key(), 1, 1)).isEmpty();
   }
 
   @Test
-  public void singleline_multiline_comment() throws IOException {
+  public void comment() throws IOException {
     highlight("/* some comment */");
+    assertHighlighting(1, 0, 18, TypeOfText.COMMENT);
 
-    assertHighlighting(1, 1, 17, TypeOfText.COMMENT);
-  }
-
-  @Test
-  public void multiline_comment() throws IOException {
-    String content = "/* some comment\nmultiline */";
-    highlight(content);
-
-    assertHighlighting(1, 1, 15, TypeOfText.COMMENT);
-    assertHighlighting(2, 1, 11, TypeOfText.COMMENT);
+    highlight("/* some comment\nmultiline */");
+    assertHighlighting(1, 0, 15, TypeOfText.COMMENT);
+    assertHighlighting(2, 0, 12, TypeOfText.COMMENT);
   }
 
   @Test
   public void string() throws IOException {
-    String content = "\"foo\"";
-    highlight(content);
+    highlight("\"foo\"");
+    assertHighlighting(1, 0, 5, TypeOfText.STRING);
 
-    assertHighlighting(1, 1, content.length() - 1, TypeOfText.STRING);
+    highlight("\"foo\nbar\"");
+    assertHighlighting(1, 0, 4, TypeOfText.STRING);
+    assertHighlighting(2, 0, 4, TypeOfText.STRING);
+  }
+
+  @Test
+  public void constant() throws IOException {
+    highlight("1");
+    assertHighlighting(1, 0, 1, TypeOfText.CONSTANT);
+
+    highlight("1.0");
+    assertHighlighting(1, 0, 3, TypeOfText.CONSTANT);
+
+    highlight("0px");
+    assertHighlighting(1, 0, 3, TypeOfText.CONSTANT);
+
+    highlight("1em");
+    assertHighlighting(1, 0, 3, TypeOfText.CONSTANT);
+
+    highlight("#ddd");
+    assertHighlighting(1, 0, 4, TypeOfText.CONSTANT);
+  }
+
+  @Test
+  public void annotation() throws IOException {
+    highlight("@bar { }");
+    assertHighlighting(1, 0, 4, TypeOfText.ANNOTATION);
+
+    highlight("@my-selector: banner;");
+    assertHighlighting(1, 0, 12, TypeOfText.ANNOTATION);
+
+    highlight("@import \"src/themes\"");
+    assertHighlighting(1, 0, 7, TypeOfText.ANNOTATION);
+
+    highlight(".element { color: @@color }");
+    assertHighlighting(1, 18, 7, TypeOfText.ANNOTATION);
+  }
+
+  @Test
+  public void keyword() throws IOException {
+    highlight("foo { }");
+    assertHighlighting(1, 0, 3, TypeOfText.KEYWORD);
+
+    highlight(".foo { }");
+    assertHighlighting(1, 0, 4, TypeOfText.KEYWORD);
+
+    highlight(".foo bar { }");
+    assertHighlighting(1, 0, 4, TypeOfText.KEYWORD);
+    assertHighlighting(1, 5, 3, TypeOfText.KEYWORD);
+
+    highlight(".border-radius(@radius) { }");
+    assertHighlighting(1, 0, 14, TypeOfText.KEYWORD);
+
+    highlight("#header { .border-radius(4px); }");
+    assertHighlighting(1, 0, 7, TypeOfText.KEYWORD);
+    assertHighlighting(1, 10, 14, TypeOfText.KEYWORD);
+  }
+
+  @Test
+  public void keyword_light() throws IOException {
+    highlight("bar: foo { }");
+    assertHighlighting(1, 0, 3, TypeOfText.KEYWORD_LIGHT);
+
+    highlight("bar { foo: 1px }");
+    assertHighlighting(1, 6, 3, TypeOfText.KEYWORD_LIGHT);
+
+    highlight("bar { foo-bar: 1px }");
+    assertHighlighting(1, 6, 7, TypeOfText.KEYWORD_LIGHT);
   }
 
   private void highlight(String content) throws IOException {
@@ -94,16 +148,13 @@ public class MetricSensorTest {
       .setContents(content)
       .build();
 
+    sensorContext = SensorContextTester.create(tempFolder.getRoot());
     sensorContext.fileSystem().add(inputFile);
 
     new MetricSensor().execute(sensorContext);
   }
 
   private void assertHighlighting(int line, int column, int length, TypeOfText type) {
-    if (column < 1) {
-      throw new IllegalStateException("Column should be greater than or equal to 1");
-    }
-
     for (int i = column; i < column + length; i++) {
       List<TypeOfText> typeOfTexts = sensorContext.highlightingTypeAt(inputFile.key(), line, i);
       assertThat(typeOfTexts).containsOnly(type);
