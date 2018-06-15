@@ -40,7 +40,6 @@ pipeline {
                         runITs "LATEST_RELEASE"
                     }
                 }
-/* excluding Windows build temporarily as Node is not available there
                 stage('ITs-windows') {
                     agent {
                         label 'windows'
@@ -49,7 +48,6 @@ pipeline {
                         runITsWindows "LATEST_RELEASE"
                     }
                 }
-*/
                 stage('ITs-dev') {
                     agent {
                         label 'linux'
