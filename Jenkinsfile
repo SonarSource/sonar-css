@@ -45,7 +45,7 @@ pipeline {
                         label 'windows'
                     }
                     steps {
-                        runITsWindows "LATEST_RELEASE"
+                        runITs "LATEST_RELEASE"
                     }
                 }
                 stage('ITs-dev') {
@@ -92,18 +92,10 @@ def runITs(String sqRuntimeVersion) {
         withMaven(maven: MAVEN_TOOL) {
             mavenSetBuildVersion()
             dir('its') {
-                sh "mvn ${itBuildArguments sqRuntimeVersion}"
-            }
-        }
-    }
-}
-
-def runITsWindows(String sqRuntimeVersion) {
-    withQAEnv {
-        withMaven(maven: MAVEN_TOOL) {
-            mavenSetBuildVersion()
-            dir('its') {
-                sh "mvn.cmd ${itBuildArguments sqRuntimeVersion}"
+                nodejs('NodeJS 10.4.1') {
+                    def mvn = isUnix() ? 'mvn' : 'mvn.cmd'
+                    sh "${mvn} ${itBuildArguments sqRuntimeVersion}"
+                }
             }
         }
     }
