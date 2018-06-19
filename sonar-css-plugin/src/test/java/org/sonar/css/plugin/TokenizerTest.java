@@ -195,11 +195,10 @@ public class TokenizerTest {
   }
 
   @Test
-  public void less_comment() throws ScriptException {
-    // FIXME: Less allows // comment which are not supported by our current tokenizer
-    //assertToken("// Get in line!", 0, "Get in line!", Type.COMMENT);
-
-    assertToken("/* One heck of a block\n * style comment! */", 0, "/* One heck of a block\n * style comment! */", Type.COMMENT);
+  public void less_comment() {
+    assertToken("// Get in line!", 0, "// Get in line!", CssTokenType.COMMENT);
+    assertToken("// body font size = 62.5%\n\n/* some comment */", 0, "// body font size = 62.5%", CssTokenType.COMMENT);
+    assertToken("/* One heck of a block\n * style comment! */", 0, "/* One heck of a block\n * style comment! */", CssTokenType.COMMENT);
   }
 
   private static void assertToken(String input, int index, String value, CssTokenType CssTokenType) {
