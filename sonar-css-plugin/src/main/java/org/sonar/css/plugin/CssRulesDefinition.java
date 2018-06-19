@@ -19,9 +19,12 @@
  */
 package org.sonar.css.plugin;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.css.plugin.rules.ColorNoInvalidHex;
+import org.sonar.css.plugin.rules.UnitNoUnknown;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
 import static org.sonar.css.plugin.SonarWayProfile.PROFILE_PATH;
@@ -33,6 +36,11 @@ public class CssRulesDefinition implements RulesDefinition {
 
   public static final String RESOURCE_FOLDER = "org/sonar/l10n/css/rules/css";
 
+  public static final List<Class> RULE_CLASSES = Collections.unmodifiableList(Arrays.asList(
+    ColorNoInvalidHex.class,
+    UnitNoUnknown.class
+  ));
+
   @Override
   public void define(Context context) {
     NewRepository repository = context
@@ -40,7 +48,7 @@ public class CssRulesDefinition implements RulesDefinition {
       .setName(RULE_REPOSITORY_NAME);
 
     RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, PROFILE_PATH);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, Collections.singletonList(ColorNoInvalidHex.class));
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, RULE_CLASSES);
     repository.done();
   }
 }

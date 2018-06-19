@@ -44,7 +44,7 @@ public class CssBundleHandlerTest {
   }
 
   @Test
-  public void test() throws Exception {
+  public void test() {
     CssBundleHandler bundleHandler = new CssBundleHandler();
     bundleHandler.bundleLocation = "/bundle/test-bundle.zip";
     bundleHandler.deployBundle(DEPLOY_DESTINATION);

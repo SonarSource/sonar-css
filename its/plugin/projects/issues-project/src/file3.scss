@@ -1,0 +1,13 @@
+$firstValue: 62.5%;
+
+$firstValue: 24px !default;
+
+body {
+    font-size: $firstValue;
+    foo: "some text";
+    width: 100pixels;
+}
+
+// body font size = 62.5%
+
+/* some comment */
