@@ -20,7 +20,9 @@
 package org.sonar.css.plugin;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
@@ -28,6 +30,7 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.highlighting.NewHighlighting;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
+import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -48,49 +51,55 @@ public class MetricSensor implements Sensor {
 
     Tokenizer tokenizer = new Tokenizer();
 
-    for (InputFile input : inputFiles) {
-      saveHighlights(context, input, tokenizer);
+    for (InputFile file : inputFiles) {
+      try {
+        List<CssToken> tokenList = tokenizer.tokenize(file.contents());
+
+        saveHighlights(context, file, tokenList);
+        saveLineTypes(context, file, tokenList);
+
+      } catch (IOException e) {
+        LOG.error(String.format("Failed to read file '%s'", file.toString()), e);
+      }
     }
   }
 
-  private static void saveHighlights(SensorContext sensorContext, InputFile input, Tokenizer tokenizer) {
-    try {
-      NewHighlighting highlighting = sensorContext.newHighlighting().onFile(input);
-      List<CssToken> tokenList = tokenizer.tokenize(input.contents());
+  private static void saveHighlights(SensorContext context, InputFile file, List<CssToken> tokenList) {
+    NewHighlighting highlighting = context.newHighlighting().onFile(file);
 
       for (int i = 0; i < tokenList.size(); i++) {
         CssToken currentToken = tokenList.get(i);
         CssToken nextToken = i + 1 < tokenList.size() ? tokenList.get(i + 1) : null;
 
-        TypeOfText highlightingType = null;
-        switch (currentToken.type) {
-          case COMMENT:
-            highlightingType = TypeOfText.COMMENT;
-            break;
+      TypeOfText highlightingType = null;
+      switch (currentToken.type) {
+        case COMMENT:
+          highlightingType = TypeOfText.COMMENT;
+          break;
 
-          case STRING:
-            highlightingType = TypeOfText.STRING;
-            break;
+        case STRING:
+          highlightingType = TypeOfText.STRING;
+          break;
 
-          case NUMBER:
+        case NUMBER:
+          highlightingType = TypeOfText.CONSTANT;
+          break;
+
+        case AT_IDENTIFIER:
+          highlightingType = TypeOfText.ANNOTATION;
+          break;
+
+        case DOLLAR_IDENTIFIER:
+          highlightingType = TypeOfText.KEYWORD;
+          break;
+
+        case HASH_IDENTIFIER:
+          if (currentToken.text.matches("^#[0-9a-fA-F]+$")) {
             highlightingType = TypeOfText.CONSTANT;
-            break;
-
-          case AT_IDENTIFIER:
-            highlightingType = TypeOfText.ANNOTATION;
-            break;
-
-          case DOLLAR_IDENTIFIER:
+          } else {
             highlightingType = TypeOfText.KEYWORD;
-            break;
-
-          case HASH_IDENTIFIER:
-            if (currentToken.text.matches("^#[0-9a-fA-F]+$")) {
-              highlightingType = TypeOfText.CONSTANT;
-            } else {
-              highlightingType = TypeOfText.KEYWORD;
-            }
-            break;
+          }
+          break;
 
           case IDENTIFIER:
             // We want to highlight the property key of a css/scss/less file and as the tokenizer is putting the ':' into another token
@@ -100,20 +109,34 @@ public class MetricSensor implements Sensor {
             }
             break;
 
-          default:
-            highlightingType = null;
-        }
-
-        if (highlightingType != null) {
-          highlighting.highlight(currentToken.startLine, currentToken.startColumn, currentToken.endLine, currentToken.endColumn, highlightingType);
-        }
+        default:
+          highlightingType = null;
       }
 
-      highlighting.save();
-
-    } catch (IOException e) {
-      LOG.error(String.format("Failed to read file '%s'", input.toString()), e);
+      if (highlightingType != null) {
+        highlighting.highlight(currentToken.startLine, currentToken.startColumn, currentToken.endLine, currentToken.endColumn, highlightingType);
+      }
     }
+
+    highlighting.save();
+  }
+
+  private static void saveLineTypes(SensorContext context, InputFile file, List<CssToken> tokenList) {
+    Set<Integer> linesOfCode = new HashSet<>();
+    Set<Integer> linesOfComment = new HashSet<>();
+
+    for (CssToken token: tokenList) {
+      for (int line = token.startLine; line <= token.endLine; line++) {
+        if (token.type.equals(CssTokenType.COMMENT)) {
+          linesOfComment.add(line);
+        } else {
+          linesOfCode.add(line);
+        }
+      }
+    }
+
+    context.<Integer>newMeasure().on(file).forMetric(CoreMetrics.NCLOC).withValue(linesOfCode.size()).save();
+    context.<Integer>newMeasure().on(file).forMetric(CoreMetrics.COMMENT_LINES).withValue(linesOfComment.size()).save();
   }
 
 }
