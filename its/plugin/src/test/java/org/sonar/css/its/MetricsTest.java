@@ -30,7 +30,7 @@ import static org.sonar.css.its.Tests.getProjectMeasureAsDouble;
 
 public class MetricsTest {
 
-  private static String PROJECT_KEY = "css-plugin-test-project";
+  private static String PROJECT_KEY = "metrics-project";
 
   @ClassRule
   public static Orchestrator orchestrator = Tests.ORCHESTRATOR;

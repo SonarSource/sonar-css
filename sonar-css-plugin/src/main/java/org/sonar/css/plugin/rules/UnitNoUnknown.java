@@ -17,22 +17,15 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.rules;
 
-import org.junit.Test;
-import org.sonar.api.config.internal.MapSettings;
+import org.sonar.check.Rule;
 
-import static org.assertj.core.api.Assertions.assertThat;
+@Rule(key = "S4653")
+public class UnitNoUnknown implements CssRule {
 
-public class CssLanguageTest {
-
-  @Test
-  public void test() {
-    MapSettings settings = new MapSettings();
-    settings.setProperty(CssPlugin.FILE_SUFFIXES_KEY, CssPlugin.FILE_SUFFIXES_DEFVALUE);
-    CssLanguage language = new CssLanguage(settings.asConfig());
-    assertThat(language.getKey()).isEqualTo("css");
-    assertThat(language.getName()).isEqualTo("CSS");
-    assertThat(language.getFileSuffixes()).containsOnly(".css", ".less", ".scss");
+  @Override
+  public String stylelintKey() {
+    return "unit-no-unknown";
   }
 }
