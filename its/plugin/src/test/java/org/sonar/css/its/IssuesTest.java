@@ -49,7 +49,6 @@ public class IssuesTest {
     request.setComponentKeys(Collections.singletonList(PROJECT_KEY));
     List<Issue> issuesList = newWsClient().issues().search(request).getIssuesList();
 
-    assertThat(issuesList).extracting("rule").hasSize(10);
+    assertThat(issuesList).extracting("rule").hasSize(13);
   }
-
 }

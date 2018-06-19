@@ -25,6 +25,7 @@ import java.util.List;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.css.plugin.rules.ColorNoInvalidHex;
 import org.sonar.css.plugin.rules.CommentNoEmpty;
+import org.sonar.css.plugin.rules.NoEmptySource;
 import org.sonar.css.plugin.rules.StringNoNewline;
 import org.sonar.css.plugin.rules.UnitNoUnknown;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
@@ -42,7 +43,8 @@ public class CssRulesDefinition implements RulesDefinition {
     ColorNoInvalidHex.class,
     UnitNoUnknown.class,
     CommentNoEmpty.class,
-    StringNoNewline.class
+    StringNoNewline.class,
+    NoEmptySource.class
   ));
 
   @Override
