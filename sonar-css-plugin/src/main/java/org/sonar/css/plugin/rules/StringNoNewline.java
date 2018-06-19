@@ -19,13 +19,13 @@
  */
 package org.sonar.css.plugin.rules;
 
-  import org.sonar.check.Rule;
+import org.sonar.check.Rule;
 
-@Rule(key = "S4647")
-public class ColorNoInvalidHex implements CssRule {
+@Rule(key = "S4652")
+public class StringNoNewline implements CssRule {
 
   @Override
   public String stylelintKey() {
-    return "color-no-invalid-hex";
+    return "string-no-newline";
   }
 }

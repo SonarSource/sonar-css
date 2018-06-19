@@ -25,6 +25,7 @@ import java.util.List;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.css.plugin.rules.ColorNoInvalidHex;
 import org.sonar.css.plugin.rules.CommentNoEmpty;
+import org.sonar.css.plugin.rules.StringNoNewline;
 import org.sonar.css.plugin.rules.UnitNoUnknown;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
@@ -40,7 +41,8 @@ public class CssRulesDefinition implements RulesDefinition {
   public static final List<Class> RULE_CLASSES = Collections.unmodifiableList(Arrays.asList(
     ColorNoInvalidHex.class,
     UnitNoUnknown.class,
-    CommentNoEmpty.class
+    CommentNoEmpty.class,
+    StringNoNewline.class
   ));
 
   @Override
