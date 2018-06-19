@@ -42,6 +42,8 @@ public class MetricsTest {
   @Test
   public void test() {
     assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(33);
+    assertThat(getProjectMeasureAsDouble("ncloc", PROJECT_KEY)).isEqualTo(26);
+    assertThat(getProjectMeasureAsDouble("comment_lines", PROJECT_KEY)).isEqualTo(5);
   }
 
 }

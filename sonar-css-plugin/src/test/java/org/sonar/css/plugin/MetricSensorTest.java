@@ -30,6 +30,7 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.measures.CoreMetrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,86 +52,107 @@ public class MetricSensorTest {
 
   @Test
   public void empty_input() throws Exception {
-    highlight("foo");
+    executeSensor("foo");
     assertThat(sensorContext.highlightingTypeAt(inputFile.key(), 1, 0)).isEmpty();
     assertThat(sensorContext.highlightingTypeAt(inputFile.key(), 1, 1)).isEmpty();
   }
 
   @Test
   public void comment() throws IOException {
-    highlight("/* some comment */");
+    executeSensor("/* some comment */");
     assertHighlighting(1, 0, 18, TypeOfText.COMMENT);
 
-    highlight("/* some comment\nmultiline */");
+    executeSensor("/* some comment\nmultiline */");
     assertHighlighting(1, 0, 15, TypeOfText.COMMENT);
     assertHighlighting(2, 0, 12, TypeOfText.COMMENT);
   }
 
   @Test
   public void string() throws IOException {
-    highlight("\"foo\"");
+    executeSensor("\"foo\"");
     assertHighlighting(1, 0, 5, TypeOfText.STRING);
 
-    highlight("\"foo\\\nbar\"");
+    executeSensor("\"foo\\\nbar\"");
     assertHighlighting(1, 0, 4, TypeOfText.STRING);
     assertHighlighting(2, 0, 4, TypeOfText.STRING);
   }
 
   @Test
   public void constant() throws IOException {
-    highlight("1");
+    executeSensor("1");
     assertHighlighting(1, 0, 1, TypeOfText.CONSTANT);
 
-    highlight("1.0");
+    executeSensor("1.0");
     assertHighlighting(1, 0, 3, TypeOfText.CONSTANT);
 
-    highlight("0px");
+    executeSensor("0px");
     assertHighlighting(1, 0, 3, TypeOfText.CONSTANT);
 
-    highlight("1em");
+    executeSensor("1em");
     assertHighlighting(1, 0, 3, TypeOfText.CONSTANT);
 
-    highlight("#ddd");
+    executeSensor("#ddd");
     assertHighlighting(1, 0, 4, TypeOfText.CONSTANT);
   }
 
   @Test
   public void annotation() throws IOException {
-    highlight("@bar { }");
+    executeSensor("@bar { }");
     assertHighlighting(1, 0, 4, TypeOfText.ANNOTATION);
 
-    highlight("@my-selector: banner;");
+    executeSensor("@my-selector: banner;");
     assertHighlighting(1, 0, 12, TypeOfText.ANNOTATION);
 
-    highlight("@import \"src/themes\"");
+    executeSensor("@import \"src/themes\"");
     assertHighlighting(1, 0, 7, TypeOfText.ANNOTATION);
 
-    highlight(".element { color: @@color }");
+    executeSensor(".element { color: @@color }");
     assertHighlighting(1, 18, 7, TypeOfText.ANNOTATION);
   }
 
   @Test
   public void keyword() throws IOException {
-    highlight("$foo { }");
+    executeSensor("$foo { }");
     assertHighlighting(1, 0, 4, TypeOfText.KEYWORD);
 
-    highlight("#header { .border-radius(4px); }");
+    executeSensor("#header { .border-radius(4px); }");
     assertHighlighting(1, 0, 7, TypeOfText.KEYWORD);
   }
 
   @Test
   public void keyword_light() throws IOException {
-    highlight("bar: foo { }");
+    executeSensor("bar: foo { }");
     assertHighlighting(1, 0, 3, TypeOfText.KEYWORD_LIGHT);
 
-    highlight("bar { foo: 1px }");
+    executeSensor("bar { foo: 1px }");
     assertHighlighting(1, 6, 3, TypeOfText.KEYWORD_LIGHT);
 
-    highlight("bar { foo-bar: 1px }");
+    executeSensor("bar { foo-bar: 1px }");
     assertHighlighting(1, 6, 7, TypeOfText.KEYWORD_LIGHT);
   }
 
-  private void highlight(String content) throws IOException {
+  @Test
+  public void lines_of_code() throws IOException {
+    executeSensor("bar { }");
+    assertLinesOfCode(1);
+
+    executeSensor("bar\n{ }");
+    assertLinesOfCode(2);
+  }
+
+  @Test
+  public void lines_of_comment() throws IOException {
+    executeSensor("// inline comment");
+    assertLinesOfComment(1);
+
+    executeSensor("/* single line comment */");
+    assertLinesOfComment(1);
+
+    executeSensor("/* multiline\n *\n *\n * comment\n*/");
+    assertLinesOfComment(5);
+  }
+
+  private void executeSensor(String content) throws IOException {
     File file = tempFolder.newFile();
     inputFile = new TestInputFileBuilder("moduleKey", file.getName())
       .setLanguage("css")
@@ -148,5 +170,13 @@ public class MetricSensorTest {
       List<TypeOfText> typeOfTexts = sensorContext.highlightingTypeAt(inputFile.key(), line, i);
       assertThat(typeOfTexts).containsOnly(type);
     }
+  }
+
+  private void assertLinesOfCode(int expected) {
+    assertThat(sensorContext.measure(inputFile.key(), CoreMetrics.NCLOC).value()).isEqualTo(expected);
+  }
+
+  private void assertLinesOfComment(int expected) {
+    assertThat(sensorContext.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value()).isEqualTo(expected);
   }
 }
