@@ -40,3 +40,6 @@ target/
 
 # npm
 node_modules/
+
+# Visual Studio
+.vs/
