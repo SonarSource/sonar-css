@@ -38,6 +38,6 @@ public class CssRulesDefinitionTest {
     assertThat(repository.name()).isEqualTo("SonarAnalyzer");
     assertThat(repository.language()).isEqualTo("css");
     assertThat(repository.isExternal()).isEqualTo(false);
-    assertThat(repository.rules()).hasSize(CssRules.getRuleClasses().size());
+    assertThat(repository.rules()).hasSize(CssRulesDefinition.RULE_CLASSES.size());
   }
 }

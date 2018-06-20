@@ -59,7 +59,10 @@
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.sonarsource.sslr</groupId>
+            <artifactId>sslr-core</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -124,7 +127,7 @@
                             <rules>
                                 <requireFilesSize>
                                     <minsize>5000000</minsize>
-                                    <maxsize>6000000</maxsize>
+                                    <maxsize>6100000</maxsize>
                                     <files>
                                         <file>${project.build.directory}/${project.build.finalName}.jar</file>
                                     </files>

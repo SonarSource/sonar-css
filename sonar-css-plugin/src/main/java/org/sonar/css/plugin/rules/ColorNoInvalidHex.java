@@ -19,7 +19,7 @@
  */
 package org.sonar.css.plugin.rules;
 
-import org.sonar.check.Rule;
+  import org.sonar.check.Rule;
 
 @Rule(key = "S4647")
 public class ColorNoInvalidHex implements CssRule {
