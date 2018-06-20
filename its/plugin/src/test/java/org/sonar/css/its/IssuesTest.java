@@ -25,6 +25,7 @@ import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.sonar.css.plugin.CssRules;
 import org.sonarqube.ws.Issues.Issue;
 import org.sonarqube.ws.client.issues.SearchRequest;
 
@@ -51,7 +52,7 @@ public class IssuesTest {
 
     assertThat(issuesList).extracting("line").containsOnly(5);
     assertThat(issuesList).extracting("component").containsOnly(PROJECT_KEY + ":src/file1.css");
-    assertThat(issuesList).extracting("rule").containsOnly("css:S4647");
+    assertThat(issuesList).extracting("rule").hasSize(CssRules.getRuleClasses().size());
   }
 
 }
