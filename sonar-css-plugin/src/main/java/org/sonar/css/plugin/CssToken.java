@@ -17,33 +17,29 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.its;
+package org.sonar.css.plugin;
 
-import com.sonar.orchestrator.Orchestrator;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import com.sonar.sslr.api.Token;
+import com.sonar.sslr.api.TokenType;
+import org.sonarsource.analyzer.commons.TokenLocation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.css.its.Tests.getProjectMeasureAsDouble;
+public class CssToken {
+  CssTokenType type;
+  String text;
+  Integer startLine;
+  Integer startColumn;
+  Integer endLine;
+  Integer endColumn;
 
-public class MetricsTest {
+  public CssToken(Token token) {
+    TokenType tokenType = token.getType();
+    this.type = tokenType instanceof CssTokenType ? (CssTokenType)tokenType : CssTokenType.UNKNOWN;
+    this.text = token.getValue();
 
-  private static String PROJECT_KEY = "metrics-project";
-
-  @ClassRule
-  public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
-
-  @BeforeClass
-  public static void prepare() {
-    orchestrator.executeBuild(Tests.createScanner(PROJECT_KEY));
+    TokenLocation tokenLocation = new TokenLocation(token.getLine(), token.getColumn(), token.getValue());
+    this.startLine = tokenLocation.startLine();
+    this.startColumn = tokenLocation.startLineOffset();
+    this.endLine = tokenLocation.endLine();
+    this.endColumn = tokenLocation.endLineOffset();
   }
-
-  @Test
-  public void test() {
-    assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(32);
-    assertThat(getProjectMeasureAsDouble("ncloc", PROJECT_KEY)).isEqualTo(25);
-    assertThat(getProjectMeasureAsDouble("comment_lines", PROJECT_KEY)).isEqualTo(4);
-  }
-
 }

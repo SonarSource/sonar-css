@@ -1,5 +1,9 @@
 {
   "rules": {
-    "color-no-invalid-hex": true
+    "color-no-invalid-hex": true,
+    "unit-no-unknown": true,
+    "comment-no-empty": true,
+    "string-no-newline": true,
+    "no-empty-source": true
   }
 }

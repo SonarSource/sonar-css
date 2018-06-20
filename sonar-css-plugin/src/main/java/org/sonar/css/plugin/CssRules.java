@@ -19,17 +19,13 @@
  */
 package org.sonar.css.plugin;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.css.plugin.rules.CssRule;
-import org.sonar.css.plugin.rules.ColorNoInvalidHex;
 
 public class CssRules {
 
@@ -37,19 +33,14 @@ public class CssRules {
   private final StylelintConfig config = new StylelintConfig();
 
   public CssRules(CheckFactory checkFactory) {
-    Checks<CssRule> checks = checkFactory.<CssRule>create(CssRulesDefinition.REPOSITORY_KEY).addAnnotatedChecks((Iterable) getRuleClasses());
+    Checks<CssRule> checks = checkFactory.<CssRule>create(CssRulesDefinition.REPOSITORY_KEY)
+      .addAnnotatedChecks((Iterable) CssRulesDefinition.RULE_CLASSES);
     Collection<CssRule> enabledRules = checks.all();
     stylelintKeyToRuleKey = new HashMap<>();
     for (CssRule rule : enabledRules) {
       stylelintKeyToRuleKey.put(rule.stylelintKey(), checks.ruleKey(rule));
       config.rules.put(rule.stylelintKey(), true);
     }
-  }
-
-  public static List<Class> getRuleClasses() {
-    return Collections.unmodifiableList(Arrays.asList(
-      ColorNoInvalidHex.class
-    ));
   }
 
   public RuleKey getSonarKey(String stylelintKey) {

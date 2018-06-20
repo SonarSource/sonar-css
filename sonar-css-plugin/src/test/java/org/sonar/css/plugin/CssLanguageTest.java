@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CssLanguageTest {
 
   @Test
-  public void test() throws Exception {
+  public void test() {
     MapSettings settings = new MapSettings();
     settings.setProperty(CssPlugin.FILE_SUFFIXES_KEY, CssPlugin.FILE_SUFFIXES_DEFVALUE);
     CssLanguage language = new CssLanguage(settings.asConfig());

@@ -17,32 +17,15 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.rules;
 
-public class Token {
+import org.sonar.check.Rule;
 
-  public enum Type {
-    COMMENT,
-    STRING,
-    WORD,
-    AT_WORD,
-    BRACKETS,
-    PUNCTUATOR
-  }
+@Rule(key = "S4667")
+public class NoEmptySource implements CssRule {
 
-  Type type;
-  String text;
-  Integer startLine;
-  Integer startColumn;
-  Integer endLine;
-  Integer endColumn;
-
-  public Token(Type type, String text, Integer startLine, Integer startColumn, Integer endLine, Integer endColumn) {
-    this.text = text;
-    this.type = type;
-    this.startLine = startLine;
-    this.startColumn = startColumn;
-    this.endLine = endLine;
-    this.endColumn = endColumn;
+  @Override
+  public String stylelintKey() {
+    return "no-empty-source";
   }
 }
