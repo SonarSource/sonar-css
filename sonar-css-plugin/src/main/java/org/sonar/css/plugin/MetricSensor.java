@@ -60,7 +60,7 @@ public class MetricSensor implements Sensor {
 
       for (int i = 0; i < tokenList.size(); i++) {
         CssToken currentToken = tokenList.get(i);
-        CssToken nextToken = i + 1 == tokenList.size() ? null : tokenList.get(i + 1);
+        CssToken nextToken = i + 1 < tokenList.size() ? tokenList.get(i + 1) : null;
 
         TypeOfText highlightingType = null;
         switch (currentToken.type) {
@@ -93,6 +93,8 @@ public class MetricSensor implements Sensor {
             break;
 
           case IDENTIFIER:
+            // We want to highlight the property key of a css/scss/less file and as the tokenizer is putting the ':' into another token
+            // we need to look for identifier followed by a PUNCTUATOR token with text ':'.
             if (nextToken != null && nextToken.text.equals(":")) {
               highlightingType = TypeOfText.KEYWORD_LIGHT;
             }

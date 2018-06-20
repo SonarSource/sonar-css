@@ -19,9 +19,8 @@
  */
 package org.sonar.css.plugin;
 
-import org.junit.Test;
-
 import java.util.List;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,12 +34,14 @@ public class TokenizerTest {
     assertToken("bar: foo { }", 0, "bar", CssTokenType.IDENTIFIER);
     assertToken("bar: foo-baz { }", 2, "foo-baz", CssTokenType.IDENTIFIER);
     assertToken("foo bar { }", 1, "bar", CssTokenType.IDENTIFIER);
-    assertToken("#bar { }", 0, "#bar", CssTokenType.HASH_IDENTIFIER);
     assertToken("foo.bar { }", 0, "foo", CssTokenType.IDENTIFIER);
     assertToken(".bar { }", 1, "bar", CssTokenType.IDENTIFIER);
     assertToken("bar { foo: 42; }", 2, "foo", CssTokenType.IDENTIFIER);
     assertToken("bar { foo: baz; }", 4, "baz", CssTokenType.IDENTIFIER);
     assertToken("foo , bar { }", 2, "bar", CssTokenType.IDENTIFIER);
+
+    // support unicode characters
+    assertToken("\u03A9 { }", 0, "\u03A9", CssTokenType.IDENTIFIER);
   }
 
   @Test
@@ -51,12 +52,18 @@ public class TokenizerTest {
   @Test
   public void hash_identifier() {
     assertToken("#bar { }", 0, "#bar", CssTokenType.HASH_IDENTIFIER);
+    assertToken("bar { color: #333; }", 4, "#333", CssTokenType.HASH_IDENTIFIER);
+    assertToken("bar { color: #e535ab; }", 4, "#e535ab", CssTokenType.HASH_IDENTIFIER);
   }
 
   @Test
   public void semi_colon() {
-    assertToken("bar: foo { }", 1, ":", CssTokenType.PUNCTUATOR);
     assertToken("bar { foo; }", 3, ";", CssTokenType.PUNCTUATOR);
+  }
+
+  @Test
+  public void colon() {
+    assertToken("bar { foo: 2px; }", 3, ":", CssTokenType.PUNCTUATOR);
   }
 
   @Test
@@ -66,13 +73,13 @@ public class TokenizerTest {
   }
 
   @Test
-  public void number_as_literal() {
-    assertToken("bar { foo: 1.15; }", 4, "1.15", CssTokenType.NUMBER);
-    assertToken("bar { foo: 1; }", 4, "1", CssTokenType.NUMBER);
-    assertToken("bar { foo: 1.15px; }", 4, "1.15px", CssTokenType.NUMBER);
-    assertToken("bar { foo: 1.15%; }", 4, "1.15%", CssTokenType.NUMBER);
-    assertToken("bar { foo: 1px; }", 4, "1px", CssTokenType.NUMBER);
-    assertToken("bar { foo: 1em/150%; }", 4, "1em", CssTokenType.NUMBER);
+  public void number() {
+    assertToken("1.15", 0, "1.15", CssTokenType.NUMBER);
+    assertToken("1", 0, "1", CssTokenType.NUMBER);
+    assertToken("1.15px", 0, "1.15px", CssTokenType.NUMBER);
+    assertToken("1.15%", 0, "1.15%", CssTokenType.NUMBER);
+    assertToken("1px", 0, "1px", CssTokenType.NUMBER);
+    assertToken("1em/150%", 0, "1em", CssTokenType.NUMBER);
   }
 
   @Test
@@ -113,12 +120,6 @@ public class TokenizerTest {
   }
 
   @Test
-  public void hashtag() {
-    assertToken("bar { color: #333; }", 4, "#333", CssTokenType.HASH_IDENTIFIER);
-    assertToken("bar { color: #e535ab; }", 4, "#e535ab", CssTokenType.HASH_IDENTIFIER);
-  }
-
-  @Test
   public void scss_variable() {
     assertToken("$font-stack: Helvetica;", 0, "$font-stack", CssTokenType.DOLLAR_IDENTIFIER);
     assertToken("$message-color: blue !default;", 4, "default", CssTokenType.IDENTIFIER);
@@ -128,23 +129,23 @@ public class TokenizerTest {
     assertToken(tokenList, 0, "p", CssTokenType.IDENTIFIER);
     assertToken(tokenList, 1, ".", CssTokenType.PUNCTUATOR);
     assertToken(tokenList, 2, "message-", CssTokenType.IDENTIFIER);
-    assertToken(tokenList, 3, "{", CssTokenType.PUNCTUATOR);
-    assertToken(tokenList, 4, "$alertClass", CssTokenType.DOLLAR_IDENTIFIER);
-    assertToken(tokenList, 5, "}", CssTokenType.PUNCTUATOR);
-    assertToken(tokenList, 6, "{", CssTokenType.PUNCTUATOR);
-    assertToken(tokenList, 7, "color", CssTokenType.IDENTIFIER);
-    assertToken(tokenList, 8, ":", CssTokenType.PUNCTUATOR);
-    assertToken(tokenList, 9, "red", CssTokenType.IDENTIFIER);
-    assertToken(tokenList, 10, ";", CssTokenType.PUNCTUATOR);
-    assertToken(tokenList, 11, "}", CssTokenType.PUNCTUATOR);
-
+    assertToken(tokenList, 3, "#", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 4, "{", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 5, "$alertClass", CssTokenType.DOLLAR_IDENTIFIER);
+    assertToken(tokenList, 6, "}", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 7, "{", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 8, "color", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 9, ":", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 10, "red", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 11, ";", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 12, "}", CssTokenType.PUNCTUATOR);
   }
 
   @Test
   public void scss_import() {
     List<CssToken> tokenList = tokenizer.tokenize("@import 'base';");
 
-    assertThat(tokenList.size()).isEqualTo(4);
+    assertThat(tokenList.size()).isEqualTo(3);
     assertToken(tokenList, 0, "@import", CssTokenType.AT_IDENTIFIER);
     assertToken(tokenList, 1, "'base'", CssTokenType.STRING);
     assertToken(tokenList, 2, ";", CssTokenType.PUNCTUATOR);
@@ -154,7 +155,7 @@ public class TokenizerTest {
   public void scss_role() {
     List<CssToken> tokenList = tokenizer.tokenize("article[role=\"main\"] { width: 1px; }");
 
-    assertThat(tokenList.size()).isEqualTo(13);
+    assertThat(tokenList.size()).isEqualTo(12);
     assertToken(tokenList, 0, "article", CssTokenType.IDENTIFIER);
     assertToken(tokenList, 1, "[", CssTokenType.PUNCTUATOR);
     assertToken(tokenList, 2, "role", CssTokenType.IDENTIFIER);
@@ -164,7 +165,7 @@ public class TokenizerTest {
   }
 
   @Test
-  public void scss_operators() {
+  public void scss_less_operators() {
     assertToken("foo { width: 300px + 960px; }", 5, "+", CssTokenType.PUNCTUATOR);
     assertToken("foo { width: 300px - 960px; }", 5, "-", CssTokenType.PUNCTUATOR);
     assertToken("foo { width: 300px * 960px; }", 5, "*", CssTokenType.PUNCTUATOR);
@@ -187,11 +188,6 @@ public class TokenizerTest {
   public void less_variable() {
     assertToken("@nice-blue: #5B83AD;", 0, "@nice-blue", CssTokenType.AT_IDENTIFIER);
     assertToken("foo { color: @@color; }", 4, "@@color", CssTokenType.AT_IDENTIFIER);
-  }
-
-  @Test
-  public void less_operators() {
-    assertToken("@base: 2cm * 3mm;", 3, "*", CssTokenType.PUNCTUATOR);
   }
 
   @Test

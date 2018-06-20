@@ -23,6 +23,10 @@ import com.sonar.sslr.impl.Lexer;
 
 import static com.sonar.sslr.impl.channel.RegexpChannelBuilder.regexp;
 
+// This is a at-best lexer.
+// It is far from being entirely matching the standard definition of css/less/scss tokens nor
+// following the theory of what a lexer responsibilities are but as we are only building line metrics and highlighting
+// on top of it we decided to focus on simplicity over being extensive.
 public final class CssLexer {
 
   private static final String NEW_LINE = "(\r\n|\r|\n|\f)";
@@ -31,7 +35,7 @@ public final class CssLexer {
   private static final String HEX_DIGIT = "0-9a-fA-F";
   private static final String ESCAPE = "(\\\\[" + HEX_DIGIT + "]{1,6}" + WHITESPACE + "?)|\\[^\r\n\f" + HEX_DIGIT + "]";
 
-  private static final String PUNCTUATOR = "[!:,;%&+\\*-/=>\\(\\)\\[\\]\\{\\}]";
+  private static final String PUNCTUATOR = "[!:,;%&+#\\*-/=>\\(\\)\\[\\]\\{\\}]";
 
   private static final String MULTI_LINE_COMMENT = "/\\*(.|" + NEW_LINE + ")*?\\*/";
   private static final String INLINE_COMMENT = "//.*";

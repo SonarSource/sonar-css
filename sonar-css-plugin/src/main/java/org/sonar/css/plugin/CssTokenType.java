@@ -21,14 +21,16 @@ package org.sonar.css.plugin;
 
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.TokenType;
-import org.omg.CORBA.UNKNOWN;
 
 public enum CssTokenType implements TokenType {
-  UNKNOWN,
   COMMENT,
   PUNCTUATOR,
-  NUMBER, STRING,
-  AT_IDENTIFIER, HASH_IDENTIFIER, DOLLAR_IDENTIFIER, IDENTIFIER;
+  NUMBER,
+  STRING,
+  AT_IDENTIFIER,
+  HASH_IDENTIFIER,
+  DOLLAR_IDENTIFIER,
+  IDENTIFIER;
 
   @Override
   public String getName() {

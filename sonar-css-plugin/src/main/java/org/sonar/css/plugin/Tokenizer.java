@@ -19,12 +19,20 @@
  */
 package org.sonar.css.plugin;
 
+import com.sonar.sslr.api.Token;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Tokenizer {
 
   public List<CssToken> tokenize(String css) {
-    return CssLexer.create().lex(css).stream().map(CssToken::new).collect(Collectors.toList());
+    List<Token> tokenList = CssLexer.create().lex(css);
+
+    // remove last token (EOF token)
+    List<Token> cloneTokenList = new ArrayList<>(tokenList);
+    cloneTokenList.remove(cloneTokenList.size() - 1);
+
+    return cloneTokenList.stream().map(CssToken::new).collect(Collectors.toList());
   }
 }

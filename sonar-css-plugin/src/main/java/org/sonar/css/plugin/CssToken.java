@@ -33,7 +33,7 @@ public class CssToken {
 
   public CssToken(Token token) {
     TokenType tokenType = token.getType();
-    this.type = tokenType instanceof CssTokenType ? (CssTokenType)tokenType : CssTokenType.UNKNOWN;
+    this.type = (CssTokenType)tokenType;
     this.text = token.getValue();
 
     TokenLocation tokenLocation = new TokenLocation(token.getLine(), token.getColumn(), token.getValue());
