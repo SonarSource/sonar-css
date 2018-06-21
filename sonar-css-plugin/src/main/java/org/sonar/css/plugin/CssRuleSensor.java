@@ -63,9 +63,7 @@ public class CssRuleSensor implements Sensor {
     File deployDestination = context.fileSystem().workDir();
     bundleHandler.deployBundle(deployDestination);
 
-    File projectBaseDir = context.fileSystem().baseDir();
-
-    String[] commandParts = linterCommandProvider.commandParts(deployDestination, projectBaseDir);
+    String[] commandParts = linterCommandProvider.commandParts(deployDestination, context);
     ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
 
     try {

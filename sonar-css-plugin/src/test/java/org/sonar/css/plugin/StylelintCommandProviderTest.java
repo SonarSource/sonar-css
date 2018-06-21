@@ -21,6 +21,7 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 import org.junit.Test;
+import org.sonar.api.batch.sensor.internal.SensorContextTester;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,11 +31,13 @@ public class StylelintCommandProviderTest {
   public void test() throws Exception {
     StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
     File deployDestination = new File("deploy_destination");
-    File baseDir = new File("base_dir");
-    assertThat(stylelintCommandProvider.commandParts(deployDestination, baseDir)).containsExactly(
+    File baseDir = new File("src/test/resources").getAbsoluteFile();
+    SensorContextTester context = SensorContextTester.create(baseDir);
+    context.settings().setProperty(CssPlugin.FILE_SUFFIXES_KEY, ".foo,.bar");
+    assertThat(stylelintCommandProvider.commandParts(deployDestination, context)).containsExactly(
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      baseDir.getAbsolutePath(),
+      baseDir.getAbsolutePath() + "/**/*{.foo,.bar}",
       "--config",
       new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
       "-f",

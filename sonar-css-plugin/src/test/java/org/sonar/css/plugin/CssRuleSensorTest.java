@@ -33,6 +33,7 @@ import org.sonar.api.batch.fs.InputFile.Type;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
+import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.css.plugin.bundle.BundleHandler;
@@ -117,7 +118,7 @@ public class CssRuleSensorTest {
     }
 
     @Override
-    public String[] commandParts(File deployDestination, File projectBaseDir) {
+    public String[] commandParts(File deployDestination, SensorContext context) {
       return elements;
     }
 
