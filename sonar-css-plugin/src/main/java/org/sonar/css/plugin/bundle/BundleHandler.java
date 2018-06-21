@@ -17,28 +17,12 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.bundle;
 
 import java.io.File;
-import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public interface BundleHandler {
 
-public class StylelintExecutionTest {
+  void deployBundle(File deployDestination);
 
-  @Test
-  public void test() throws Exception {
-    StylelintExecution stylelintExecution = new StylelintExecution();
-    File deployDestination = new File("deploy_destination");
-    File baseDir = new File("base_dir");
-    assertThat(stylelintExecution.commandParts(deployDestination, baseDir)).containsExactly(
-      "node",
-      new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      baseDir.getAbsolutePath(),
-      "--config",
-      new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
-      "-f",
-      "json"
-    );
-  }
 }

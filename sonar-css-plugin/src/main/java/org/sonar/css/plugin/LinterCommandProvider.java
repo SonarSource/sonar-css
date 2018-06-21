@@ -25,4 +25,5 @@ public interface LinterCommandProvider {
 
   String[] commandParts(File deployDestination, File projectBaseDir);
 
+  String configPath(File deployDestination);
 }

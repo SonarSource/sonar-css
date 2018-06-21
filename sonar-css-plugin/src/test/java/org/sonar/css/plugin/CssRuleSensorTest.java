@@ -23,6 +23,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -32,6 +35,7 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +50,7 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_descriptor() throws Exception {
-    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintExecution());
+    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintCommandProvider());
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     sensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
@@ -64,6 +68,9 @@ public class CssRuleSensorTest {
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(1);
+
+    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
+    assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true}}");
   }
 
   private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
@@ -112,6 +119,11 @@ public class CssRuleSensorTest {
     @Override
     public String[] commandParts(File deployDestination, File projectBaseDir) {
       return elements;
+    }
+
+    @Override
+    public String configPath(File deployDestination) {
+      return new File(deployDestination, "testconfig.json").getAbsolutePath();
     }
   }
 

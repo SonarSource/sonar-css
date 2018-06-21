@@ -24,7 +24,6 @@ import java.io.InputStream;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.css.plugin.BundleHandler;
 import org.sonar.css.plugin.Zip;
 
 @ScannerSide

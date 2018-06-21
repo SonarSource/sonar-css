@@ -23,7 +23,9 @@ import java.io.File;
 import org.sonar.api.batch.ScannerSide;
 
 @ScannerSide
-public class StylelintExecution implements LinterCommandProvider {
+public class StylelintCommandProvider implements LinterCommandProvider {
+
+  private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
 
   @Override
   public String[] commandParts(File deployDestination, File projectBaseDir) {
@@ -31,8 +33,13 @@ public class StylelintExecution implements LinterCommandProvider {
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
       projectBaseDir.getAbsolutePath(),
-      "--config", new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
+      "--config", new File(deployDestination, CONFIG_PATH).getAbsolutePath(),
       "-f", "json"
     };
+  }
+
+  @Override
+  public String configPath(File deployDestination) {
+    return new File(deployDestination, CONFIG_PATH).getAbsolutePath();
   }
 }

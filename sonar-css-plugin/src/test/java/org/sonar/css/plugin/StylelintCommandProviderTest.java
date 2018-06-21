@@ -20,9 +20,25 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
+import org.junit.Test;
 
-public interface BundleHandler {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  void deployBundle(File deployDestination);
+public class StylelintCommandProviderTest {
 
+  @Test
+  public void test() throws Exception {
+    StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
+    File deployDestination = new File("deploy_destination");
+    File baseDir = new File("base_dir");
+    assertThat(stylelintCommandProvider.commandParts(deployDestination, baseDir)).containsExactly(
+      "node",
+      new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
+      baseDir.getAbsolutePath(),
+      "--config",
+      new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
+      "-f",
+      "json"
+    );
+  }
 }

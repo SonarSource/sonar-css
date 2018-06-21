@@ -24,6 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collections;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -32,6 +35,8 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
+import org.sonar.css.plugin.CssRules.StylelintConfig;
+import org.sonar.css.plugin.bundle.BundleHandler;
 
 public class CssRuleSensor implements Sensor {
 
@@ -64,6 +69,7 @@ public class CssRuleSensor implements Sensor {
     ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
 
     try {
+      createConfig(deployDestination);
       Process process = processBuilder.start();
 
       try (InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
@@ -75,6 +81,13 @@ public class CssRuleSensor implements Sensor {
       String command = String.join(" ", commandParts);
       throw new IllegalStateException(String.format("Failed to run external process '%s'. Re-run analysis with debug option for more information.", command), e);
     }
+  }
+
+  private void createConfig(File deployDestination) throws IOException {
+    String configPath = linterCommandProvider.configPath(deployDestination);
+    StylelintConfig config = cssRules.getConfig();
+    String configAsJson = new Gson().toJson(config);
+    Files.write(Paths.get(configPath), Collections.singletonList(configAsJson), StandardCharsets.UTF_8);
   }
 
   private static void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
