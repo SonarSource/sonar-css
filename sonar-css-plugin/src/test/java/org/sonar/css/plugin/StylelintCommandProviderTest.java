@@ -24,14 +24,14 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StylelintExecutionTest {
+public class StylelintCommandProviderTest {
 
   @Test
   public void test() throws Exception {
-    StylelintExecution stylelintExecution = new StylelintExecution();
+    StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
     File deployDestination = new File("deploy_destination");
     File baseDir = new File("base_dir");
-    assertThat(stylelintExecution.commandParts(deployDestination, baseDir)).containsExactly(
+    assertThat(stylelintCommandProvider.commandParts(deployDestination, baseDir)).containsExactly(
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
       baseDir.getAbsolutePath(),
