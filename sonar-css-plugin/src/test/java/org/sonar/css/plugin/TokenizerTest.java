@@ -197,6 +197,11 @@ public class TokenizerTest {
     assertToken("/* One heck of a block\n * style comment! */", 0, "/* One heck of a block\n * style comment! */", CssTokenType.COMMENT);
   }
 
+  @Test
+  public void unrecognized() {
+    assertToken("$$a", 0, "$a", CssTokenType.DOLLAR_IDENTIFIER);
+  }
+
   private static void assertToken(String input, int index, String value, CssTokenType CssTokenType) {
     List<CssToken> tokenList = tokenizer.tokenize(input);
     assertToken(tokenList, index, value, CssTokenType);
