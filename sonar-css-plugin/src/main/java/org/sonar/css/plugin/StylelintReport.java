@@ -19,23 +19,20 @@
  */
 package org.sonar.css.plugin;
 
-import org.junit.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+public class StylelintReport {
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class CssPluginTest {
-
-  @Test
-  public void count_extensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin underTest = new CssPlugin();
-    underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(9);
+  private StylelintReport(){
   }
+
+  static class IssuesPerFile {
+    String source;
+    Issue[] warnings;
+  }
+
+  static class Issue {
+    int line;
+    String rule;
+    String text;
+  }
+
 }

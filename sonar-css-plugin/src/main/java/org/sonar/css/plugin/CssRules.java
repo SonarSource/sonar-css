@@ -19,24 +19,24 @@
  */
 package org.sonar.css.plugin;
 
-import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.batch.rule.Checks;
-import org.sonar.api.rule.RuleKey;
-import org.sonar.css.plugin.rules.CommentNoEmpty;
-import org.sonar.css.plugin.rules.CssRule;
-import org.sonar.css.plugin.rules.DeclarationBlockNoDuplicateProperties;
-import org.sonar.css.plugin.rules.KeyframeDeclarationNoImportant;
-import org.sonar.css.plugin.rules.NoEmptySource;
-import org.sonar.css.plugin.rules.ColorNoInvalidHex;
-import org.sonar.css.plugin.rules.StringNoNewline;
-import org.sonar.css.plugin.rules.UnitNoUnknown;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
+import org.sonar.api.batch.rule.CheckFactory;
+import org.sonar.api.batch.rule.Checks;
+import org.sonar.api.rule.RuleKey;
+import org.sonar.css.plugin.rules.ColorNoInvalidHex;
+import org.sonar.css.plugin.rules.CommentNoEmpty;
+import org.sonar.css.plugin.rules.CssRule;
+import org.sonar.css.plugin.rules.DeclarationBlockNoDuplicateProperties;
+import org.sonar.css.plugin.rules.KeyframeDeclarationNoImportant;
+import org.sonar.css.plugin.rules.NoEmptySource;
+import org.sonar.css.plugin.rules.StringNoNewline;
+import org.sonar.css.plugin.rules.UnitNoUnknown;
 
 public class CssRules {
 
@@ -66,12 +66,9 @@ public class CssRules {
     ));
   }
 
-  public RuleKey getSonarKey(String stylelintKey) {
-    RuleKey ruleKey = stylelintKeyToRuleKey.get(stylelintKey);
-    if (ruleKey == null) {
-      throw new IllegalStateException("Unknown stylelint rule or rule not enabled " + stylelintKey);
-    }
-    return ruleKey;
+  @Nullable
+  public RuleKey getActiveSonarKey(String stylelintKey) {
+    return stylelintKeyToRuleKey.get(stylelintKey);
   }
 
   public StylelintConfig getConfig() {
