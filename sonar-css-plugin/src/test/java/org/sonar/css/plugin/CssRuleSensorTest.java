@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.InputFile.Type;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
@@ -42,6 +43,9 @@ import org.sonar.css.plugin.bundle.CssBundleHandler;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CssRuleSensorTest {
+
+  @Rule
+  public ExpectedException thrown= ExpectedException.none();
 
   private static CheckFactory checkFactory = new CheckFactory(new TestActiveRules("S4647"));
   private File BASE_DIR = new File("src/test/resources").getAbsoluteFile();
@@ -72,6 +76,19 @@ public class CssRuleSensorTest {
 
     Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
     assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true}}");
+  }
+
+  @Test
+  public void test_error() throws IOException {
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("Failed to parse json result of external process execution");
+
+    SensorContextTester context = SensorContextTester.create(BASE_DIR);
+    context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
+    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
+    TestLinterCommandProvider rulesExecution = TestLinterCommandProvider.nodeScript("/executables/mockError.js", inputFile.absolutePath());
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
+    sensor.execute(context);
   }
 
   private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
