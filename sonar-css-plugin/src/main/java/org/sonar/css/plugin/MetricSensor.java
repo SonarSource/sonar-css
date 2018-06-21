@@ -34,7 +34,6 @@ import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
-import org.sonar.api.measures.Metric;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
