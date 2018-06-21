@@ -35,6 +35,7 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -25,7 +25,7 @@ import org.sonar.api.batch.ScannerSide;
 @ScannerSide
 public class StylelintCommandProvider implements LinterCommandProvider {
 
-  private final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
+  private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
 
   @Override
   public String[] commandParts(File deployDestination, File projectBaseDir) {

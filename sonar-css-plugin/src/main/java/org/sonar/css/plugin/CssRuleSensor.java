@@ -35,13 +35,10 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
+import org.sonar.css.plugin.bundle.BundleHandler;
 
 public class CssRuleSensor implements Sensor {
-
-  private static final Logger LOG = Loggers.get(CssRuleSensor.class);
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
