@@ -1,4 +1,5 @@
 .class1 {
-  background-color: #ffw; /* S4647 | color-no-invalid-hex */
-  width: 100pixels; /* S4653 | unit-no-unknown */
+  background-color: #ffw;   /* S4647 | color-no-invalid-hex */
+  width: 100pixels;         /* S4653 | unit-no-unknown */
+  /* */                     /* S4663 | comment-no-empty */
 }

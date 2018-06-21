@@ -23,6 +23,7 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.css.plugin.rules.ColorNoInvalidHex;
+import org.sonar.css.plugin.rules.CommentNoEmpty;
 import org.sonar.css.plugin.rules.CssRule;
 import org.sonar.css.plugin.rules.UnitNoUnknown;
 
@@ -52,7 +53,8 @@ public class CssRules {
   public static List<Class> getRuleClasses() {
     return Collections.unmodifiableList(Arrays.asList(
         ColorNoInvalidHex.class,
-        UnitNoUnknown.class
+        UnitNoUnknown.class,
+        CommentNoEmpty.class
     ));
   }
 
