@@ -36,11 +36,6 @@ public class CssRulesDefinition implements RulesDefinition {
 
   public static final String RESOURCE_FOLDER = "org/sonar/l10n/css/rules/css";
 
-  public static final List<Class> RULE_CLASSES = Collections.unmodifiableList(Arrays.asList(
-    ColorNoInvalidHex.class,
-    UnitNoUnknown.class
-  ));
-
   @Override
   public void define(Context context) {
     NewRepository repository = context
@@ -48,7 +43,7 @@ public class CssRulesDefinition implements RulesDefinition {
       .setName(RULE_REPOSITORY_NAME);
 
     RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, PROFILE_PATH);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, RULE_CLASSES);
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, CssRules.getRuleClasses());
     repository.done();
   }
 }

@@ -19,14 +19,14 @@
  */
 package org.sonar.css.plugin;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.css.plugin.rules.ColorNoInvalidHex;
 import org.sonar.css.plugin.rules.CssRule;
+import org.sonar.css.plugin.rules.UnitNoUnknown;
 
 public class CssRules {
 
@@ -35,13 +35,20 @@ public class CssRules {
 
   public CssRules(CheckFactory checkFactory) {
     Checks<CssRule> checks = checkFactory.<CssRule>create(CssRulesDefinition.REPOSITORY_KEY)
-      .addAnnotatedChecks((Iterable) CssRulesDefinition.RULE_CLASSES);
+      .addAnnotatedChecks((Iterable) getRuleClasses());
     Collection<CssRule> enabledRules = checks.all();
     stylelintKeyToRuleKey = new HashMap<>();
     for (CssRule rule : enabledRules) {
       stylelintKeyToRuleKey.put(rule.stylelintKey(), checks.ruleKey(rule));
       config.rules.put(rule.stylelintKey(), true);
     }
+  }
+
+  public static List<Class> getRuleClasses() {
+    return Collections.unmodifiableList(Arrays.asList(
+        ColorNoInvalidHex.class,
+        UnitNoUnknown.class
+    ));
   }
 
   public RuleKey getSonarKey(String stylelintKey) {
