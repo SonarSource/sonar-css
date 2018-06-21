@@ -31,8 +31,12 @@ import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.measures.CoreMetrics;
+import org.sonar.api.measures.FileLinesContext;
+import org.sonar.api.measures.FileLinesContextFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MetricSensorTest {
 
@@ -45,7 +49,7 @@ public class MetricSensorTest {
   @Test
   public void should_describe() {
     DefaultSensorDescriptor desc = new DefaultSensorDescriptor();
-    new MetricSensor().describe(desc);
+    new MetricSensor(null).describe(desc);
 
     assertThat(desc.languages()).containsOnly("css");
   }
@@ -138,6 +142,22 @@ public class MetricSensorTest {
 
     executeSensor("bar\n{ }");
     assertLinesOfCode(2);
+
+    // We don't count empty lines
+    executeSensor("\n\n\nsomething\n\n\n");
+    assertLinesOfCode(1);
+
+    // We don't count comments
+    executeSensor("// foo");
+    assertLinesOfCode(0);
+    executeSensor("/* dasdsa */");
+    assertLinesOfCode(0);
+    executeSensor("/* das\ndsa */");
+    assertLinesOfCode(0);
+
+    // Mix code and comment
+    executeSensor("foo {} // some comment");
+    assertLinesOfCode(1);
   }
 
   @Test
@@ -150,6 +170,18 @@ public class MetricSensorTest {
 
     executeSensor("/* multiline\n *\n *\n * comment\n*/");
     assertLinesOfComment(5);
+
+    // We don't count empty lines
+    executeSensor("\n\n\n/* something */\n\n\n");
+    assertLinesOfComment(1);
+
+    // We don't count code
+    executeSensor("foo {}");
+    assertLinesOfComment(0);
+
+    // Mix code and comment
+    executeSensor("foo {} // some comment");
+    assertLinesOfComment(1);
   }
 
   private void executeSensor(String content) throws IOException {
@@ -162,7 +194,10 @@ public class MetricSensorTest {
     sensorContext = SensorContextTester.create(tempFolder.getRoot());
     sensorContext.fileSystem().add(inputFile);
 
-    new MetricSensor().execute(sensorContext);
+    FileLinesContext linesContext = mock(FileLinesContext.class);
+    FileLinesContextFactory linesContextFactory = mock(FileLinesContextFactory.class);
+    when(linesContextFactory.createFor(inputFile)).thenReturn(linesContext);
+    new MetricSensor(linesContextFactory).execute(sensorContext);
   }
 
   private void assertHighlighting(int line, int column, int length, TypeOfText type) {

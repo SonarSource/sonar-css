@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
@@ -31,6 +32,9 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.highlighting.NewHighlighting;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.measures.CoreMetrics;
+import org.sonar.api.measures.FileLinesContext;
+import org.sonar.api.measures.FileLinesContextFactory;
+import org.sonar.api.measures.Metric;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -38,10 +42,16 @@ public class MetricSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(MetricSensor.class);
 
+  private final FileLinesContextFactory fileLinesContextFactory;
+
+  public MetricSensor(FileLinesContextFactory fileLinesContextFactory) {
+    this.fileLinesContextFactory = fileLinesContextFactory;
+  }
+
   @Override
   public void describe(SensorDescriptor descriptor) {
     descriptor
-      .onlyOnLanguage(CssLanguage.KEY);
+        .onlyOnLanguage(CssLanguage.KEY);
   }
 
   @Override
@@ -67,9 +77,9 @@ public class MetricSensor implements Sensor {
   private static void saveHighlights(SensorContext context, InputFile file, List<CssToken> tokenList) {
     NewHighlighting highlighting = context.newHighlighting().onFile(file);
 
-      for (int i = 0; i < tokenList.size(); i++) {
-        CssToken currentToken = tokenList.get(i);
-        CssToken nextToken = i + 1 < tokenList.size() ? tokenList.get(i + 1) : null;
+    for (int i = 0; i < tokenList.size(); i++) {
+      CssToken currentToken = tokenList.get(i);
+      CssToken nextToken = i + 1 < tokenList.size() ? tokenList.get(i + 1) : null;
 
       TypeOfText highlightingType = null;
       switch (currentToken.type) {
@@ -101,13 +111,13 @@ public class MetricSensor implements Sensor {
           }
           break;
 
-          case IDENTIFIER:
-            // We want to highlight the property key of a css/scss/less file and as the tokenizer is putting the ':' into another token
-            // we need to look for identifier followed by a PUNCTUATOR token with text ':'.
-            if (nextToken != null && nextToken.text.equals(":")) {
-              highlightingType = TypeOfText.KEYWORD_LIGHT;
-            }
-            break;
+        case IDENTIFIER:
+          // We want to highlight the property key of a css/scss/less file and as the tokenizer is putting the ':' into another token
+          // we need to look for identifier followed by a PUNCTUATOR token with text ':'.
+          if (nextToken != null && nextToken.text.equals(":")) {
+            highlightingType = TypeOfText.KEYWORD_LIGHT;
+          }
+          break;
 
         default:
           highlightingType = null;
@@ -121,11 +131,12 @@ public class MetricSensor implements Sensor {
     highlighting.save();
   }
 
-  private static void saveLineTypes(SensorContext context, InputFile file, List<CssToken> tokenList) {
+  private void saveLineTypes(SensorContext context, InputFile file, List<CssToken> tokenList) {
+    // collect line types
     Set<Integer> linesOfCode = new HashSet<>();
     Set<Integer> linesOfComment = new HashSet<>();
 
-    for (CssToken token: tokenList) {
+    for (CssToken token : tokenList) {
       for (int line = token.startLine; line <= token.endLine; line++) {
         if (token.type.equals(CssTokenType.COMMENT)) {
           linesOfComment.add(line);
@@ -137,6 +148,11 @@ public class MetricSensor implements Sensor {
 
     context.<Integer>newMeasure().on(file).forMetric(CoreMetrics.NCLOC).withValue(linesOfCode.size()).save();
     context.<Integer>newMeasure().on(file).forMetric(CoreMetrics.COMMENT_LINES).withValue(linesOfComment.size()).save();
+
+    FileLinesContext fileLinesContext = fileLinesContextFactory.createFor(file);
+    linesOfCode.forEach(line -> fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, line, 1));
+    linesOfComment.forEach(line -> fileLinesContext.setIntValue(CoreMetrics.COMMENT_LINES_DATA_KEY, line, 1));
+    fileLinesContext.save();
   }
 
 }
