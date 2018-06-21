@@ -55,8 +55,8 @@ public class CssRules {
     return Collections.unmodifiableList(Arrays.asList(
         ColorNoInvalidHex.class,
         CommentNoEmpty.class,       
-		StringNoNewline.class,
-		UnitNoUnknown.class
+		    StringNoNewline.class,
+		    UnitNoUnknown.class
     ));
   }
 
