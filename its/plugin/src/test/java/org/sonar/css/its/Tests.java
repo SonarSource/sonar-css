@@ -67,7 +67,7 @@ public class Tests {
     return (measure == null) ? null : Double.parseDouble(measure.getValue());
   }
 
-  private static Measure getMeasure(String metricKey, String projectKey) {
+  public static Measure getMeasure(String metricKey, String projectKey) {
     ComponentWsResponse response = newWsClient().measures().component(new ComponentRequest()
       .setComponent(projectKey)
       .setMetricKeys(Collections.singletonList(metricKey)));

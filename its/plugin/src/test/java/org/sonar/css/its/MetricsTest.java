@@ -25,6 +25,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.css.its.Tests.getMeasure;
 import static org.sonar.css.its.Tests.getProjectMeasureAsDouble;
 
 public class MetricsTest {
@@ -42,6 +43,23 @@ public class MetricsTest {
   @Test
   public void test() {
     assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(33);
+    assertThat(getProjectMeasureAsDouble("ncloc", PROJECT_KEY)).isEqualTo(23);
+    assertThat(getProjectMeasureAsDouble("comment_lines", PROJECT_KEY)).isEqualTo(5);
+
+    assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file1.css").getValue())
+        .contains("1=1;", "2=1;", "3=1;", "4=1;", "5=1;", "6=1;", "7=1;", "8=1");
+    assertThat(getMeasure("comment_lines_data", PROJECT_KEY + ":src/file1.css").getValue())
+        .contains("5=1;", "10=1");
+
+    assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file2.less").getValue())
+        .contains("1=1;", "2=1;", "3=1;", "4=1;", "5=1;", "6=1;", "7=1;", "8=1;", "9=1");
+    assertThat(getMeasure("comment_lines_data", PROJECT_KEY + ":src/file2.less").getValue())
+        .contains("11=1");
+
+    assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file3.scss").getValue())
+        .contains("1=1;", "3=1;", "5=1;", "6=1;", "7=1;", "8=1");
+    assertThat(getMeasure("comment_lines_data", PROJECT_KEY + ":src/file3.scss").getValue())
+        .contains("10=1;", "12=1");
   }
 
 }
