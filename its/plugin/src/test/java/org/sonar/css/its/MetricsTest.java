@@ -42,14 +42,14 @@ public class MetricsTest {
 
   @Test
   public void test() {
-    assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(33);
-    assertThat(getProjectMeasureAsDouble("ncloc", PROJECT_KEY)).isEqualTo(23);
-    assertThat(getProjectMeasureAsDouble("comment_lines", PROJECT_KEY)).isEqualTo(5);
+    assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(32);
+    assertThat(getProjectMeasureAsDouble("ncloc", PROJECT_KEY)).isEqualTo(22);
+    assertThat(getProjectMeasureAsDouble("comment_lines", PROJECT_KEY)).isEqualTo(4);
 
     assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file1.css").getValue())
-        .contains("1=1;", "2=1;", "3=1;", "4=1;", "5=1;", "6=1;", "7=1;", "8=1");
+        .contains("1=1;", "2=1;", "3=1;", "4=1;", "5=1;", "6=1;", "7=1");
     assertThat(getMeasure("comment_lines_data", PROJECT_KEY + ":src/file1.css").getValue())
-        .contains("5=1;", "10=1");
+        .contains("9=1");
 
     assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file2.less").getValue())
         .contains("1=1;", "2=1;", "3=1;", "4=1;", "5=1;", "6=1;", "7=1;", "8=1;", "9=1");

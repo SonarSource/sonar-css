@@ -1,13 +1,4 @@
-$firstValue: 62.5%;
-
-$firstValue: 24px !default;
-
-body {
-    font-size: $firstValue;
-    foo: "some text";
-    width: 100pixels;
+.class1 {
+  background-color: #ffw; /* S4647 | color-no-invalid-hex */
+  width: 100pixels; /* S4653 | unit-no-unknown */
 }
-
-// body font size = 62.5%
-
-/* some comment */

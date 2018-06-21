@@ -38,8 +38,7 @@ public class SonarWayProfileTest {
     assertThat(profile.language()).isEqualTo(CssLanguage.KEY);
     assertThat(profile.name()).isEqualTo(SonarWayProfile.PROFILE_NAME);
     assertThat(profile.rules()).extracting("repoKey").containsOnly(CssRulesDefinition.REPOSITORY_KEY);
-    assertThat(profile.rules()).extracting("ruleKey").contains("S4647");
-    assertThat(profile.rules()).extracting("ruleKey").contains("S4653");
+    assertThat(profile.rules()).extracting("ruleKey").hasSize(CssRulesDefinition.RULE_CLASSES.size());
   }
 
 }

@@ -49,7 +49,7 @@ public class CssRuleSensorTest {
   public TemporaryFolder tmpDir = new TemporaryFolder();
 
   @Test
-  public void test_descriptor() throws Exception {
+  public void test_descriptor() {
     CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintCommandProvider());
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     sensor.describe(sensorDescriptor);
@@ -59,7 +59,7 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_execute() {
+  public void test_execute() throws IOException {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");

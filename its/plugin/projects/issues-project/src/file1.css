@@ -1,11 +1,4 @@
 .class1 {
-  background-color: #2d5e8b;
+  background-color: #ffw; /* S4647 | color-no-invalid-hex */
+  width: 100pixels; /* S4653 | unit-no-unknown */
 }
-.class1 .class2 {
-  background-color: #ffw; /* issue here */
-  color: #2d5e8b;
-  foo: "some text";
-  width: 100pixels;
-}
-
-/* some comment */
