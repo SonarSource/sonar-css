@@ -33,7 +33,9 @@ public class StylelintCommandProvider implements LinterCommandProvider {
   public String[] commandParts(File deployDestination, SensorContext context) {
     String projectBaseDir = context.fileSystem().baseDir().getAbsolutePath();
     String[] suffixes = context.config().getStringArray(CssPlugin.FILE_SUFFIXES_KEY);
-    String filesToAnalyze = Paths.get(projectBaseDir, "**/*{" + String.join(",", suffixes) + "}").toString();
+    String filesGlob = "**" + File.separator + "*{" + String.join(",", suffixes) + "}";
+    String filesToAnalyze = Paths.get(projectBaseDir, "TOREPLACE").toString();
+    filesToAnalyze = filesToAnalyze.replace("TOREPLACE", filesGlob);
 
     return new String[]{
       "node",

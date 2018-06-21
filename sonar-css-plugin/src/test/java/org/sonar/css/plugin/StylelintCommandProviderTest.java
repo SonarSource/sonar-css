@@ -37,7 +37,7 @@ public class StylelintCommandProviderTest {
     assertThat(stylelintCommandProvider.commandParts(deployDestination, context)).containsExactly(
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      baseDir.getAbsolutePath() + "/**/*{.foo,.bar}",
+      baseDir.getAbsolutePath() + File.separator + "**" + File.separator + "*{.foo,.bar}",
       "--config",
       new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
       "-f",
