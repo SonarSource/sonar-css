@@ -2,4 +2,6 @@
   background-color: #ffw;   /* S4647 | color-no-invalid-hex */
   width: 100pixels;         /* S4653 | unit-no-unknown */
   /* */                     /* S4663 | comment-no-empty */
+  content: "first
+    second";                /* S4652 | string-no-newline */
 }
