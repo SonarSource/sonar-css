@@ -19,30 +19,27 @@
  */
 package org.sonar.css.plugin;
 
-public class Token {
+import com.sonar.sslr.api.Token;
+import com.sonar.sslr.api.TokenType;
+import org.sonarsource.analyzer.commons.TokenLocation;
 
-  public enum Type {
-    COMMENT,
-    STRING,
-    WORD,
-    AT_WORD,
-    BRACKETS,
-    PUNCTUATOR
-  }
-
-  Type type;
+public class CssToken {
+  CssTokenType type;
   String text;
   Integer startLine;
   Integer startColumn;
   Integer endLine;
   Integer endColumn;
 
-  public Token(Type type, String text, Integer startLine, Integer startColumn, Integer endLine, Integer endColumn) {
-    this.text = text;
-    this.type = type;
-    this.startLine = startLine;
-    this.startColumn = startColumn;
-    this.endLine = endLine;
-    this.endColumn = endColumn;
+  public CssToken(Token token) {
+    TokenType tokenType = token.getType();
+    this.type = (CssTokenType)tokenType;
+    this.text = token.getValue();
+
+    TokenLocation tokenLocation = new TokenLocation(token.getLine(), token.getColumn(), token.getValue());
+    this.startLine = tokenLocation.startLine();
+    this.startColumn = tokenLocation.startLineOffset();
+    this.endLine = tokenLocation.endLine();
+    this.endColumn = tokenLocation.endLineOffset();
   }
 }

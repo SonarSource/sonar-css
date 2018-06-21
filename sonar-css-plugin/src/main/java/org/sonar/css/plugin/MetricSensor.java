@@ -21,7 +21,6 @@ package org.sonar.css.plugin;
 
 import java.io.IOException;
 import java.util.List;
-import javax.script.ScriptException;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
@@ -57,11 +56,11 @@ public class MetricSensor implements Sensor {
   private static void saveHighlights(SensorContext sensorContext, InputFile input, Tokenizer tokenizer) {
     try {
       NewHighlighting highlighting = sensorContext.newHighlighting().onFile(input);
-      List<Token> tokenList = tokenizer.tokenize(input.contents());
+      List<CssToken> tokenList = tokenizer.tokenize(input.contents());
 
       for (int i = 0; i < tokenList.size(); i++) {
-        Token currentToken = tokenList.get(i);
-        Token nextToken = i + 1 == tokenList.size() ? null : tokenList.get(i + 1);
+        CssToken currentToken = tokenList.get(i);
+        CssToken nextToken = i + 1 < tokenList.size() ? tokenList.get(i + 1) : null;
 
         TypeOfText highlightingType = null;
         switch (currentToken.type) {
@@ -73,18 +72,32 @@ public class MetricSensor implements Sensor {
             highlightingType = TypeOfText.STRING;
             break;
 
-          case WORD:
-            if (Character.isDigit(currentToken.text.charAt(0)) || currentToken.text.matches("^#[0-9a-fA-F]+$")) {
+          case NUMBER:
+            highlightingType = TypeOfText.CONSTANT;
+            break;
+
+          case AT_IDENTIFIER:
+            highlightingType = TypeOfText.ANNOTATION;
+            break;
+
+          case DOLLAR_IDENTIFIER:
+            highlightingType = TypeOfText.KEYWORD;
+            break;
+
+          case HASH_IDENTIFIER:
+            if (currentToken.text.matches("^#[0-9a-fA-F]+$")) {
               highlightingType = TypeOfText.CONSTANT;
-            } else if (nextToken != null && nextToken.text.equals(":")) {
-              highlightingType = TypeOfText.KEYWORD_LIGHT;
-            } else if (currentToken.text.startsWith(".") || (nextToken != null && nextToken.text.startsWith("{"))) {
+            } else {
               highlightingType = TypeOfText.KEYWORD;
             }
             break;
 
-          case AT_WORD:
-            highlightingType = TypeOfText.ANNOTATION;
+          case IDENTIFIER:
+            // We want to highlight the property key of a css/scss/less file and as the tokenizer is putting the ':' into another token
+            // we need to look for identifier followed by a PUNCTUATOR token with text ':'.
+            if (nextToken != null && nextToken.text.equals(":")) {
+              highlightingType = TypeOfText.KEYWORD_LIGHT;
+            }
             break;
 
           default:
@@ -92,14 +105,12 @@ public class MetricSensor implements Sensor {
         }
 
         if (highlightingType != null) {
-          highlighting.highlight(currentToken.startLine, currentToken.startColumn - 1, currentToken.endLine, currentToken.endColumn, highlightingType);
+          highlighting.highlight(currentToken.startLine, currentToken.startColumn, currentToken.endLine, currentToken.endColumn, highlightingType);
         }
       }
 
       highlighting.save();
 
-    } catch (ScriptException e) {
-      LOG.error(String.format("Failed to tokenize file '%s'", input.toString()), e);
     } catch (IOException e) {
       LOG.error(String.format("Failed to read file '%s'", input.toString()), e);
     }

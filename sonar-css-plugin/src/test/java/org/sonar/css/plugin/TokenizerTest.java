@@ -20,11 +20,7 @@
 package org.sonar.css.plugin;
 
 import java.util.List;
-import java.util.Optional;
-
-import javax.script.ScriptException;
 import org.junit.Test;
-import org.sonar.css.plugin.Token.Type;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,67 +29,84 @@ public class TokenizerTest {
   private final static Tokenizer tokenizer = new Tokenizer();
   
   @Test
-  public void word() throws ScriptException {
-    assertToken("bar { }", 0, "bar", Type.WORD);
-    assertToken("bar: foo { }", 0, "bar", Type.WORD);
-    assertToken("bar: foo-baz { }", 2, "foo-baz", Type.WORD);
-    assertToken("foo bar { }", 1, "bar", Type.WORD);
-    assertToken("#bar { }", 0, "#bar", Type.WORD);
-    assertToken("foo.bar { }", 0, "foo.bar", Type.WORD);
-    assertToken(".bar { }", 0, ".bar", Type.WORD);
-    assertToken("bar { foo: 42; }", 2, "foo", Type.WORD);
-    assertToken("bar { foo: baz; }", 4, "baz", Type.WORD);
-    assertToken("foo , bar { }", 2, "bar", Type.WORD);
+  public void identifier() {
+    assertToken("bar { }", 0, "bar", CssTokenType.IDENTIFIER);
+    assertToken("bar: foo { }", 0, "bar", CssTokenType.IDENTIFIER);
+    assertToken("bar: foo-baz { }", 2, "foo-baz", CssTokenType.IDENTIFIER);
+    assertToken("foo bar { }", 1, "bar", CssTokenType.IDENTIFIER);
+    assertToken("foo.bar { }", 0, "foo", CssTokenType.IDENTIFIER);
+    assertToken(".bar { }", 1, "bar", CssTokenType.IDENTIFIER);
+    assertToken("bar { foo: 42; }", 2, "foo", CssTokenType.IDENTIFIER);
+    assertToken("bar { foo: baz; }", 4, "baz", CssTokenType.IDENTIFIER);
+    assertToken("foo , bar { }", 2, "bar", CssTokenType.IDENTIFIER);
+
+    // support unicode characters
+    assertToken("\u03A9 { }", 0, "\u03A9", CssTokenType.IDENTIFIER);
   }
 
   @Test
-  public void semi_colon() throws ScriptException {
-    assertToken("bar: foo { }", 1, ":", Type.PUNCTUATOR);
-    assertToken("bar { foo; }", 3, ";", Type.PUNCTUATOR);
+  public void at_identifier() {
+    assertToken("@bar { }", 0, "@bar", CssTokenType.AT_IDENTIFIER);
   }
 
   @Test
-  public void comma() throws ScriptException {
-    assertToken("foo , bar { }", 1, ",", Type.PUNCTUATOR);
-    assertToken("foo, bar { }", 1, ",", Type.PUNCTUATOR);
+  public void hash_identifier() {
+    assertToken("#bar { }", 0, "#bar", CssTokenType.HASH_IDENTIFIER);
+    assertToken("bar { color: #333; }", 4, "#333", CssTokenType.HASH_IDENTIFIER);
+    assertToken("bar { color: #e535ab; }", 4, "#e535ab", CssTokenType.HASH_IDENTIFIER);
   }
 
   @Test
-  public void number_as_word() throws ScriptException {
-    assertToken("bar { foo: 1.15; }", 4, "1.15", Type.WORD);
-    assertToken("bar { foo: 1; }", 4, "1", Type.WORD);
-    assertToken("bar { foo: 1.15px; }", 4, "1.15px", Type.WORD);
-    assertToken("bar { foo: 1.15%; }", 4, "1.15%", Type.WORD);
-    assertToken("bar { foo: 1px; }", 4, "1px", Type.WORD);
-    assertToken("bar { foo: 1em/150%; }", 4, "1em/150%", Type.WORD);
+  public void semi_colon() {
+    assertToken("bar { foo; }", 3, ";", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void brackets() throws ScriptException {
-    assertToken("bar { foo: (1.15); }", 4, "(1.15)", Type.BRACKETS);
-    assertToken("bar { foo: ( 1.15 ); }", 4, "( 1.15 )", Type.BRACKETS);
-    assertToken("bar { foo: (1.15 1 0px); }", 4, "(1.15 1 0px)", Type.BRACKETS);
-    assertToken("bar { foo: (1.15, 1, 0px); }", 4, "(1.15, 1, 0px)", Type.BRACKETS);
-    assertToken("bar { content: string(doctitle); }", 5, "(doctitle)", Type.BRACKETS);
-    assertToken("bar { string-set: booktitle content(); }", 6, "()", Type.BRACKETS);
-    assertToken("bar { a: b(attr(href, url), c) \")\"; }", 7, "(href, url)", Type.BRACKETS);
+  public void colon() {
+    assertToken("bar { foo: 2px; }", 3, ":", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void strings() throws ScriptException {
-    assertToken("bar { foo: \"\"; }", 4, "\"\"", Type.STRING);
-    assertToken("bar { foo: \"hello, world\"; }", 4, "\"hello, world\"", Type.STRING);
+  public void comma() {
+    assertToken("foo , bar { }", 1, ",", CssTokenType.PUNCTUATOR);
+    assertToken("foo, bar { }", 1, ",", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void at_word() throws ScriptException {
-    assertToken("@bar { }", 0, "@bar", Type.AT_WORD);
+  public void number() {
+    assertToken("1.15", 0, "1.15", CssTokenType.NUMBER);
+    assertToken("1", 0, "1", CssTokenType.NUMBER);
+    assertToken("1.15px", 0, "1.15px", CssTokenType.NUMBER);
+    assertToken("1.15%", 0, "1.15%", CssTokenType.NUMBER);
+    assertToken("1px", 0, "1px", CssTokenType.NUMBER);
+    assertToken("1em/150%", 0, "1em", CssTokenType.NUMBER);
   }
 
   @Test
-  public void comment() throws ScriptException {
-    assertToken("/* foo */", 0, "/* foo */", Type.COMMENT);
-    assertToken("foo { a: /* foo */ 42; }", 4, "/* foo */", Type.COMMENT);
+  public void parenthesis() {
+    assertToken("bar { foo: (1.15); }", 4, "(", CssTokenType.PUNCTUATOR);
+    assertToken("bar { foo: (1.15); }", 6, ")", CssTokenType.PUNCTUATOR);
+    assertToken("bar { foo: ( 1.15 ); }", 4, "(", CssTokenType.PUNCTUATOR);
+    assertToken("bar { foo: (1.15 1 0px); }", 4, "(", CssTokenType.PUNCTUATOR);
+    assertToken("bar { foo: (1.15, 1, 0px); }", 4, "(", CssTokenType.PUNCTUATOR);
+    assertToken("bar { content: string(doctitle); }", 5, "(", CssTokenType.PUNCTUATOR);
+    assertToken("bar { string-set: booktitle content(); }", 6, "(", CssTokenType.PUNCTUATOR);
+    assertToken("bar { a: b(attr(href, url), c) \")\"; }", 7, "(", CssTokenType.PUNCTUATOR);
+  }
+
+  @Test
+  public void strings() {
+    assertToken("bar { foo: \"text\"; }", 4, "\"text\"", CssTokenType.STRING);
+    assertToken("bar { foo: \"hello, world\"; }", 4, "\"hello, world\"", CssTokenType.STRING);
+    assertToken("bar { foo: \"\"; }", 4, "\"\"", CssTokenType.STRING);
+    assertToken("\"foo\\\nbar\"", 0, "\"foo\\\nbar\"", CssTokenType.STRING);
+    assertToken("@min768: ~\"(min-width: 768px)\"", 2, "~\"(min-width: 768px)\"", CssTokenType.STRING);
+  }
+
+  @Test
+  public void comment() {
+    assertToken("/* foo */", 0, "/* foo */", CssTokenType.COMMENT);
+    assertToken("foo { a: /* foo */ 42; }", 4, "/* foo */", CssTokenType.COMMENT);
     assertToken("/* \n"
       + "  this is a comment\n"
       + "  and it is awesome because\n"
@@ -102,122 +115,110 @@ public class TokenizerTest {
       + "  this is a comment\n"
       + "  and it is awesome because\n"
       + "  it is multiline!\n"
-      + "*/", Type.COMMENT, 1, 1, 5, 2);
-    assertToken("foo { a: /* foo\nbar*/ 42; }", 4, "/* foo\nbar*/", Type.COMMENT, 1, 10, 2, 5);
+      + "*/", CssTokenType.COMMENT, 1, 0, 5, 2);
+    assertToken("foo { a: /* foo\nbar*/ 42; }", 4, "/* foo\nbar*/", CssTokenType.COMMENT, 1, 9, 2, 5);
   }
 
   @Test
-  public void hashtag() throws ScriptException {
-    assertToken("bar { color: #333; }", 4, "#333", Type.WORD);
-    assertToken("bar { color: #e535ab; }", 4, "#e535ab", Type.WORD);
-    assertToken("#table-of-contents + ul li { list-style: none; }", 0, "#table-of-contents", Type.WORD);
+  public void scss_variable() {
+    assertToken("$font-stack: Helvetica;", 0, "$font-stack", CssTokenType.DOLLAR_IDENTIFIER);
+    assertToken("$message-color: blue !default;", 4, "default", CssTokenType.IDENTIFIER);
+
+    List<CssToken> tokenList = tokenizer.tokenize("p.message-#{$alertClass} { color: red; }");
+    assertThat(tokenList.size()).isEqualTo(13);
+    assertToken(tokenList, 0, "p", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 1, ".", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 2, "message-", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 3, "#", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 4, "{", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 5, "$alertClass", CssTokenType.DOLLAR_IDENTIFIER);
+    assertToken(tokenList, 6, "}", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 7, "{", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 8, "color", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 9, ":", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 10, "red", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 11, ";", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 12, "}", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void scss_variable() throws ScriptException {
-    assertToken("$font-stack: Helvetica;", 0, "$font-stack", Type.WORD);
-    assertToken("$message-color: blue !default;", 3, "!default", Type.WORD);
-
-    List<Token> tokenList = tokenizer.tokenize("p.message-#{$alertClass} { color: red; }");
-    assertThat(tokenList.size()).isEqualTo(11);
-    assertToken(tokenList, 0, "p.message-", Type.WORD);
-    assertToken(tokenList, 1, "#", Type.WORD);
-    assertToken(tokenList, 2, "{", Type.PUNCTUATOR);
-    assertToken(tokenList, 3, "$alertClass", Type.WORD);
-    assertToken(tokenList, 4, "}", Type.PUNCTUATOR);
-    assertToken(tokenList, 5, "{", Type.PUNCTUATOR);
-    assertToken(tokenList, 6, "color", Type.WORD);
-    assertToken(tokenList, 7, ":", Type.PUNCTUATOR);
-    assertToken(tokenList, 8, "red", Type.WORD);
-    assertToken(tokenList, 9, ";", Type.PUNCTUATOR);
-    assertToken(tokenList, 10, "}", Type.PUNCTUATOR);
-
-  }
-
-  @Test
-  public void scss_import() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("@import 'base';");
+  public void scss_import() {
+    List<CssToken> tokenList = tokenizer.tokenize("@import 'base';");
 
     assertThat(tokenList.size()).isEqualTo(3);
-    assertToken(tokenList, 0, "@import", Type.AT_WORD);
-    assertToken(tokenList, 1, "'base'", Type.STRING);
-    assertToken(tokenList, 2, ";", Type.PUNCTUATOR);
+    assertToken(tokenList, 0, "@import", CssTokenType.AT_IDENTIFIER);
+    assertToken(tokenList, 1, "'base'", CssTokenType.STRING);
+    assertToken(tokenList, 2, ";", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void scss_role() throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize("article[role=\"main\"] { width: 1px; }");
+  public void scss_role() {
+    List<CssToken> tokenList = tokenizer.tokenize("article[role=\"main\"] { width: 1px; }");
 
-    assertThat(tokenList.size()).isEqualTo(11);
-    assertToken(tokenList, 0, "article", Type.WORD);
-    assertToken(tokenList, 1, "[", Type.PUNCTUATOR);
-    assertToken(tokenList, 2, "role=", Type.WORD);
-    assertToken(tokenList, 3, "\"main\"", Type.STRING);
-    assertToken(tokenList, 4, "]", Type.PUNCTUATOR);
+    assertThat(tokenList.size()).isEqualTo(12);
+    assertToken(tokenList, 0, "article", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 1, "[", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 2, "role", CssTokenType.IDENTIFIER);
+    assertToken(tokenList, 3, "=", CssTokenType.PUNCTUATOR);
+    assertToken(tokenList, 4, "\"main\"", CssTokenType.STRING);
+    assertToken(tokenList, 5, "]", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void scss_operators() throws ScriptException {
-    assertToken("foo { width: 300px + 960px; }", 5, "+", Type.WORD);
-    assertToken("foo { width: 300px - 960px; }", 5, "-", Type.WORD);
-    assertToken("foo { width: 300px * 960px; }", 5, "*", Type.WORD);
-    assertToken("foo { width: 300px / 960px; }", 5, "/", Type.WORD);
+  public void scss_less_operators() {
+    assertToken("foo { width: 300px + 960px; }", 5, "+", CssTokenType.PUNCTUATOR);
+    assertToken("foo { width: 300px - 960px; }", 5, "-", CssTokenType.PUNCTUATOR);
+    assertToken("foo { width: 300px * 960px; }", 5, "*", CssTokenType.PUNCTUATOR);
+    assertToken("foo { width: 300px / 960px; }", 5, "/", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void scss_parent_selector() throws ScriptException {
-    assertToken("a { &:hover { color: red; } }", 2, "&", Type.WORD);
-    assertToken("p { body.no-touch & { display: none; } }", 3, "&", Type.WORD);
+  public void scss_parent_selector() {
+    assertToken("a { &:hover { color: red; } }", 2, "&", CssTokenType.PUNCTUATOR);
+    assertToken("p { body.no-touch & { display: none; } }", 5, "&", CssTokenType.PUNCTUATOR);
   }
 
   @Test
-  public void scss_control_directives() throws ScriptException {
-    assertToken("@if ($debug) { }", 0, "@if", Type.AT_WORD);
-    assertToken("@each $name in 'save' 'cancel' { }", 0, "@each", Type.AT_WORD);
+  public void scss_control_directives() {
+    assertToken("@if ($debug) { }", 0, "@if", CssTokenType.AT_IDENTIFIER);
+    assertToken("@each $name in 'save' 'cancel' { }", 0, "@each", CssTokenType.AT_IDENTIFIER);
   }
 
   @Test
-  public void less_variable() throws ScriptException {
-    assertToken("@nice-blue: #5B83AD;", 0, "@nice-blue", Type.AT_WORD);
-    assertToken("foo { color: @@color; }", 4, "@@color", Type.AT_WORD);
+  public void less_variable() {
+    assertToken("@nice-blue: #5B83AD;", 0, "@nice-blue", CssTokenType.AT_IDENTIFIER);
+    assertToken("foo { color: @@color; }", 4, "@@color", CssTokenType.AT_IDENTIFIER);
   }
 
   @Test
-  public void less_operators() throws ScriptException {
-    assertToken("@base: 2cm * 3mm;", 3, "*", Type.WORD);
+  public void less_comment() {
+    assertToken("// Get in line!", 0, "// Get in line!", CssTokenType.COMMENT);
+    assertToken("// body font size = 62.5%\n\n/* some comment */", 0, "// body font size = 62.5%", CssTokenType.COMMENT);
+    assertToken("/* One heck of a block\n * style comment! */", 0, "/* One heck of a block\n * style comment! */", CssTokenType.COMMENT);
   }
 
   @Test
-  public void less_escaping() throws ScriptException {
-    assertToken("@min768: ~\"(min-width: 768px)\";", 2, "~", Type.WORD);
+  public void unrecognized() {
+    assertToken("$$a", 0, "$a", CssTokenType.DOLLAR_IDENTIFIER);
   }
 
-  @Test
-  public void less_comment() throws ScriptException {
-    // FIXME: Less allows // comment which are not supported by our current tokenizer
-    //assertToken("// Get in line!", 0, "Get in line!", Type.COMMENT);
-
-    assertToken("/* One heck of a block\n * style comment! */", 0, "/* One heck of a block\n * style comment! */", Type.COMMENT);
+  private static void assertToken(String input, int index, String value, CssTokenType CssTokenType) {
+    List<CssToken> tokenList = tokenizer.tokenize(input);
+    assertToken(tokenList, index, value, CssTokenType);
   }
 
-  private static void assertToken(String input, int index, String value, Token.Type type) throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(input);
-    assertToken(tokenList, index, value, type);
+  private static void assertToken(String input, int index, String value, CssTokenType CssTokenType, int line, int column, int endLine, int endColumn) {
+    List<CssToken> tokenList = tokenizer.tokenize(input);
+    assertToken(tokenList, index, value, CssTokenType, line, column, endLine, endColumn);
   }
 
-  private static void assertToken(String input, int index, String value, Token.Type type, int line, int column, int
-    endLine, int endColumn) throws ScriptException {
-    List<Token> tokenList = tokenizer.tokenize(input);
-    assertToken(tokenList, index, value, type, line, column, endLine, endColumn);
-  }
-
-  private static void assertToken(List<Token> tokenList, int index, String value, Token.Type type) {
-    assertThat(tokenList.get(index).type).isEqualTo(type);
+  private static void assertToken(List<CssToken> tokenList, int index, String value, CssTokenType CssTokenType) {
+    assertThat(tokenList.get(index).type).isEqualTo(CssTokenType);
     assertThat(tokenList.get(index).text).isEqualTo(value);
   }
 
-  private static void assertToken(List<Token> tokenList, int index, String value, Token.Type type, int line, int column, int endLine, int endColumn) {
-    assertToken(tokenList, index, value, type);
+  private static void assertToken(List<CssToken> tokenList, int index, String value, CssTokenType CssTokenType, int line, int column, int endLine, int endColumn) {
+    assertToken(tokenList, index, value, CssTokenType);
     assertThat(tokenList.get(index).startLine).isEqualTo(line);
     assertThat(tokenList.get(index).startColumn).isEqualTo(column);
     assertThat(tokenList.get(index).endLine).isEqualTo(endLine);

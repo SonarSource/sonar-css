@@ -19,115 +19,20 @@
  */
 package org.sonar.css.plugin;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import com.sonar.sslr.api.Token;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.sonar.css.plugin.Token.Type;
+import java.util.stream.Collectors;
 
 public class Tokenizer {
 
-  public List<Token> tokenize(String css) throws ScriptException {
-    ScriptEngine engine = new NashornScriptEngineFactory().getScriptEngine();
-    InputStream tokenizeScript = Tokenizer.class.getClassLoader().getResourceAsStream("tokenize.js");
-    engine.eval(new InputStreamReader(tokenizeScript, StandardCharsets.UTF_8));
-    String cssInput = "tokenize('" + StringEscapeUtils.escapeJavaScript(css) + "')";
-    Object tokens = engine.eval(cssInput);
-    return extractTokens(tokens);
-  }
+  public List<CssToken> tokenize(String css) {
+    List<Token> tokenList = CssLexer.create().lex(css);
 
-  private static List<Token> extractTokens(Object tokens) {
-    // tokens is result of call to javascript function tokenize(). It returns an array of arrays, where nested arrays
-    // correspond to tokens. These array javascript objects mapped in Java to Map objects where array index is key.
+    // remove last token (EOF token)
+    List<Token> cloneTokenList = new ArrayList<>(tokenList);
+    cloneTokenList.remove(cloneTokenList.size() - 1);
 
-    List<Token> resultList = new ArrayList<>();
-    for (Object tokenObject : ((Map<String, Object>) tokens).values()) {
-
-      // Access the inner arrays (disregard the keys) and use their length to decide which type of token we are
-      // dealing with.
-      Map<String, Object> tokenProperties = (Map<String, Object>) tokenObject;
-
-      // skip whitespace token (size < 4)
-      if (tokenProperties.size() >= 4) {
-        String text = tokenProperties.get("1").toString();
-        Type type = computeType(tokenProperties.get("0").toString(), text);
-        Integer startLine = convertToInt(tokenProperties.get("2"));
-        Integer startColumn = ((Double) tokenProperties.get("3")).intValue();
-
-        // all cases except for punctuator type
-        if (tokenProperties.size() == 6) {
-          Integer endLine = convertToInt(tokenProperties.get("4"));
-          Integer endColumn = ((Double) tokenProperties.get("5")).intValue();
-
-
-          if (isTokenWithPunctuator(text, ",", startLine, endLine)) {
-            resultList.addAll(splitTokenWithPunctuator(text, type, startLine, startColumn, endLine, endColumn));
-          } else if (isTokenWithPunctuator(text, ":", startLine, endLine)) {
-            resultList.addAll(splitTokenWithPunctuator(text, type, startLine, startColumn, endLine, endColumn));
-          } else {
-            resultList.add(new Token(type, text, startLine, startColumn, endLine, endColumn));
-          }
-        } else {
-          // is punctuator
-          resultList.add(new Token(type, text, startLine, startColumn, startLine, startColumn));
-        }
-      }
-    }
-
-    return resultList;
-  }
-
-  // Javascript tokenizer is not returning 2 tokens for words ending with a comma (e.g. foo,) and for words starting
-  // with at symbol and endings with colon (e.g. @base:) so we need to split the word into 2 tokens (1 word without
-  // the punctuator and 1 punctuator).
-  // For the sake of simplicity we don't handle words ending with the punctuator on a new line.
-  private static Boolean isTokenWithPunctuator(String text, String punctuator, Integer startLine, Integer endLine) {
-    return text.length() > 1 && text.endsWith(punctuator) && startLine.equals(endLine);
-  }
-
-  private static List<Token> splitTokenWithPunctuator(String text, Type type, Integer startLine, Integer startColumn, Integer endLine, Integer endColumn) {
-    List<Token> tokenList = new ArrayList<>();
-
-    tokenList.add(new Token(type, text.substring(0, text.length() - 1), startLine, startColumn, endLine, endColumn - 1));
-    tokenList.add(new Token(Type.PUNCTUATOR, text.substring(text.length() - 1), startLine, endColumn, endLine, endColumn));
-
-    return tokenList;
-  }
-
-  private static Integer convertToInt(Object value) {
-    if (value instanceof Double) {
-      return ((Double) value).intValue();
-    } else if (value instanceof Integer) {
-      return (Integer) value;
-    } else {
-      throw new IllegalStateException("Failed to convert to number: " + value);
-    }
-  }
-
-  private static Type computeType(String type, String text) {
-    switch (type) {
-      case "at-word":
-        return Type.AT_WORD;
-      case "word":
-        if (",".equals(text)) {
-          return Type.PUNCTUATOR;
-        } else {
-          return Type.WORD;
-        }
-      case "comment":
-        return Type.COMMENT;
-      case "string":
-        return Type.STRING;
-      case "brackets":
-        return Type.BRACKETS;
-      default:
-        return Type.PUNCTUATOR;
-    }
+    return cloneTokenList.stream().map(CssToken::new).collect(Collectors.toList());
   }
 }

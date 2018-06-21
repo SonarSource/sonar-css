@@ -71,7 +71,7 @@ public class MetricSensorTest {
     highlight("\"foo\"");
     assertHighlighting(1, 0, 5, TypeOfText.STRING);
 
-    highlight("\"foo\nbar\"");
+    highlight("\"foo\\\nbar\"");
     assertHighlighting(1, 0, 4, TypeOfText.STRING);
     assertHighlighting(2, 0, 4, TypeOfText.STRING);
   }
@@ -111,22 +111,11 @@ public class MetricSensorTest {
 
   @Test
   public void keyword() throws IOException {
-    highlight("foo { }");
-    assertHighlighting(1, 0, 3, TypeOfText.KEYWORD);
-
-    highlight(".foo { }");
+    highlight("$foo { }");
     assertHighlighting(1, 0, 4, TypeOfText.KEYWORD);
-
-    highlight(".foo bar { }");
-    assertHighlighting(1, 0, 4, TypeOfText.KEYWORD);
-    assertHighlighting(1, 5, 3, TypeOfText.KEYWORD);
-
-    highlight(".border-radius(@radius) { }");
-    assertHighlighting(1, 0, 14, TypeOfText.KEYWORD);
 
     highlight("#header { .border-radius(4px); }");
     assertHighlighting(1, 0, 7, TypeOfText.KEYWORD);
-    assertHighlighting(1, 10, 14, TypeOfText.KEYWORD);
   }
 
   @Test
