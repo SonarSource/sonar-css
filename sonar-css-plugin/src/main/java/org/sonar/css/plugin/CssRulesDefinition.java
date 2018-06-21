@@ -19,12 +19,7 @@
  */
 package org.sonar.css.plugin;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.css.plugin.rules.ColorNoInvalidHex;
-import org.sonar.css.plugin.rules.UnitNoUnknown;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
 import static org.sonar.css.plugin.SonarWayProfile.PROFILE_PATH;

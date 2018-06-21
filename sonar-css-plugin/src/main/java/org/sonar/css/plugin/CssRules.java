@@ -19,14 +19,19 @@
  */
 package org.sonar.css.plugin;
 
-import java.util.*;
-
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.css.plugin.rules.ColorNoInvalidHex;
 import org.sonar.css.plugin.rules.CssRule;
 import org.sonar.css.plugin.rules.UnitNoUnknown;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CssRules {
 
