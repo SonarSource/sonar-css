@@ -27,6 +27,12 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.sonarsource.css</groupId>
+      <artifactId>sonar-css-plugin</artifactId>
+      <version>${version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

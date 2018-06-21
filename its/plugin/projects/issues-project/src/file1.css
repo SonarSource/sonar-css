@@ -1,0 +1,4 @@
+.class1 {
+  background-color: #ffw; /* S4647 | color-no-invalid-hex */
+  width: 100pixels; /* S4653 | unit-no-unknown */
+}

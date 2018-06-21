@@ -52,7 +52,7 @@ public class Tests {
   static {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
       .addPlugin(PLUGIN_LOCATION)
-      .setSonarVersion(System.getProperty("sonar.runtimeVersion", "7.2-RC1"));
+      .setSonarVersion(System.getProperty("sonar.runtimeVersion", "7.2"));
     ORCHESTRATOR = orchestratorBuilder.build();
   }
 

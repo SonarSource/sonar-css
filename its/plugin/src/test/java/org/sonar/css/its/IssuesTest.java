@@ -25,6 +25,7 @@ import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.sonar.css.plugin.CssRules;
 import org.sonarqube.ws.Issues.Issue;
 import org.sonarqube.ws.client.issues.SearchRequest;
 
@@ -33,7 +34,7 @@ import static org.sonar.css.its.Tests.newWsClient;
 
 public class IssuesTest {
 
-  private static String PROJECT_KEY = "css-plugin-test-project";
+  private static String PROJECT_KEY = "issues-project";
 
   @ClassRule
   public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
@@ -49,9 +50,7 @@ public class IssuesTest {
     request.setComponentKeys(Collections.singletonList(PROJECT_KEY));
     List<Issue> issuesList = newWsClient().issues().search(request).getIssuesList();
 
-    assertThat(issuesList).extracting("line").containsOnly(5);
-    assertThat(issuesList).extracting("component").containsOnly(PROJECT_KEY + ":src/file1.css");
-    assertThat(issuesList).extracting("rule").containsOnly("css:S4647");
+    assertThat(issuesList).extracting("rule").hasSize(CssRules.getRuleClasses().size() * 3);
   }
 
 }
