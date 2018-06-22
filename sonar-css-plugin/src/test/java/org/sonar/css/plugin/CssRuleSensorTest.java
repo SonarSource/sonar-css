@@ -60,7 +60,6 @@ public class CssRuleSensorTest {
     sensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
     assertThat(sensorDescriptor.languages()).containsOnly("css");
-    assertThat(sensorDescriptor.type()).isEqualTo(Type.MAIN);
   }
 
   @Test

@@ -36,7 +36,10 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
+import org.sonar.css.plugin.StylelintReport.Issue;
+import org.sonar.css.plugin.StylelintReport.IssuesPerFile;
 import org.sonar.css.plugin.bundle.BundleHandler;
 
 public class CssRuleSensor implements Sensor {
@@ -55,8 +58,7 @@ public class CssRuleSensor implements Sensor {
   public void describe(SensorDescriptor descriptor) {
     descriptor
       .onlyOnLanguage(CssLanguage.KEY)
-      .name("SonarCSS Rules")
-      .onlyOnFileType(InputFile.Type.MAIN);
+      .name("SonarCSS Rules");
   }
 
   @Override
@@ -107,24 +109,17 @@ public class CssRuleSensor implements Sensor {
             .at(inputFile.selectLine(issue.line))
             .message(issue.text);
 
+          RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
+          if (ruleKey == null) {
+            throw new IllegalStateException("Unknown stylelint rule or rule not enabled " + issue.rule);
+          }
           sonarIssue
             .at(location)
-            .forRule(cssRules.getSonarKey(issue.rule))
+            .forRule(ruleKey)
             .save();
         }
       }
     }
-  }
-
-  static class IssuesPerFile {
-    String source;
-    Issue[] warnings;
-  }
-
-  static class Issue {
-    int line;
-    String rule;
-    String text;
   }
 
 }

@@ -27,14 +27,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CssRulesDefinitionTest {
 
   @Test
-  public void test() {
-    CssRulesDefinition rulesDefinition = new CssRulesDefinition();
+  public void test_with_external_rules() {
+    CssRulesDefinition rulesDefinition = new CssRulesDefinition(true);
     RulesDefinition.Context context = new RulesDefinition.Context();
     rulesDefinition.define(context);
-    RulesDefinition.Repository repository = context.repository("css");
+
+    assertThat(context.repositories()).hasSize(2);
+    RulesDefinition.Repository mainRepository = context.repository("css");
+    RulesDefinition.Repository externalRepository = context.repository("external_stylelint");
+
+    assertThat(externalRepository.name()).isEqualTo("stylelint");
+    assertThat(externalRepository.language()).isEqualTo("css");
+    assertThat(externalRepository.isExternal()).isEqualTo(true);
+    assertThat(externalRepository.rules()).hasSize(170);
+
+    assertThat(mainRepository.name()).isEqualTo("SonarAnalyzer");
+    assertThat(mainRepository.language()).isEqualTo("css");
+    assertThat(mainRepository.isExternal()).isEqualTo(false);
+    assertThat(mainRepository.rules()).hasSize(CssRules.getRuleClasses().size());
+  }
+
+  @Test
+  public void test_no_external_rules() throws Exception {
+    CssRulesDefinition rulesDefinition = new CssRulesDefinition(false);
+    RulesDefinition.Context context = new RulesDefinition.Context();
+    rulesDefinition.define(context);
 
     assertThat(context.repositories()).hasSize(1);
 
+    RulesDefinition.Repository repository = context.repository("css");
     assertThat(repository.name()).isEqualTo("SonarAnalyzer");
     assertThat(repository.language()).isEqualTo("css");
     assertThat(repository.isExternal()).isEqualTo(false);

@@ -22,6 +22,7 @@ package org.sonar.css.plugin;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
+import org.sonar.api.utils.Version;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 public class CssPlugin implements Plugin {
@@ -29,19 +30,26 @@ public class CssPlugin implements Plugin {
   static final String FILE_SUFFIXES_KEY = "sonar.css.file.suffixes";
   public static final String FILE_SUFFIXES_DEFVALUE = ".css,.less,.scss";
 
+  public static final String STYLELINT_REPORT_PATHS = "sonar.css.stylelint.reportPaths";
+  public static final String STYLELINT_REPORT_PATHS_DEFAULT_VALUE = "";
+
   private static final String CSS_CATEGORY = "CSS";
+  private static final String LINTER_SUBCATEGORY = "Popular Rule Engines";
   private static final String GENERAL_SUBCATEGORY = "General";
 
   @Override
   public void define(Context context) {
+    boolean externalIssuesSupported = context.getSonarQubeVersion().isGreaterThanOrEqual(Version.create(7, 2));
+
     context.addExtensions(
       MetricSensor.class,
       CssLanguage.class,
       SonarWayProfile.class,
-      CssRulesDefinition.class,
+      new CssRulesDefinition(externalIssuesSupported),
       CssBundleHandler.class,
       CssRuleSensor.class,
       StylelintCommandProvider.class,
+      StylelintReportSensor.class,
 
       PropertyDefinition.builder(FILE_SUFFIXES_KEY)
         .defaultValue(FILE_SUFFIXES_DEFVALUE)
@@ -53,5 +61,19 @@ public class CssPlugin implements Plugin {
         .multiValues(true)
         .build()
     );
+
+
+    if (externalIssuesSupported) {
+      context.addExtension(
+        PropertyDefinition.builder(STYLELINT_REPORT_PATHS)
+          .defaultValue(STYLELINT_REPORT_PATHS_DEFAULT_VALUE)
+          .name("Stylelint Report Files")
+          .description("Paths (absolute or relative) to the JSON files with stylelint issues.")
+          .onQualifiers(Qualifiers.MODULE, Qualifiers.PROJECT)
+          .subCategory(LINTER_SUBCATEGORY)
+          .category(CSS_CATEGORY)
+          .multiValues(true)
+          .build());
+    }
   }
 }
