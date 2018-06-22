@@ -7,7 +7,7 @@ var result = [
 
     warnings: [
       {
-        text: "some message",
+        text: "some message (color-no-invalid-hex)",
         line: 2,
         rule: "color-no-invalid-hex"
       }
