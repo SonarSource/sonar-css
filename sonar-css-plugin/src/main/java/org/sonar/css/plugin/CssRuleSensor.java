@@ -20,6 +20,7 @@
 package org.sonar.css.plugin;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -63,10 +64,9 @@ public class CssRuleSensor implements Sensor {
     File deployDestination = context.fileSystem().workDir();
     bundleHandler.deployBundle(deployDestination);
 
-    File projectBaseDir = context.fileSystem().baseDir();
-
-    String[] commandParts = linterCommandProvider.commandParts(deployDestination, projectBaseDir);
+    String[] commandParts = linterCommandProvider.commandParts(deployDestination, context);
     ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
+    String command = String.join(" ", commandParts);
 
     try {
       createConfig(deployDestination);
@@ -78,8 +78,10 @@ public class CssRuleSensor implements Sensor {
       }
 
     } catch (IOException e) {
-      String command = String.join(" ", commandParts);
-      throw new IllegalStateException(String.format("Failed to run external process '%s'. Re-run analysis with debug option for more information.", command), e);
+      throw new IllegalStateException(String.format("Failed to run external process '%s'", command), e);
+
+    } catch (JsonSyntaxException e) {
+      throw new IllegalStateException(String.format("Failed to parse json result of external process execution '%s'. To diagnose, try to run it manually.", command), e);
     }
   }
 

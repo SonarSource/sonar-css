@@ -20,7 +20,9 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
+import java.nio.file.Paths;
 import org.sonar.api.batch.ScannerSide;
+import org.sonar.api.batch.sensor.SensorContext;
 
 @ScannerSide
 public class StylelintCommandProvider implements LinterCommandProvider {
@@ -28,11 +30,17 @@ public class StylelintCommandProvider implements LinterCommandProvider {
   private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
 
   @Override
-  public String[] commandParts(File deployDestination, File projectBaseDir) {
+  public String[] commandParts(File deployDestination, SensorContext context) {
+    String projectBaseDir = context.fileSystem().baseDir().getAbsolutePath();
+    String[] suffixes = context.config().getStringArray(CssPlugin.FILE_SUFFIXES_KEY);
+    String filesGlob = "**" + File.separator + "*{" + String.join(",", suffixes) + "}";
+    String filesToAnalyze = Paths.get(projectBaseDir, "TOREPLACE").toString();
+    filesToAnalyze = filesToAnalyze.replace("TOREPLACE", filesGlob);
+
     return new String[]{
       "node",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      projectBaseDir.getAbsolutePath(),
+      filesToAnalyze,
       "--config", new File(deployDestination, CONFIG_PATH).getAbsolutePath(),
       "-f", "json"
     };
