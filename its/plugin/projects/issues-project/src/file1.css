@@ -1,16 +1,17 @@
 .class1 {
-  background-color: #ffw;         /* S4647 | color-no-invalid-hex */
-  width: 100pixels;               /* S4653 | unit-no-unknown */
-  /* */                           /* S4663 | comment-no-empty */
-  content: "first
-    second";                      /* S4652 | string-no-newline */
+    background-color: #ffw; /* S4647 | color-no-invalid-hex */
+    width: 100pixels; /* S4653 | unit-no-unknown */
+    /* */ /* S4663 | comment-no-empty */
+    content: "first second";                  /* S4652 | string-no-newline */ color: pink;
+    color: orange; /* S4656 | declaration-block-no-duplicate-properties */
 }
 
 @keyframes important1 {
-  from {
-    margin-top: 50px;
-  }
-  to {
-    margin-top: 100px !important; /* S4655 | keyframe-declaration-no-important */
-  }
+    from {
+        margin-top: 50px;
+    }
+
+    to {
+        margin-top: 100px !important; /* S4655 | keyframe-declaration-no-important */
+    }
 }
