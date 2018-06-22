@@ -24,6 +24,7 @@ import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.css.plugin.rules.CommentNoEmpty;
 import org.sonar.css.plugin.rules.CssRule;
+import org.sonar.css.plugin.rules.KeyframeDeclarationNoImportant;
 import org.sonar.css.plugin.rules.NoEmptySource;
 import org.sonar.css.plugin.rules.ColorNoInvalidHex;
 import org.sonar.css.plugin.rules.StringNoNewline;
@@ -54,11 +55,12 @@ public class CssRules {
 
   public static List<Class> getRuleClasses() {
     return Collections.unmodifiableList(Arrays.asList(
-        ColorNoInvalidHex.class,
-        CommentNoEmpty.class,
-        NoEmptySource.class,
-        StringNoNewline.class,
-        UnitNoUnknown.class
+      ColorNoInvalidHex.class,
+      CommentNoEmpty.class,
+      KeyframeDeclarationNoImportant.class,
+      NoEmptySource.class,
+      StringNoNewline.class,
+      UnitNoUnknown.class
     ));
   }
 
