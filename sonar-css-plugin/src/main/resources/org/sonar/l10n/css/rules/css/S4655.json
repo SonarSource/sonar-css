@@ -1,5 +1,5 @@
 {
-  "title": "\"!important\" should not be used on \"keyframes\" ",
+  "title": "\"!important\" should not be used on \"keyframes\"",
   "type": "BUG",
   "status": "ready",
   "remediation": {
