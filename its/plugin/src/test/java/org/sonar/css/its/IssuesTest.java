@@ -51,7 +51,7 @@ public class IssuesTest {
     List<Issue> issuesList = newWsClient().issues().search(request).getIssuesList();
 
     assertThat(issuesList).extracting("rule").hasSize(
-      CssRules.getRuleClasses().size() * 3
+      CssRules.getRuleClasses().size() * 3 /* issues are raised against .css, .less and .scss */
       - 1 /* issue S1128 not raised on .less */);
   }
 
