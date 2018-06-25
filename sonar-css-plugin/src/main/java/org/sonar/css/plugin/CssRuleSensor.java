@@ -28,6 +28,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -94,6 +96,17 @@ public class CssRuleSensor implements Sensor {
     Files.write(Paths.get(configPath), Collections.singletonList(configAsJson), StandardCharsets.UTF_8);
   }
 
+  private static String normalizeMessage(String message) {
+    // stylelint messages have format "message (rulekey)"
+    Pattern pattern = Pattern.compile("(.+)\\([a-z\\-]+\\)");
+    Matcher matcher = pattern.matcher(message);
+    if (matcher.matches()) {
+      return matcher.group(1);
+    } else {
+      return message;
+    }
+  }
+
   private static void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
     FileSystem fileSystem = context.fileSystem();
 
@@ -107,7 +120,7 @@ public class CssRuleSensor implements Sensor {
           NewIssueLocation location = sonarIssue.newLocation()
             .on(inputFile)
             .at(inputFile.selectLine(issue.line))
-            .message(issue.text);
+            .message(normalizeMessage(issue.text));
 
           RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
           if (ruleKey == null) {

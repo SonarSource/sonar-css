@@ -37,6 +37,7 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
 
@@ -72,6 +73,8 @@ public class CssRuleSensorTest {
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(1);
+    Issue issue = context.allIssues().iterator().next();
+    assertThat(issue.primaryLocation().message()).isEqualTo("some message");
 
     Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
     assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true}}");
