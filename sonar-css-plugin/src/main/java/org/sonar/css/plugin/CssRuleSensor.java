@@ -172,12 +172,18 @@ public class CssRuleSensor implements Sensor {
 
           RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
           if (ruleKey == null) {
-            throw new IllegalStateException("Unknown stylelint rule or rule not enabled " + issue.rule);
+            if ("CssSyntaxError".equals(issue.rule)) {
+              LOG.error("Failed to parse " + inputFile.uri());
+            } else {
+              LOG.error("Unknown stylelint rule or rule not enabled " + issue.rule);
+            }
+
+          } else {
+            sonarIssue
+              .at(location)
+              .forRule(ruleKey)
+              .save();
           }
-          sonarIssue
-            .at(location)
-            .forRule(ruleKey)
-            .save();
         }
       }
     }
