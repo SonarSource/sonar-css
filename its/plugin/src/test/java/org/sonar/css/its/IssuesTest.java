@@ -52,7 +52,7 @@ public class IssuesTest {
 
     assertThat(issuesList).extracting("rule").hasSize(
       CssRules.getRuleClasses().size() * 3
-      - 1 /* S1128 not raising on .less */);
+      - 1 /* issue S1128 not raised on .less */);
   }
 
 }
