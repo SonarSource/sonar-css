@@ -50,7 +50,9 @@ public class IssuesTest {
     request.setComponentKeys(Collections.singletonList(PROJECT_KEY));
     List<Issue> issuesList = newWsClient().issues().search(request).getIssuesList();
 
-    assertThat(issuesList).extracting("rule").hasSize(CssRules.getRuleClasses().size() * 3);
+    assertThat(issuesList).extracting("rule").hasSize(
+      CssRules.getRuleClasses().size() * 3
+      - 1 /* issue S1128 not raised on .less */);
   }
 
 }
