@@ -56,7 +56,7 @@ public class StylelintReportTest {
         "external_stylelint:no-missing-end-of-source-newline",
         "external_stylelint:rule-empty-line-before",
         "external_stylelint:selector-pseudo-element-colon-notation",
-        "external_stylelint:block-no-empty");
+        "css:S4658");
     }
   }
 }
