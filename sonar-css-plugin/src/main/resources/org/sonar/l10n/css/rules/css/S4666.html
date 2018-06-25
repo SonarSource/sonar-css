@@ -1,0 +1,14 @@
+<p>When a selector appears more than once in a statement, this is not a bug but probably a mistake that reduces the readability of the source code.
+Therefore, selectors should not be duplicated.</p>
+<h2>Noncompliant Code Example</h2>
+<pre>
+.foo,
+.bar,
+.foo {}
+</pre>
+<h2>Compliant Solution</h2>
+<pre>
+.bar,
+.foo {}
+</pre>
+
