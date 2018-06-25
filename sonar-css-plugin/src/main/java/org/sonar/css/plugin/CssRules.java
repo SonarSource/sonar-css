@@ -38,6 +38,7 @@ import org.sonar.css.plugin.rules.FontFamilyNoMissingGenericFamilyKeyword;
 import org.sonar.css.plugin.rules.KeyframeDeclarationNoImportant;
 import org.sonar.css.plugin.rules.NoDuplicateAtImportRules;
 import org.sonar.css.plugin.rules.NoEmptySource;
+import org.sonar.css.plugin.rules.NoExtraSemicolons;
 import org.sonar.css.plugin.rules.StringNoNewline;
 import org.sonar.css.plugin.rules.UnitNoUnknown;
 
@@ -67,6 +68,7 @@ public class CssRules {
       KeyframeDeclarationNoImportant.class,
       NoDuplicateAtImportRules.class,
       NoEmptySource.class,
+      NoExtraSemicolons.class,
       StringNoNewline.class,
       UnitNoUnknown.class
     ));
