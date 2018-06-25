@@ -24,6 +24,9 @@ a {
   color: pink;;                                               /* S1116 | no-extra-semicolons */
 }
 
+unknown {                                                     /* S4670 | selector-type-no-unknown */
+  color: black;
+}
 
 @keyframes important1 {
   from {
@@ -34,4 +37,4 @@ a {
   }
 }
 
-foo { }                                                       /* S4658 | block-no-empty */
+.class2 { }                                                   /* S4658 | block-no-empty */
