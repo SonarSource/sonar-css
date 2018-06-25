@@ -38,12 +38,18 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.config.Configuration;
+import org.sonar.api.utils.log.LogTester;
+import org.sonar.api.utils.log.LoggerLevel;
 import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CssRuleSensorTest {
+
+  @Rule
+  public final LogTester logTester = new LogTester();
 
   @Rule
   public ExpectedException thrown= ExpectedException.none();
@@ -68,7 +74,7 @@ public class CssRuleSensorTest {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
-    TestLinterCommandProvider rulesExecution = TestLinterCommandProvider.nodeScript("/executables/mockStylelint.js", inputFile.absolutePath());
+    TestLinterCommandProvider rulesExecution = new TestLinterCommandProvider().nodeScript("/executables/mockStylelint.js", inputFile.absolutePath());
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
     sensor.execute(context);
 
@@ -81,6 +87,20 @@ public class CssRuleSensorTest {
   }
 
   @Test
+  public void test_invalid_node() throws IOException {
+    SensorContextTester context = SensorContextTester.create(BASE_DIR);
+    context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
+    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
+    TestLinterCommandProvider rulesExecution = new TestLinterCommandProvider().nodeScript("/executables/mockStylelint.js", inputFile.absolutePath());
+    rulesExecution.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(0);
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
+  }
+
+  @Test
   public void test_error() throws IOException {
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Failed to parse json result of external process execution");
@@ -88,7 +108,7 @@ public class CssRuleSensorTest {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
-    TestLinterCommandProvider rulesExecution = TestLinterCommandProvider.nodeScript("/executables/mockError.js", inputFile.absolutePath());
+    TestLinterCommandProvider rulesExecution = new TestLinterCommandProvider().nodeScript("/executables/mockError.js", inputFile.absolutePath());
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
     sensor.execute(context);
   }
@@ -108,7 +128,7 @@ public class CssRuleSensorTest {
 
   private static class TestLinterCommandProvider implements LinterCommandProvider {
 
-    private static String nodeExecutable = findNodeExecutable();
+    String nodeExecutable = findNodeExecutable();
 
     private String[] elements;
 
@@ -130,10 +150,9 @@ public class CssRuleSensorTest {
       }
     }
 
-    static TestLinterCommandProvider nodeScript(String script, String args) {
-      TestLinterCommandProvider testRulesExecution = new TestLinterCommandProvider();
-      testRulesExecution.elements = new String[]{ nodeExecutable, resourceScript(script), args};
-      return testRulesExecution;
+    TestLinterCommandProvider nodeScript(String script, String args) {
+      this.elements = new String[]{ nodeExecutable, resourceScript(script), args};
+      return this;
     }
 
     @Override
@@ -144,6 +163,11 @@ public class CssRuleSensorTest {
     @Override
     public String configPath(File deployDestination) {
       return new File(deployDestination, "testconfig.json").getAbsolutePath();
+    }
+
+    @Override
+    public String nodeExecutable(Configuration configuration) {
+      return nodeExecutable;
     }
   }
 

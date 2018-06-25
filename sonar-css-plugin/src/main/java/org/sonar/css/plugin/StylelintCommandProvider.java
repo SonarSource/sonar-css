@@ -23,11 +23,13 @@ import java.io.File;
 import java.nio.file.Paths;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.config.Configuration;
 
 @ScannerSide
 public class StylelintCommandProvider implements LinterCommandProvider {
 
   private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
+  private static final String NODE_EXECUTABLE = "node";
 
   @Override
   public String[] commandParts(File deployDestination, SensorContext context) {
@@ -38,7 +40,7 @@ public class StylelintCommandProvider implements LinterCommandProvider {
     filesToAnalyze = filesToAnalyze.replace("TOREPLACE", filesGlob);
 
     return new String[]{
-      "node",
+      nodeExecutable(context.config()),
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
       filesToAnalyze,
       "--config", new File(deployDestination, CONFIG_PATH).getAbsolutePath(),
@@ -49,5 +51,10 @@ public class StylelintCommandProvider implements LinterCommandProvider {
   @Override
   public String configPath(File deployDestination) {
     return new File(deployDestination, CONFIG_PATH).getAbsolutePath();
+  }
+
+  @Override
+  public String nodeExecutable(Configuration configuration) {
+    return NODE_EXECUTABLE;
   }
 }

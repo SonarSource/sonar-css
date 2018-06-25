@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.IOUtils;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -39,12 +40,17 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
 import org.sonar.css.plugin.StylelintReport.Issue;
 import org.sonar.css.plugin.StylelintReport.IssuesPerFile;
 import org.sonar.css.plugin.bundle.BundleHandler;
 
 public class CssRuleSensor implements Sensor {
+
+  private static final Logger LOG = Loggers.get(CssRuleSensor.class);
+  private static final int MIN_NODE_VERSION = 6;
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
@@ -65,6 +71,10 @@ public class CssRuleSensor implements Sensor {
 
   @Override
   public void execute(SensorContext context) {
+    if (!checkCompatibleNodeVersion(context)) {
+      return;
+    }
+
     File deployDestination = context.fileSystem().workDir();
     bundleHandler.deployBundle(deployDestination);
 
@@ -87,6 +97,39 @@ public class CssRuleSensor implements Sensor {
     } catch (JsonSyntaxException e) {
       throw new IllegalStateException(String.format("Failed to parse json result of external process execution '%s'. To diagnose, try to run it manually.", command), e);
     }
+  }
+
+  private boolean checkCompatibleNodeVersion(SensorContext context) {
+    String nodeExecutable = linterCommandProvider.nodeExecutable(context.config());
+    LOG.debug("Checking node version");
+    String messageSuffix = "No CSS files will be analyzed.";
+
+    String version;
+    try {
+      Process process = Runtime.getRuntime().exec(nodeExecutable + " -v");
+      version = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8).trim();
+    } catch (Exception e) {
+      LOG.error("Failed to get Node.js version. " + messageSuffix, e);
+      return false;
+    }
+
+    Pattern versionPattern = Pattern.compile("v?(\\d+)\\.\\d+\\.\\d+");
+    Matcher versionMatcher = versionPattern.matcher(version);
+    if (versionMatcher.matches()) {
+      int major = Integer.parseInt(versionMatcher.group(1));
+      if (major < MIN_NODE_VERSION) {
+        String message = String.format("Only Node.js v%s or later is supported, got %s. %s", MIN_NODE_VERSION, version, messageSuffix);
+        LOG.error(message);
+        return false;
+      }
+    } else {
+      String message = String.format("Failed to parse Node.js version, got '%s'. %s", version, messageSuffix);
+      LOG.error(message);
+      return false;
+    }
+
+    LOG.debug(String.format("Using Node.js %s", version));
+    return true;
   }
 
   private void createConfig(File deployDestination) throws IOException {

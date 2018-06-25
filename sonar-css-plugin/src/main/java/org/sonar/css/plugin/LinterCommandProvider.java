@@ -21,10 +21,13 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.config.Configuration;
 
 public interface LinterCommandProvider {
 
   String[] commandParts(File deployDestination, SensorContext context);
 
   String configPath(File deployDestination);
+
+  String nodeExecutable(Configuration configuration);
 }
