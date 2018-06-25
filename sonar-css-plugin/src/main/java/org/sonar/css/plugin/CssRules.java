@@ -43,6 +43,7 @@ import org.sonar.css.plugin.rules.NoDuplicateSelectors;
 import org.sonar.css.plugin.rules.NoEmptySource;
 import org.sonar.css.plugin.rules.NoExtraSemicolons;
 import org.sonar.css.plugin.rules.PropertyNoUnknown;
+import org.sonar.css.plugin.rules.SelectorTypeNoUnknown;
 import org.sonar.css.plugin.rules.StringNoNewline;
 import org.sonar.css.plugin.rules.UnitNoUnknown;
 
@@ -77,6 +78,7 @@ public class CssRules {
       NoEmptySource.class,
       NoExtraSemicolons.class,
       PropertyNoUnknown.class,
+      SelectorTypeNoUnknown.class,
       StringNoNewline.class,
       UnitNoUnknown.class
     ));
