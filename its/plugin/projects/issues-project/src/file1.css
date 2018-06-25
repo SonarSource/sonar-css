@@ -9,6 +9,7 @@
     second";              /* S4652 | string-no-newline */
   color: pink;
   color: orange;          /* S4656 | declaration-block-no-duplicate-properties */
+  font: 1em/1.3 Times;    /* S4649 | font-family-no-missing-generic-family-keyword */
 }
 
 @keyframes important1 {
