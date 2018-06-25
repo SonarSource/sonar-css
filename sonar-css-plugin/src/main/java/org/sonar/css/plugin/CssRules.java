@@ -33,6 +33,7 @@ import org.sonar.css.plugin.rules.ColorNoInvalidHex;
 import org.sonar.css.plugin.rules.CommentNoEmpty;
 import org.sonar.css.plugin.rules.CssRule;
 import org.sonar.css.plugin.rules.DeclarationBlockNoDuplicateProperties;
+import org.sonar.css.plugin.rules.FontFamilyNoDuplicateNames;
 import org.sonar.css.plugin.rules.FontFamilyNoMissingGenericFamilyKeyword;
 import org.sonar.css.plugin.rules.KeyframeDeclarationNoImportant;
 import org.sonar.css.plugin.rules.NoDuplicateAtImportRules;
@@ -61,6 +62,7 @@ public class CssRules {
       ColorNoInvalidHex.class,
       CommentNoEmpty.class,
       DeclarationBlockNoDuplicateProperties.class,
+      FontFamilyNoDuplicateNames.class,
       FontFamilyNoMissingGenericFamilyKeyword.class,
       KeyframeDeclarationNoImportant.class,
       NoDuplicateAtImportRules.class,
