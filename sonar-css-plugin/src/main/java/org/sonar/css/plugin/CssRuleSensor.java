@@ -93,7 +93,7 @@ public class CssRuleSensor implements Sensor {
 
       try (InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
         IssuesPerFile[] issues = new Gson().fromJson(inputStreamReader, IssuesPerFile[].class);
-        saveIssues(context, cssRules, issues);
+        saveIssues(context, issues);
       }
 
     } catch (IOException e) {
@@ -155,7 +155,7 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private static void saveIssues(SensorContext context, CssRules cssRules, IssuesPerFile[] issues) {
+  private void saveIssues(SensorContext context, IssuesPerFile[] issues) {
     FileSystem fileSystem = context.fileSystem();
 
     for (IssuesPerFile issuesPerFile : issues) {
@@ -163,29 +163,33 @@ public class CssRuleSensor implements Sensor {
 
       if (inputFile != null) {
         for (Issue issue : issuesPerFile.warnings) {
-          NewIssue sonarIssue = context.newIssue();
-
-          NewIssueLocation location = sonarIssue.newLocation()
-            .on(inputFile)
-            .at(inputFile.selectLine(issue.line))
-            .message(normalizeMessage(issue.text));
-
-          RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
-          if (ruleKey == null) {
-            if ("CssSyntaxError".equals(issue.rule)) {
-              LOG.error("Failed to parse " + inputFile.uri());
-            } else {
-              LOG.error("Unknown stylelint rule or rule not enabled " + issue.rule);
-            }
-
-          } else {
-            sonarIssue
-              .at(location)
-              .forRule(ruleKey)
-              .save();
-          }
+          saveIssue(context, inputFile, issue);
         }
       }
+    }
+  }
+
+  private void saveIssue(SensorContext context, InputFile inputFile, Issue issue) {
+    NewIssue sonarIssue = context.newIssue();
+
+    NewIssueLocation location = sonarIssue.newLocation()
+      .on(inputFile)
+      .at(inputFile.selectLine(issue.line))
+      .message(normalizeMessage(issue.text));
+
+    RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
+    if (ruleKey == null) {
+      if ("CssSyntaxError".equals(issue.rule)) {
+        LOG.error("Failed to parse " + inputFile.uri());
+      } else {
+        LOG.error("Unknown stylelint rule or rule not enabled " + issue.rule);
+      }
+
+    } else {
+      sonarIssue
+        .at(location)
+        .forRule(ruleKey)
+        .save();
     }
   }
 
