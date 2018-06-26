@@ -38,6 +38,7 @@ import org.sonar.css.plugin.rules.DeclarationBlockNoDuplicateProperties;
 import org.sonar.css.plugin.rules.DeclarationBlockNoShorthandPropertyOverrides;
 import org.sonar.css.plugin.rules.FontFamilyNoDuplicateNames;
 import org.sonar.css.plugin.rules.FontFamilyNoMissingGenericFamilyKeyword;
+import org.sonar.css.plugin.rules.FunctionLinearGradientNoNonstandardDirection;
 import org.sonar.css.plugin.rules.KeyframeDeclarationNoImportant;
 import org.sonar.css.plugin.rules.MediaFeatureNameNoUnknown;
 import org.sonar.css.plugin.rules.NoDuplicateAtImportRules;
@@ -78,6 +79,7 @@ public class CssRules {
       DeclarationBlockNoShorthandPropertyOverrides.class,
       FontFamilyNoDuplicateNames.class,
       FontFamilyNoMissingGenericFamilyKeyword.class,
+      FunctionLinearGradientNoNonstandardDirection.class,
       KeyframeDeclarationNoImportant.class,
       MediaFeatureNameNoUnknown.class,
       NoDuplicateAtImportRules.class,
