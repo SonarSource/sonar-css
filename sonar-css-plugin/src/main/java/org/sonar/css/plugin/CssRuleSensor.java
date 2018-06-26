@@ -71,6 +71,11 @@ public class CssRuleSensor implements Sensor {
 
   @Override
   public void execute(SensorContext context) {
+    if (cssRules.isEmpty()) {
+      LOG.warn("No rules are activated in CSS Quality Profile");
+      return;
+    }
+
     if (!checkCompatibleNodeVersion(context)) {
       return;
     }
