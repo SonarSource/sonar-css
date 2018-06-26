@@ -21,7 +21,7 @@ a:unknown {                                                   /* S4659 | selecto
 }
 
 .class1 {                                                     /* S4666 | no-duplicate-selectors */
-  width: 100px;
+  padding: 100px;
 }
 
 a {
@@ -34,6 +34,10 @@ a::pseudo {                                                   /* S4660 | selecto
 
 unknown {                                                     /* S4670 | selector-type-no-unknown */
   color: black;
+}
+
+@unknown {                                                    /* S4662 | at-rule-no-unknown */
+  width: 1px;
 }
 
 @keyframes important1 {
