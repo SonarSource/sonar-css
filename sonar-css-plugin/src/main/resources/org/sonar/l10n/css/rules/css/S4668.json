@@ -1,5 +1,5 @@
 {
-  "title": "Comment formatting should be valid",
+  "title": "Single line comment syntax should not be used",
   "type": "BUG",
   "status": "ready",
   "remediation": {

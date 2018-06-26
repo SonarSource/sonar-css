@@ -4,18 +4,19 @@ useless. The code should be refactored to consider the longhand property or to r
 <pre>
 a {
   padding-left: 10px;
-  padding: 20px; // Noncompliant; padding is overriding padding-left making it useless
+  padding: 20px; /* Noncompliant; padding is overriding padding-left making it useless */
 }
 </pre>
 <h2>Compliant Solution</h2>
 <pre>
 a {
-  padding: 10px; // Compliant; padding is defining a general behaviour and padding-left, just after, is precising the left case
+  padding: 10px; /* Compliant; padding is defining a general behaviour and padding-left, just after, is precising the left case */
   padding-left: 20px;
 }
 </pre>
 <h2>See</h2>
 <ul>
-  <li> https://developer.mozilla.org/en-US/docs/Web/CSS/Shorthand_properties </li>
+  <li> <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Shorthand_properties">Mozilla Web Technology for Developers</a> - shorthand
+  properties </li>
 </ul>
 

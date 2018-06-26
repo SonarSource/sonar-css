@@ -1,5 +1,5 @@
 {
-  "title": "Empty statements should be removed",
+  "title": "Extra semicolons should be removed",
   "type": "CODE_SMELL",
   "status": "ready",
   "remediation": {

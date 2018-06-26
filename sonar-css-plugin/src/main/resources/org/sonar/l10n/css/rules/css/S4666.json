@@ -9,7 +9,7 @@
   "tags": [
     
   ],
-  "defaultSeverity": "Minor",
+  "defaultSeverity": "Major",
   "ruleSpecification": "RSPEC-4666",
   "sqKey": "S4666",
   "scope": "Main"
