@@ -1,7 +1,7 @@
 @import "a.css";
 @import "a.css";                                              /* S1128 | no-duplicate-at-import-rules */
 
-.class1 {
+a:unknown {                                                   /* S4659 | selector-pseudo-class-no-unknown */
   background-color: #ffw;                                     /* S4647 | color-no-invalid-hex */
   width: 100pixels;                                           /* S4653 | unit-no-unknown */
   /* */                                                       /* S4663 | comment-no-empty */
@@ -16,12 +16,20 @@
   padding: 20px;                                              /* S4657 | declaration-block-no-shorthand-property-overrides */
 }
 
+.class1 {
+  width: 100px;
+}
+
 .class1 {                                                     /* S4666 | no-duplicate-selectors */
   width: 100px;
 }
 
 a {
   color: pink;;                                               /* S1116 | no-extra-semicolons */
+}
+
+a::pseudo {                                                   /* S4660 | selector-pseudo-element-no-unknown */
+  color: red;
 }
 
 unknown {                                                     /* S4670 | selector-type-no-unknown */
