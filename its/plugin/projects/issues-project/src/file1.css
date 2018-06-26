@@ -16,9 +16,11 @@ a:unknown {                                                   /* S4659 | selecto
   padding: 20px;                                              /* S4657 | declaration-block-no-shorthand-property-overrides */
 }
 
+// color: pink;                                               /* S4668 | no-invalid-double-slash-comments */
+
 .class1 {
   width: 100px;
-  // color: pink;                                             /* S4668 | no-invalid-double-slash-comments */
+  background: linear-gradient(top, #fff, #000);               /* S4651 | function-linear-gradient-no-nonstandard-direction */
 }
 
 .class1 {                                                     /* S4666 | no-duplicate-selectors */
