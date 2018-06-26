@@ -1,9 +1,20 @@
 @import "a.css";
 @import "a.css";                                              /* S1128 | no-duplicate-at-import-rules */
 
+b a {
+  color: pink;;                                               /* S1116 | no-extra-semicolons */
+}
+
+a {                                                           /* S4664 | no-descending-specificity */
+  color: red;
+}
+
+a::pseudo {                                                   /* S4660 | selector-pseudo-element-no-unknown */
+  color: red;
+}
+
 a:unknown {                                                   /* S4659 | selector-pseudo-class-no-unknown */
   background-color: #ffw;                                     /* S4647 | color-no-invalid-hex */
-  width: 100pixels;                                           /* S4653 | unit-no-unknown */
   /* */                                                       /* S4663 | comment-no-empty */
   content: "first
     second";                                                  /* S4652 | string-no-newline */
@@ -14,7 +25,7 @@ a:unknown {                                                   /* S4659 | selecto
   heigth: 100%;                                               /* S4654 | property-no-unknown */
   padding-left: 10px;
   padding: 20px;                                              /* S4657 | declaration-block-no-shorthand-property-overrides */
-  top: calc(1px+2px);                                         /* S4650 | function-calc-no-unspaced-operator */
+  top: calc(1px+2px);                                         /* S4650 | function-calc-no-unspaced-operator */ /* S4653 | unit-no-unknown */
 }
 
 // color: pink;                                               /* S4668 | no-invalid-double-slash-comments */
@@ -26,14 +37,6 @@ a:unknown {                                                   /* S4659 | selecto
 
 .class1 {                                                     /* S4666 | no-duplicate-selectors */
   padding: 100px;
-}
-
-a {
-  color: pink;;                                               /* S1116 | no-extra-semicolons */
-}
-
-a::pseudo {                                                   /* S4660 | selector-pseudo-element-no-unknown */
-  color: red;
 }
 
 unknown {                                                     /* S4670 | selector-type-no-unknown */
