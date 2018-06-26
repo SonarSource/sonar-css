@@ -2,10 +2,14 @@
 can lead to unexpected results.</p>
 <h2>Noncompliant Code Example</h2>
 <pre>
-a { // color: pink; }
+// some comment
+a { color: pink; }
 </pre>
 <h2>Compliant Solution</h2>
 <pre>
-a { /* color: pink; */ }
+/* some comment */
+a { color: pink; }
 </pre>
+<h2>Exceptions</h2>
+<p>This rule ignores single line comments in <code>less</code> and <code>scss</code> files.</p>
 
