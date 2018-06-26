@@ -136,6 +136,15 @@ public class CssRuleSensorTest {
     sensor.execute(context);
   }
 
+  @Test
+  public void test_not_execute_rules_if_nothing_enabled() throws IOException {
+    TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockError.js", inputFile.absolutePath());
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), new CheckFactory(new TestActiveRules()), commandProvider);
+    sensor.execute(context);
+
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains("No rules are activated in CSS Quality Profile");
+  }
+
   private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
       .setModuleBaseDir(sensorContext.fileSystem().baseDirPath())

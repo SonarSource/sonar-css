@@ -101,6 +101,10 @@ public class CssRules {
     return config;
   }
 
+  public boolean isEmpty() {
+    return stylelintKeyToRuleKey.isEmpty();
+  }
+
   public static class StylelintConfig {
     Map<String, Boolean> rules = new HashMap<>();
   }
