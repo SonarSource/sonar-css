@@ -1,0 +1,16 @@
+{
+  "title": "\"calc\" members should be correctly spaced or indented",
+  "type": "BUG",
+  "status": "ready",
+  "remediation": {
+    "func": "Constant\/Issue",
+    "constantCost": "1min"
+  },
+  "tags": [
+    
+  ],
+  "defaultSeverity": "Blocker",
+  "ruleSpecification": "RSPEC-4650",
+  "sqKey": "S4650",
+  "scope": "Main"
+}
