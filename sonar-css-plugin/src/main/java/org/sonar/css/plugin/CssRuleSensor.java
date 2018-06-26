@@ -172,20 +172,21 @@ public class CssRuleSensor implements Sensor {
   private void saveIssue(SensorContext context, InputFile inputFile, Issue issue) {
     NewIssue sonarIssue = context.newIssue();
 
-    NewIssueLocation location = sonarIssue.newLocation()
-      .on(inputFile)
-      .at(inputFile.selectLine(issue.line))
-      .message(normalizeMessage(issue.text));
-
     RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
+
     if (ruleKey == null) {
       if ("CssSyntaxError".equals(issue.rule)) {
         LOG.error("Failed to parse " + inputFile.uri());
       } else {
-        LOG.error("Unknown stylelint rule or rule not enabled " + issue.rule);
+        LOG.error("Unknown stylelint rule or rule not enabled: '" + issue.rule + "'");
       }
 
     } else {
+      NewIssueLocation location = sonarIssue.newLocation()
+        .on(inputFile)
+        .at(inputFile.selectLine(issue.line))
+        .message(normalizeMessage(issue.text));
+
       sonarIssue
         .at(location)
         .forRule(ruleKey)

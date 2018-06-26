@@ -157,6 +157,18 @@ public class CssRuleSensorTest {
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri());
   }
 
+  @Test
+  public void test_unknown_rule() throws IOException {
+    SensorContextTester context = SensorContextTester.create(BASE_DIR);
+    context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
+    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
+    TestLinterCommandProvider rulesExecution = new TestLinterCommandProvider().nodeScript("/executables/mockUnknownRule.js", inputFile.absolutePath());
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
+    sensor.execute(context);
+
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Unknown stylelint rule or rule not enabled: 'unknown-rule-key'");
+  }
+
   private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
       .setModuleBaseDir(sensorContext.fileSystem().baseDirPath())
