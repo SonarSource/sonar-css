@@ -50,3 +50,7 @@ unknown {                                                     /* S4670 | selecto
 }
 
 .class2 { }                                                   /* S4658 | block-no-empty */
+
+@media screen and (unknown) {                                 /* S4661 | media-feature-name-no-unknown */
+  width: 2px;
+}
