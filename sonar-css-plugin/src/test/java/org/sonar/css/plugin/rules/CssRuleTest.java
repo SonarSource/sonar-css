@@ -17,15 +17,16 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.rules;
 
+import com.google.gson.Gson;
 import java.lang.reflect.InvocationTargetException;
 import org.junit.Test;
-import org.sonar.css.plugin.rules.CssRule;
+import org.sonar.css.plugin.CssRules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RuleTest {
+public class CssRuleTest {
 
   @Test
   public void class_name_should_match_stylelint_key() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -34,5 +35,19 @@ public class RuleTest {
       String stylelintRuleKeyWithoutUnderscore = rule.stylelintKey().replace("-", "");
       assertThat(ruleClass.getSimpleName()).isEqualToIgnoringCase(stylelintRuleKeyWithoutUnderscore);
     }
+  }
+
+  @Test
+  public void at_rule_unknown_default() {
+    String optionsAsJson = new Gson().toJson(new AtRuleNoUnknown().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"content\",\"debug\",\"each\",\"else\",\"for\",\"function\",\"if\",\"include\",\"mixin\",\"return\",\"while\"]}]");
+  }
+
+  @Test
+  public void at_rule_unknown_custom() {
+    AtRuleNoUnknown instance = new AtRuleNoUnknown();
+    instance.ignoredAtRules = "foo";
+    String optionsAsJson = new Gson().toJson(instance.stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"foo\"]}]");
   }
 }

@@ -32,7 +32,7 @@ public class AtRuleNoUnknown implements CssRule {
     key = "ignoreAtRules",
     description = "Comma-separated list of \"at-rules\" to consider as valid.",
     defaultValue = "" + DEFAULT_IGNORED_AT_RULES)
-  private String ignoredAtRules = DEFAULT_IGNORED_AT_RULES;
+  String ignoredAtRules = DEFAULT_IGNORED_AT_RULES;
 
   @Override
   public String stylelintKey() {
@@ -41,11 +41,15 @@ public class AtRuleNoUnknown implements CssRule {
 
   @Override
   public Object stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption());
+    return Arrays.asList(true, new StylelintIgnoreOption(ignoredAtRules.split(",")));
   }
 
-  private class StylelintIgnoreOption {
+  private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignoreAtRules = ignoredAtRules.split(",");
+    private final String[] ignoreAtRules;
+
+    StylelintIgnoreOption(String[] ignoreAtRules) {
+      this.ignoreAtRules = ignoreAtRules;
+    }
   }
 }
