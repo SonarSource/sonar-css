@@ -21,15 +21,19 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.Optional;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.config.Configuration;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 @ScannerSide
 public class StylelintCommandProvider implements LinterCommandProvider {
 
+  private static final Logger LOG = Loggers.get(StylelintCommandProvider.class);
+
   private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
-  private static final String NODE_EXECUTABLE = "node";
 
   @Override
   public String[] commandParts(File deployDestination, SensorContext context) {
@@ -55,6 +59,15 @@ public class StylelintCommandProvider implements LinterCommandProvider {
 
   @Override
   public String nodeExecutable(Configuration configuration) {
-    return NODE_EXECUTABLE;
+    Optional<String> nodeExecutableOptional = configuration.get(CssPlugin.NODE_EXECUTABLE);
+    if (nodeExecutableOptional.isPresent()) {
+      String nodeExecutable = nodeExecutableOptional.get();
+      File file = new File(nodeExecutable);
+      if (file.exists()) {
+        return nodeExecutable;
+      }
+      LOG.warn("Provided node executable file does not exist: " + file);
+    }
+    return CssPlugin.NODE_EXECUTABLE_DEFAULT;
   }
 }

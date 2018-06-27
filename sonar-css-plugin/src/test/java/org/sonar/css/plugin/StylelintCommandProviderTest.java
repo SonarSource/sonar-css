@@ -20,12 +20,23 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.config.internal.MapSettings;
+import org.sonar.api.utils.log.LogTester;
+import org.sonar.api.utils.log.LoggerLevel;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class StylelintCommandProviderTest {
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public final LogTester logTester = new LogTester();
 
   @Test
   public void test() throws Exception {
@@ -43,5 +54,23 @@ public class StylelintCommandProviderTest {
       "-f",
       "json"
     );
+  }
+
+  @Test
+  public void test_node_executable() throws Exception {
+    StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
+
+    MapSettings settings = new MapSettings();
+    assertThat(stylelintCommandProvider.nodeExecutable(settings.asConfig())).isEqualTo("node");
+    assertThat(logTester.logs(LoggerLevel.WARN)).isEmpty();
+
+    File customNode = temporaryFolder.newFile("custom-node.exe");
+    settings.setProperty(CssPlugin.NODE_EXECUTABLE, customNode.getAbsolutePath());
+    assertThat(stylelintCommandProvider.nodeExecutable(settings.asConfig())).isEqualTo(customNode.getAbsolutePath());
+    assertThat(logTester.logs(LoggerLevel.WARN)).isEmpty();
+
+    settings.setProperty(CssPlugin.NODE_EXECUTABLE, "mynode");
+    assertThat(stylelintCommandProvider.nodeExecutable(settings.asConfig())).isEqualTo("node");
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Provided node executable file does not exist: mynode");
   }
 }
