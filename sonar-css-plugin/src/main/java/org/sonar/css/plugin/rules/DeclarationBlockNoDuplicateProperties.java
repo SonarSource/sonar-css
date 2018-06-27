@@ -23,9 +23,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.sonar.check.Rule;
+import org.sonar.check.RuleProperty;
 
 @Rule(key = "S4656")
 public class DeclarationBlockNoDuplicateProperties implements CssRule {
+
+  private static final boolean DEFAULT_IGNORE_FALLBACKS = true;
+
+  @RuleProperty(
+    key = "ignoreFallbacks",
+    description = "Ignore consecutive duplicated properties with different values.",
+    defaultValue = "" + DEFAULT_IGNORE_FALLBACKS)
+  boolean ignoreFallbacks = DEFAULT_IGNORE_FALLBACKS;
 
   @Override
   public String stylelintKey() {
@@ -34,7 +43,7 @@ public class DeclarationBlockNoDuplicateProperties implements CssRule {
 
   @Override
   public Object stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption());
+    return ignoreFallbacks ? Arrays.asList(true, new StylelintIgnoreOption()) : true;
   }
 
   private static class StylelintIgnoreOption {

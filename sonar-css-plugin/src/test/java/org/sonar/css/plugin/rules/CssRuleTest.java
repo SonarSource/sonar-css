@@ -50,4 +50,18 @@ public class CssRuleTest {
     String optionsAsJson = new Gson().toJson(instance.stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"foo\"]}]");
   }
+
+  @Test
+  public void declaration_block_no_duplicate_properties_default() {
+    String optionsAsJson = new Gson().toJson(new DeclarationBlockNoDuplicateProperties().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]");
+  }
+
+  @Test
+  public void declaration_block_no_duplicate_properties_custom() {
+    DeclarationBlockNoDuplicateProperties instance = new DeclarationBlockNoDuplicateProperties();
+    instance.ignoreFallbacks = false;
+    String optionsAsJson = new Gson().toJson(instance.stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("true");
+  }
 }
