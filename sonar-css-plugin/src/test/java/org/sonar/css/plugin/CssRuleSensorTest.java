@@ -58,7 +58,7 @@ public class CssRuleSensorTest {
   @Rule
   public ExpectedException thrown= ExpectedException.none();
 
-  private static CheckFactory checkFactory = new CheckFactory(new TestActiveRules("S4647"));
+  private static CheckFactory checkFactory = new CheckFactory(new TestActiveRules("S4647", "S4656"));
 
   private static final File BASE_DIR = new File("src/test/resources").getAbsoluteFile();
 
@@ -66,7 +66,7 @@ public class CssRuleSensorTest {
   private DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
   }
 
@@ -90,11 +90,11 @@ public class CssRuleSensorTest {
     assertThat(issue.primaryLocation().message()).isEqualTo("some message");
 
     Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
-    assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true}}");
+    assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
   }
 
   @Test
-  public void test_invalid_node() throws IOException {
+  public void test_invalid_node() {
     TestLinterCommandProvider commandProvider = getCommandProvider();
     commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
@@ -105,7 +105,7 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_no_node() throws IOException {
+  public void test_no_node() {
     TestLinterCommandProvider commandProvider = getCommandProvider();
     commandProvider.nodeExecutable = TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
@@ -116,7 +116,7 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_old_node() throws IOException {
+  public void test_old_node() {
     TestLinterCommandProvider commandProvider = getCommandProvider();
     commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/oldNodeVersion.js");
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
@@ -127,7 +127,7 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_error() throws IOException {
+  public void test_error() {
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Failed to parse json result of external process execution");
 
@@ -137,7 +137,7 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_not_execute_rules_if_nothing_enabled() throws IOException {
+  public void test_not_execute_rules_if_nothing_enabled() {
     TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockError.js", inputFile.absolutePath());
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), new CheckFactory(new TestActiveRules()), commandProvider);
     sensor.execute(context);
@@ -146,7 +146,7 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_syntax_error() throws IOException {
+  public void test_syntax_error() {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
@@ -158,7 +158,7 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_unknown_rule() throws IOException {
+  public void test_unknown_rule() {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
