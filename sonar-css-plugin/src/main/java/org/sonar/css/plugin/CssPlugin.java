@@ -33,7 +33,7 @@ public class CssPlugin implements Plugin {
   public static final String STYLELINT_REPORT_PATHS = "sonar.css.stylelint.reportPaths";
   public static final String STYLELINT_REPORT_PATHS_DEFAULT_VALUE = "";
 
-  public static final String NODE_EXECUTABLE = "sonar.typescript.node";
+  public static final String NODE_EXECUTABLE = "sonar.css.node";
   public static final String NODE_EXECUTABLE_DEFAULT = "node";
 
   private static final String CSS_CATEGORY = "CSS";
