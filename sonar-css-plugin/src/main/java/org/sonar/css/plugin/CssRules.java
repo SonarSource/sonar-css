@@ -67,7 +67,7 @@ public class CssRules {
     stylelintKeyToRuleKey = new HashMap<>();
     for (CssRule rule : enabledRules) {
       stylelintKeyToRuleKey.put(rule.stylelintKey(), checks.ruleKey(rule));
-      config.rules.put(rule.stylelintKey(), true);
+      config.rules.put(rule.stylelintKey(), rule.stylelintOptions());
     }
   }
 
@@ -114,6 +114,6 @@ public class CssRules {
   }
 
   public static class StylelintConfig {
-    Map<String, Boolean> rules = new HashMap<>();
+    Map<String, Object> rules = new HashMap<>();
   }
 }

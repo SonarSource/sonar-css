@@ -23,4 +23,7 @@ public interface CssRule {
 
   String stylelintKey();
 
+  default Object stylelintOptions() {
+    return true;
+  }
 }
