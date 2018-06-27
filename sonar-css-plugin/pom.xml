@@ -80,7 +80,7 @@
                 <groupId>org.sonarsource.sonar-packaging-maven-plugin</groupId>
                 <artifactId>sonar-packaging-maven-plugin</artifactId>
                 <configuration>
-                    <pluginKey>css-family</pluginKey>
+                    <pluginKey>cssfamily</pluginKey>
                     <!-- This value shows up in the SonarQube GUI -->
                     <pluginName>SonarCSS</pluginName>
                     <pluginClass>org.sonar.css.plugin.CssPlugin</pluginClass>
