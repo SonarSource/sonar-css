@@ -17,34 +17,31 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.its;
 
+import com.sonar.orchestrator.Orchestrator;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.css.its.Tests.getProjectMeasureAsDouble;
 
-public class CssPluginTest {
+public class MinifiedTest {
 
-  @Test
-  public void count_extensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin underTest = new CssPlugin();
-    underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(11);
+  private static String PROJECT_KEY = "minified-project";
+
+  @ClassRule
+  public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
+
+  @BeforeClass
+  public static void prepare() {
+    orchestrator.executeBuild(Tests.createScanner(PROJECT_KEY));
   }
 
   @Test
-  public void count_extensions_7_2() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(7, 2), SonarQubeSide.SCANNER);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin underTest = new CssPlugin();
-    underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(12);
+  public void test() {
+    assertThat(getProjectMeasureAsDouble("files", PROJECT_KEY)).isEqualTo(1);
   }
+
 }

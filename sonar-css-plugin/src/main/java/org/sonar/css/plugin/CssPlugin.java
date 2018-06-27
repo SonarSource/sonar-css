@@ -53,6 +53,7 @@ public class CssPlugin implements Plugin {
       CssRuleSensor.class,
       StylelintCommandProvider.class,
       StylelintReportSensor.class,
+      MinifiedFilesFilter.class,
 
       PropertyDefinition.builder(FILE_SUFFIXES_KEY)
         .defaultValue(FILE_SUFFIXES_DEFVALUE)
