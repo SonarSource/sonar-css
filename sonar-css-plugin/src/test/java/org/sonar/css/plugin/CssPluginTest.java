@@ -36,6 +36,15 @@ public class CssPluginTest {
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin underTest = new CssPlugin();
     underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(9);
+    assertThat(context.getExtensions()).hasSize(10);
+  }
+
+  @Test
+  public void count_extensions_7_2() {
+    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(7, 2), SonarQubeSide.SCANNER);
+    Plugin.Context context = new Plugin.Context(runtime);
+    Plugin underTest = new CssPlugin();
+    underTest.define(context);
+    assertThat(context.getExtensions()).hasSize(11);
   }
 }
