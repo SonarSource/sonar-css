@@ -29,7 +29,6 @@ import java.util.List;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-import org.sonar.css.plugin.StylelintReport;
 import org.sonarqube.ws.Measures.ComponentWsResponse;
 import org.sonarqube.ws.Measures.Measure;
 import org.sonarqube.ws.client.HttpConnector;
@@ -41,7 +40,8 @@ import org.sonarqube.ws.client.measures.ComponentRequest;
 @Suite.SuiteClasses({
   MetricsTest.class,
   IssuesTest.class,
-  StylelintReportTest.class
+  StylelintReportTest.class,
+  MinifiedTest.class
 })
 public class Tests {
 
