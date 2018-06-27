@@ -34,7 +34,6 @@ public class CssPlugin implements Plugin {
   public static final String STYLELINT_REPORT_PATHS_DEFAULT_VALUE = "";
 
   public static final String NODE_EXECUTABLE = "sonar.css.node";
-  public static final String NODE_EXECUTABLE_DEFAULT = "node";
 
   private static final String CSS_CATEGORY = "CSS";
   private static final String LINTER_SUBCATEGORY = "Popular Rule Engines";
@@ -66,9 +65,8 @@ public class CssPlugin implements Plugin {
         .build(),
 
       PropertyDefinition.builder(NODE_EXECUTABLE)
-        .defaultValue(NODE_EXECUTABLE_DEFAULT)
         .name("Node.js executable")
-        .description("Node.js executable used to run the analysis of CSS files.")
+        .description("Node.js executable used to run the analysis of CSS files. When not set, 'node' is used.")
         .subCategory(GENERAL_SUBCATEGORY)
         .category(CSS_CATEGORY)
         .hidden()

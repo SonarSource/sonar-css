@@ -34,6 +34,9 @@ public class StylelintCommandProvider implements LinterCommandProvider {
   private static final Logger LOG = Loggers.get(StylelintCommandProvider.class);
 
   private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
+  private static final String NODE_EXECUTABLE_DEFAULT = "node";
+
+  private String nodeExecutable = null;
 
   @Override
   public String[] commandParts(File deployDestination, SensorContext context) {
@@ -59,6 +62,14 @@ public class StylelintCommandProvider implements LinterCommandProvider {
 
   @Override
   public String nodeExecutable(Configuration configuration) {
+    if (nodeExecutable == null) {
+      nodeExecutable = retrieveNodeExecutableFromConfig(configuration);
+    }
+
+    return nodeExecutable;
+  }
+
+  private static String retrieveNodeExecutableFromConfig(Configuration configuration) {
     Optional<String> nodeExecutableOptional = configuration.get(CssPlugin.NODE_EXECUTABLE);
     if (nodeExecutableOptional.isPresent()) {
       String nodeExecutable = nodeExecutableOptional.get();
@@ -66,8 +77,10 @@ public class StylelintCommandProvider implements LinterCommandProvider {
       if (file.exists()) {
         return nodeExecutable;
       }
-      LOG.warn("Provided node executable file does not exist: " + file);
+
+      LOG.warn("Provided node executable file does not exist: " + file + ". Default 'node' will be used.");
     }
-    return CssPlugin.NODE_EXECUTABLE_DEFAULT;
+
+    return NODE_EXECUTABLE_DEFAULT;
   }
 }
