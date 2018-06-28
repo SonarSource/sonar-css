@@ -1,6 +1,6 @@
 {
   "title": "Selectors of lower specificity should come before overriding selectors of higher specificity",
-  "type": "BUG",
+  "type": "CODE_SMELL",
   "status": "ready",
   "remediation": {
     "func": "Constant\/Issue",
