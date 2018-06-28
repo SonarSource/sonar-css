@@ -19,11 +19,14 @@
  */
 package org.sonar.css.plugin.rules;
 
+import java.util.Collections;
+import java.util.List;
+
 public interface CssRule {
 
   String stylelintKey();
 
-  default Object stylelintOptions() {
-    return true;
+  default List<Object> stylelintOptions() {
+    return Collections.emptyList();
   }
 }

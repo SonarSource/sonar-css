@@ -20,6 +20,7 @@
 package org.sonar.css.plugin;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
@@ -140,7 +141,10 @@ public class CssRuleSensor implements Sensor {
   private void createConfig(File deployDestination) throws IOException {
     String configPath = linterCommandProvider.configPath(deployDestination);
     StylelintConfig config = cssRules.getConfig();
-    String configAsJson = new Gson().toJson(config);
+    final GsonBuilder gsonBuilder = new GsonBuilder();
+    gsonBuilder.registerTypeAdapter(StylelintConfig.class, config);
+    final Gson gson = gsonBuilder.create();
+    String configAsJson = gson.toJson(config);
     Files.write(Paths.get(configPath), Collections.singletonList(configAsJson), StandardCharsets.UTF_8);
   }
 
