@@ -119,7 +119,7 @@ public class CssRules {
     return stylelintKeyToRuleKey.isEmpty();
   }
 
-  public static class StylelintConfig  implements JsonSerializer<StylelintConfig> {
+  public static class StylelintConfig implements JsonSerializer<StylelintConfig> {
     Map<String, List<Object>> rules = new HashMap<>();
 
     @Override
