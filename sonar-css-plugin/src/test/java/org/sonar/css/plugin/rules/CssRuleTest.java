@@ -38,6 +38,19 @@ public class CssRuleTest {
   }
 
   @Test
+  public void rules_default_json_is_true() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    for (Class ruleClass : CssRules.getRuleClasses()) {
+      CssRule rule = (CssRule)ruleClass.getConstructor().newInstance();
+      if (rule instanceof AtRuleNoUnknown || rule instanceof DeclarationBlockNoDuplicateProperties) {
+        continue;
+      }
+
+      String optionsAsJson = new Gson().toJson(rule.stylelintOptions());
+      assertThat(optionsAsJson).isEqualTo("true");
+    }
+  }
+
+  @Test
   public void at_rule_unknown_default() {
     String optionsAsJson = new Gson().toJson(new AtRuleNoUnknown().stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"content\",\"debug\",\"each\",\"else\",\"for\",\"function\",\"if\",\"include\",\"mixin\",\"return\",\"while\"]}]");
