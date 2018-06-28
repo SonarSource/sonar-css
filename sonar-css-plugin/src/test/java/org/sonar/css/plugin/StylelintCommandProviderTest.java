@@ -57,20 +57,30 @@ public class StylelintCommandProviderTest {
   }
 
   @Test
-  public void test_node_executable() throws Exception {
+  public void test_node_executable_wo_settings() throws Exception {
     StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
-
     MapSettings settings = new MapSettings();
     assertThat(stylelintCommandProvider.nodeExecutable(settings.asConfig())).isEqualTo("node");
     assertThat(logTester.logs(LoggerLevel.WARN)).isEmpty();
+  }
 
+  @Test
+  public void test_node_executable_custom() throws Exception {
+    StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
+    MapSettings settings = new MapSettings();
     File customNode = temporaryFolder.newFile("custom-node.exe");
     settings.setProperty(CssPlugin.NODE_EXECUTABLE, customNode.getAbsolutePath());
     assertThat(stylelintCommandProvider.nodeExecutable(settings.asConfig())).isEqualTo(customNode.getAbsolutePath());
     assertThat(logTester.logs(LoggerLevel.WARN)).isEmpty();
+  }
 
+  @Test
+  public void test_node_executable_custom_invalid() throws Exception {
+    StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
+
+    MapSettings settings = new MapSettings();
     settings.setProperty(CssPlugin.NODE_EXECUTABLE, "mynode");
     assertThat(stylelintCommandProvider.nodeExecutable(settings.asConfig())).isEqualTo("node");
-    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Provided node executable file does not exist: mynode");
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Provided node executable file does not exist: mynode. Fallback to using 'node' from path.");
   }
 }
