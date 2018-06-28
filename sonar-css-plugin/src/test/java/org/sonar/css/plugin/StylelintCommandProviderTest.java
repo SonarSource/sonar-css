@@ -81,6 +81,6 @@ public class StylelintCommandProviderTest {
     MapSettings settings = new MapSettings();
     settings.setProperty(CssPlugin.NODE_EXECUTABLE, "mynode");
     assertThat(stylelintCommandProvider.nodeExecutable(settings.asConfig())).isEqualTo("node");
-    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Provided node executable file does not exist: mynode. Default 'node' will be used.");
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Provided node executable file does not exist: mynode. Fallback to using 'node' from path.");
   }
 }

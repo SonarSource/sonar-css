@@ -78,7 +78,7 @@ public class StylelintCommandProvider implements LinterCommandProvider {
         return nodeExecutable;
       }
 
-      LOG.warn("Provided node executable file does not exist: " + file + ". Default 'node' will be used.");
+      LOG.warn("Provided node executable file does not exist: " + file + ". Fallback to using 'node' from path.");
     }
 
     return NODE_EXECUTABLE_DEFAULT;

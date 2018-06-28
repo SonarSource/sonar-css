@@ -66,7 +66,7 @@ public class CssPlugin implements Plugin {
 
       PropertyDefinition.builder(NODE_EXECUTABLE)
         .name("Node.js executable")
-        .description("Node.js executable used to run the analysis of CSS files. When not set, 'node' is used.")
+        .description("Path to the Node.js executable that will be used to run the analysis of CSS files. When not set, expects 'node' to be in the path.")
         .subCategory(GENERAL_SUBCATEGORY)
         .category(CSS_CATEGORY)
         .hidden()
