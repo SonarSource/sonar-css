@@ -66,9 +66,10 @@ unknown {                                                     /* S4670 | selecto
 @mixin adjust-location($x, $y) {
   @if unitless($x) {
     color: blue;
-    @debug ""
-    @warn ""
-    @error ""
+    @debug "";
+    @warn "";
+    @error "";
+    @at-root [dir="ltr"] { color: blue; }
   } @else {
     color: black;
   }
