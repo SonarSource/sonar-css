@@ -1,28 +1,25 @@
-<p>Order of instructions in CSS is important: instructions that occur last in the file take the priority. When a selector with high specificity (eg
-<code>#container a top: 10px; </code>) comes before the selector it overrides (eg: <code>a top: 0; </code>), the priority is given to the high
-specificity definition which violates the principle of the last instruction takes the priority. </p>
-<p>CSS are most legible when overriding selectors always come after the selectors they override. That way both mechanisms, source order and
-specificity, work together nicely.</p>
+<p>Order of instructions in CSS is important: instructions with equal specificity that occur later in the file take the priority. But when a selector
+with a higher specificity (e.g. <code>p a { color: green;}</code>) comes before the selector it overrides (e.g.: <code>a { color: green;}</code>), the
+priority is given to the first one. Even if it works properly, this is harder to anticipate the behaviour of the stylesheet while reading as it goes
+against the principle that the last instruction takes the priority.</p>
 <h2>Noncompliant Code Example</h2>
 <pre>
-b a {}
-a {}
+p a {
+  color: green;
+}
 
-
-@media print {
-  #c a {}
-  a {}
+a {
+  color: blue;
 }
 </pre>
 <h2>Compliant Solution</h2>
 <pre>
-a {}
-b a {}
+a {
+  color: blue;
+}
 
-
-@media print {
-  a {}
-  #c a {}
+p a {
+  color: green;
 }
 </pre>
 
