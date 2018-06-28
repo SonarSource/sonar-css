@@ -38,15 +38,14 @@ public class CssRuleTest {
   }
 
   @Test
-  public void rules_default_json_is_true() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+  public void rules_default_is_empty() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
     for (Class ruleClass : CssRules.getRuleClasses()) {
       CssRule rule = (CssRule)ruleClass.getConstructor().newInstance();
       if (rule instanceof AtRuleNoUnknown || rule instanceof DeclarationBlockNoDuplicateProperties) {
         continue;
       }
 
-      String optionsAsJson = new Gson().toJson(rule.stylelintOptions());
-      assertThat(optionsAsJson).isEqualTo("true");
+      assertThat(rule.stylelintOptions()).isEmpty();
     }
   }
 
@@ -74,7 +73,6 @@ public class CssRuleTest {
   public void declaration_block_no_duplicate_properties_custom() {
     DeclarationBlockNoDuplicateProperties instance = new DeclarationBlockNoDuplicateProperties();
     instance.ignoreFallbacks = false;
-    String optionsAsJson = new Gson().toJson(instance.stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("true");
+    assertThat(instance.stylelintOptions()).isEmpty();
   }
 }

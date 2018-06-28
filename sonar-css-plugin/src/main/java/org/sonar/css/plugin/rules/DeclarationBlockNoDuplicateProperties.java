@@ -42,8 +42,8 @@ public class DeclarationBlockNoDuplicateProperties implements CssRule {
   }
 
   @Override
-  public Object stylelintOptions() {
-    return ignoreFallbacks ? Arrays.asList(true, new StylelintIgnoreOption()) : true;
+  public List<Object> stylelintOptions() {
+    return ignoreFallbacks ? Arrays.asList(true, new StylelintIgnoreOption()) : Collections.emptyList();
   }
 
   private static class StylelintIgnoreOption {

@@ -20,6 +20,7 @@
 package org.sonar.css.plugin.rules;
 
 import java.util.Arrays;
+import java.util.List;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 
@@ -40,7 +41,7 @@ public class AtRuleNoUnknown implements CssRule {
   }
 
   @Override
-  public Object stylelintOptions() {
+  public List<Object> stylelintOptions() {
     return Arrays.asList(true, new StylelintIgnoreOption(ignoredAtRules.split(",")));
   }
 
