@@ -68,6 +68,7 @@ public class StylelintReportSensor implements Sensor {
   public void describe(SensorDescriptor descriptor) {
     descriptor
       .onlyOnLanguage(CssLanguage.KEY)
+      .onlyWhenConfiguration(conf -> conf.hasKey(CssPlugin.STYLELINT_REPORT_PATHS))
       .name("Import of stylelint issues");
   }
 
