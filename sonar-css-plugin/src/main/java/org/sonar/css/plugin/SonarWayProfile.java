@@ -28,7 +28,7 @@ import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
 public class SonarWayProfile implements BuiltInQualityProfilesDefinition {
 
   public static final String PROFILE_NAME = "Sonar way";
-  public static final String PROFILE_PATH = RESOURCE_FOLDER + "/Sonar_way_profile.json";
+  public static final String PROFILE_PATH = RESOURCE_FOLDER + CssRulesDefinition.REPOSITORY_KEY + "/Sonar_way_profile.json";
 
   @Override
   public void define(Context context) {
