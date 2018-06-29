@@ -2,7 +2,8 @@
   {
     "key": "color-no-invalid-hex",
     "url": "https://stylelint.io/user-guide/rules/color-no-invalid-hex/",
-    "name": "Disallow invalid hex colors"
+    "name": "Disallow invalid hex colors",
+    "type": "BUG"
   },
   {
     "key": "font-family-no-duplicate-names",
@@ -12,17 +13,20 @@
   {
     "key": "font-family-no-missing-generic-family-keyword",
     "url": "https://stylelint.io/user-guide/rules/font-family-no-missing-generic-family-keyword/",
-    "name": "Disallow missing generic families in lists of font family names"
+    "name": "Disallow missing generic families in lists of font family names",
+    "type": "BUG"
   },
   {
     "key": "function-calc-no-unspaced-operator",
     "url": "https://stylelint.io/user-guide/rules/function-calc-no-unspaced-operator/",
-    "name": "Disallow an unspaced operator within `calc` functions"
+    "name": "Disallow an unspaced operator within `calc` functions",
+    "type": "BUG"
   },
   {
     "key": "function-linear-gradient-no-nonstandard-direction",
     "url": "https://stylelint.io/user-guide/rules/function-linear-gradient-no-nonstandard-direction/",
-    "name": "Disallow direction values in `linear-gradient()` calls that are not valid according to the [standard syntax](https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient#Syntax)"
+    "name": "Disallow direction values in `linear-gradient()` calls that are not valid according to the [standard syntax](https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient#Syntax)",
+    "type": "BUG"
   },
   {
     "key": "string-no-newline",
@@ -32,27 +36,32 @@
   {
     "key": "unit-no-unknown",
     "url": "https://stylelint.io/user-guide/rules/unit-no-unknown/",
-    "name": "Disallow unknown units"
+    "name": "Disallow unknown units",
+    "type": "BUG"
   },
   {
     "key": "property-no-unknown",
     "url": "https://stylelint.io/user-guide/rules/property-no-unknown/",
-    "name": "Disallow unknown properties"
+    "name": "Disallow unknown properties",
+    "type": "BUG"
   },
   {
     "key": "keyframe-declaration-no-important",
     "url": "https://stylelint.io/user-guide/rules/keyframe-declaration-no-important/",
-    "name": "Disallow `!important` within keyframe declarations"
+    "name": "Disallow `!important` within keyframe declarations",
+    "type": "BUG"
   },
   {
     "key": "declaration-block-no-duplicate-properties",
     "url": "https://stylelint.io/user-guide/rules/declaration-block-no-duplicate-properties/",
-    "name": "Disallow duplicate properties within declaration blocks"
+    "name": "Disallow duplicate properties within declaration blocks",
+    "type": "BUG"
   },
   {
     "key": "declaration-block-no-shorthand-property-overrides",
     "url": "https://stylelint.io/user-guide/rules/declaration-block-no-shorthand-property-overrides/",
-    "name": "Disallow shorthand properties that override related longhand properties within declaration blocks"
+    "name": "Disallow shorthand properties that override related longhand properties within declaration blocks",
+    "type": "BUG"
   },
   {
     "key": "block-no-empty",
@@ -62,17 +71,20 @@
   {
     "key": "selector-pseudo-class-no-unknown",
     "url": "https://stylelint.io/user-guide/rules/selector-pseudo-class-no-unknown/",
-    "name": "Disallow unknown pseudo-class selectors"
+    "name": "Disallow unknown pseudo-class selectors",
+    "type": "BUG"
   },
   {
     "key": "selector-pseudo-element-no-unknown",
     "url": "https://stylelint.io/user-guide/rules/selector-pseudo-element-no-unknown/",
-    "name": "Disallow unknown pseudo-element selectors"
+    "name": "Disallow unknown pseudo-element selectors",
+    "type": "BUG"
   },
   {
     "key": "selector-type-no-unknown",
     "url": "https://stylelint.io/user-guide/rules/selector-type-no-unknown/",
-    "name": "Disallow unknown type selectors"
+    "name": "Disallow unknown type selectors",
+    "type": "BUG"
   },
   {
     "key": "media-feature-name-no-unknown",
@@ -82,7 +94,8 @@
   {
     "key": "at-rule-no-unknown",
     "url": "https://stylelint.io/user-guide/rules/at-rule-no-unknown/",
-    "name": "Disallow unknown at-rules"
+    "name": "Disallow unknown at-rules",
+    "type": "BUG"
   },
   {
     "key": "comment-no-empty",
@@ -117,7 +130,8 @@
   {
     "key": "no-invalid-double-slash-comments",
     "url": "https://stylelint.io/user-guide/rules/no-invalid-double-slash-comments/",
-    "name": "Disallow double-slash comments (`//...`) which are not supported by CSS"
+    "name": "Disallow double-slash comments (`//...`) which are not supported by CSS",
+    "type": "BUG"
   },
   {
     "key": "color-named",

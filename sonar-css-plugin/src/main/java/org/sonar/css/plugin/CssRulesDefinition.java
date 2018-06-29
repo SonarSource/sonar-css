@@ -29,9 +29,9 @@ public class CssRulesDefinition implements RulesDefinition {
   public static final String REPOSITORY_KEY = "css";
   public static final String RULE_REPOSITORY_NAME = "SonarAnalyzer";
 
-  public static final String RESOURCE_FOLDER = "org/sonar/l10n/css/rules/css";
+  public static final String RESOURCE_FOLDER = "org/sonar/l10n/css/rules/";
 
-  private boolean externalIssuesSupported;
+  private final boolean externalIssuesSupported;
 
   public CssRulesDefinition(boolean externalIssuesSupported) {
     this.externalIssuesSupported = externalIssuesSupported;
@@ -43,12 +43,12 @@ public class CssRulesDefinition implements RulesDefinition {
       .createRepository(REPOSITORY_KEY, CssLanguage.KEY)
       .setName(RULE_REPOSITORY_NAME);
 
-    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, PROFILE_PATH);
+    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER + REPOSITORY_KEY, PROFILE_PATH);
     ruleMetadataLoader.addRulesByAnnotatedClass(repository, CssRules.getRuleClasses());
     repository.done();
 
     if (externalIssuesSupported) {
-      StylelintReportSensor.createExternalRuleRepository(context);
+      StylelintReportSensor.getStylelintRuleLoader().createExternalRuleRepository(context);
     }
   }
 }

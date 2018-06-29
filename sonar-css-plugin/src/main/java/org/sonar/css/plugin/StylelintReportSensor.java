@@ -26,9 +26,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.InputFile;
@@ -40,49 +38,30 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewExternalIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.api.rules.RuleType;
-import org.sonar.api.server.rule.RulesDefinition.Context;
-import org.sonar.api.server.rule.RulesDefinition.NewRepository;
-import org.sonar.api.server.rule.RulesDefinition.NewRule;
-import org.sonar.api.utils.Version;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.StylelintReport.Issue;
 import org.sonar.css.plugin.StylelintReport.IssuesPerFile;
+import org.sonarsource.analyzer.commons.ExternalReportProvider;
+import org.sonarsource.analyzer.commons.ExternalRuleLoader;
+
+import static org.sonar.css.plugin.CssRulesDefinition.RESOURCE_FOLDER;
 
 public class StylelintReportSensor implements Sensor {
 
+  public static final String STYLELINT = "stylelint";
+
+
   private static final Logger LOG = Loggers.get(StylelintReportSensor.class);
-
-  private static final String REPOSITORY = "stylelint";
-
   private static final long DEFAULT_REMEDIATION_COST = 5L;
   private static final Severity DEFAULT_SEVERITY = Severity.MAJOR;
   private static final String FILE_EXCEPTION_MESSAGE = "No issues information will be saved as the report file can't be read.";
 
-  private static final Set<String> BUG_RULES = new HashSet<>(Arrays.asList(
-    "selector-type-no-unknown",
-    "no-invalid-double-slash-comments",
-    "no-descending-specificity",
-    "at-rule-no-unknown",
-    "selector-type-no-unknown",
-    "selector-pseudo-element-no-unknown",
-    "selector-pseudo-class-no-unknown",
-    "declaration-block-no-shorthand-property-overrides",
-    "declaration-block-no-duplicate-properties",
-    "keyframe-declaration-no-important",
-    "property-no-unknown",
-    "unit-no-unknown",
-    "function-linear-gradient-no-nonstandard-direction",
-    "function-calc-no-unspaced-operator",
-    "font-family-no-missing-generic-family-keyword",
-    "color-no-invalid-hex"
-  ));
-
   private final CssRules cssRules;
+  private ExternalRuleLoader stylelintRuleLoader = getStylelintRuleLoader();
 
   public StylelintReportSensor(CheckFactory checkFactory) {
-    cssRules = new CssRules(checkFactory);
+    this.cssRules = new CssRules(checkFactory);
   }
 
   @Override
@@ -94,22 +73,8 @@ public class StylelintReportSensor implements Sensor {
 
   @Override
   public void execute(SensorContext context) {
-    boolean externalIssuesSupported = context.getSonarQubeVersion().isGreaterThanOrEqual(Version.create(7, 2));
-    String[] reportPaths = context.config().getStringArray(CssPlugin.STYLELINT_REPORT_PATHS);
-
-    if (reportPaths.length == 0) {
-      return;
-    }
-
-    if (!externalIssuesSupported) {
-      LOG.error("Import of external issues requires SonarQube 7.2 or greater.");
-      return;
-    }
-
-    for (String reportPath : reportPaths) {
-      File report = getIOFile(context.fileSystem().baseDir(), reportPath);
-      importReport(report, context);
-    }
+    List<File> reportFiles = ExternalReportProvider.getReportFiles(context, CssPlugin.STYLELINT_REPORT_PATHS);
+    reportFiles.forEach(report -> importReport(report, context));
   }
 
   private void importReport(File report, SensorContext context) {
@@ -162,58 +127,19 @@ public class StylelintReportSensor implements Sensor {
 
     newExternalIssue
       .at(primaryLocation)
-      .forRule(RuleKey.of(REPOSITORY, stylelintKey))
-      .type(ruleType(stylelintKey))
+      .forRule(RuleKey.of(STYLELINT, stylelintKey))
+      .type(stylelintRuleLoader.ruleType(stylelintKey))
       .severity(DEFAULT_SEVERITY)
       .remediationEffortMinutes(DEFAULT_REMEDIATION_COST)
       .save();
   }
 
-  private static RuleType ruleType(String stylelintKey) {
-    return BUG_RULES.contains(stylelintKey)
-      ? RuleType.BUG
-      : RuleType.CODE_SMELL;
+  public static ExternalRuleLoader getStylelintRuleLoader() {
+    return new ExternalRuleLoader(
+      StylelintReportSensor.STYLELINT,
+      StylelintReportSensor.STYLELINT,
+      RESOURCE_FOLDER + StylelintReportSensor.STYLELINT + "/rules.json",
+      CssLanguage.KEY);
   }
 
-  /**
-   * Returns a java.io.File for the given path.
-   * If path is not absolute, returns a File with module base directory as parent path.
-   */
-  private static File getIOFile(File baseDir, String path) {
-    File file = new File(path);
-    if (!file.isAbsolute()) {
-      file = new File(baseDir, path);
-    }
-
-    return file;
-  }
-
-  static void createExternalRuleRepository(Context context) {
-    NewRepository externalRepo = context.createExternalRepository(REPOSITORY, CssLanguage.KEY).setName(REPOSITORY);
-    String pathToRulesMeta = "org/sonar/l10n/css/rules/" + REPOSITORY + "/rules.json";
-    String description = "See the description of %s rule <code>%s</code> at <a href=\"%s\">%s website</a>.";
-
-    try (InputStreamReader inputStreamReader = new InputStreamReader(StylelintReportSensor.class.getClassLoader().getResourceAsStream(pathToRulesMeta), StandardCharsets.UTF_8)) {
-      ExternalRule[] rules = new Gson().fromJson(inputStreamReader, ExternalRule[].class);
-      for (ExternalRule rule : rules) {
-        NewRule newRule = externalRepo.createRule(rule.key).setName(rule.name);
-        newRule.setHtmlDescription(String.format(description, REPOSITORY, rule.key, rule.url, REPOSITORY));
-        newRule.setDebtRemediationFunction(newRule.debtRemediationFunctions().constantPerIssue(DEFAULT_REMEDIATION_COST + "min"));
-        if (BUG_RULES.contains(rule.key)) {
-          newRule.setType(RuleType.BUG);
-        }
-      }
-
-    } catch (IOException e) {
-      throw new IllegalStateException("Can't read resource: " + pathToRulesMeta, e);
-    }
-
-    externalRepo.done();
-  }
-
-  private static class ExternalRule {
-    String url;
-    String key;
-    String name;
-  }
 }
