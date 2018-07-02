@@ -50,7 +50,8 @@ public class MetricSensor implements Sensor {
   @Override
   public void describe(SensorDescriptor descriptor) {
     descriptor
-        .onlyOnLanguage(CssLanguage.KEY);
+      .name("SonarCSS Metrics")
+      .onlyOnLanguage(CssLanguage.KEY);
   }
 
   @Override
