@@ -31,7 +31,6 @@ import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
@@ -53,8 +52,6 @@ public class StylelintReportSensor implements Sensor {
 
 
   private static final Logger LOG = Loggers.get(StylelintReportSensor.class);
-  private static final long DEFAULT_REMEDIATION_COST = 5L;
-  private static final Severity DEFAULT_SEVERITY = Severity.MAJOR;
   private static final String FILE_EXCEPTION_MESSAGE = "No issues information will be saved as the report file can't be read.";
 
   private final CssRules cssRules;
@@ -130,8 +127,8 @@ public class StylelintReportSensor implements Sensor {
       .at(primaryLocation)
       .forRule(RuleKey.of(STYLELINT, stylelintKey))
       .type(stylelintRuleLoader.ruleType(stylelintKey))
-      .severity(DEFAULT_SEVERITY)
-      .remediationEffortMinutes(DEFAULT_REMEDIATION_COST)
+      .severity(stylelintRuleLoader.ruleSeverity(stylelintKey))
+      .remediationEffortMinutes(stylelintRuleLoader.ruleConstantDebtMinutes(stylelintKey))
       .save();
   }
 
