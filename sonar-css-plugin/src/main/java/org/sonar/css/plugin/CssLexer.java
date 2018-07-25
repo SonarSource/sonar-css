@@ -45,7 +45,7 @@ public final class CssLexer {
   private static final String MULTI_LINE_COMMENT = "(?s)/\\*.*?\\*/";
   private static final String INLINE_COMMENT = "//[^\n\r\f]*+";
 
-  private static final String NUMBER = "[+|-]?+\\d*\\.?+\\d++(?:[a-z]++|%)?+";
+  private static final String NUMBER = "[+|-]?+(?:\\d++(?:.\\d++)?+|\\.\\d++)(?:[a-z]++|%)?+";
 
   private static final String NAME_CHAR = "[a-zA-Z0-9_-]|" + NON_ASCII + "|" + ESCAPE;
   private static final String NAME_START = "[a-zA-Z_]|" + NON_ASCII + "|" + ESCAPE;
