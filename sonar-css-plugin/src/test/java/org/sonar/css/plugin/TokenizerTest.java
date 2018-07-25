@@ -103,9 +103,9 @@ public class TokenizerTest {
     assertToken("\"foo\\\nbar\"", 0, "\"foo\\\nbar\"", CssTokenType.STRING);
     assertToken("@min768: ~\"(min-width: 768px)\"", 2, "~\"(min-width: 768px)\"", CssTokenType.STRING);
 
-    int numberOfLineReturn = 1000000;
-    String seedCode = StringUtils.repeat("a", numberOfLineReturn);
-    
+    int numberOfChars = 1000000;
+    String seedCode = StringUtils.repeat("a", numberOfChars);
+
     String testCode = "\"" + seedCode + "\"";
     assertToken(testCode, 0, testCode, CssTokenType.STRING, 1, 0, 1, testCode.length());
     testCode = "'" + seedCode + "'";
