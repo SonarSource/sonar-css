@@ -20,9 +20,8 @@
 package org.sonar.css.plugin;
 
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,6 +77,7 @@ public class TokenizerTest {
   public void number() {
     assertToken("1.15", 0, "1.15", CssTokenType.NUMBER);
     assertToken("1", 0, "1", CssTokenType.NUMBER);
+    assertToken(".1", 0, ".1", CssTokenType.NUMBER);
     assertToken("1.15px", 0, "1.15px", CssTokenType.NUMBER);
     assertToken("1.15%", 0, "1.15%", CssTokenType.NUMBER);
     assertToken("1px", 0, "1px", CssTokenType.NUMBER);
@@ -103,22 +103,33 @@ public class TokenizerTest {
     assertToken("bar { foo: \"\"; }", 4, "\"\"", CssTokenType.STRING);
     assertToken("\"foo\\\nbar\"", 0, "\"foo\\\nbar\"", CssTokenType.STRING);
     assertToken("@min768: ~\"(min-width: 768px)\"", 2, "~\"(min-width: 768px)\"", CssTokenType.STRING);
+
+    int numberOfChars = 1000000;
+    String seedCode = StringUtils.repeat("a", numberOfChars);
+
+    String testCode = "\"" + seedCode + "\"";
+    assertToken(testCode, 0, testCode, CssTokenType.STRING, 1, 0, 1, testCode.length());
+    testCode = "'" + seedCode + "'";
+    assertToken(testCode, 0, testCode, CssTokenType.STRING, 1, 0, 1, testCode.length());
   }
 
   @Test
   public void comment() {
     assertToken("/* foo */", 0, "/* foo */", CssTokenType.COMMENT);
     assertToken("foo { a: /* foo */ 42; }", 4, "/* foo */", CssTokenType.COMMENT);
-    assertToken("/* \n"
-      + "  this is a comment\n"
-      + "  and it is awesome because\n"
-      + "  it is multiline!\n"
-      + "*/", 0, "/* \n"
-      + "  this is a comment\n"
-      + "  and it is awesome because\n"
-      + "  it is multiline!\n"
-      + "*/", CssTokenType.COMMENT, 1, 0, 5, 2);
     assertToken("foo { a: /* foo\nbar*/ 42; }", 4, "/* foo\nbar*/", CssTokenType.COMMENT, 1, 9, 2, 5);
+    assertToken("foo { a: /* foo\r\nbar*/ 42; }", 4, "/* foo\r\nbar*/", CssTokenType.COMMENT, 1, 9, 2, 5);
+    assertToken("foo { a: /* foo\fbar*/ 42; }", 4, "/* foo\fbar*/", CssTokenType.COMMENT, 1, 9, 1, 21);
+    String code = "/* \n"
+      + "  this is a comment\n"
+      + "  and it is awesome because\n"
+      + "  it is multiline!\n"
+      + "*/";
+    assertToken(code, 0, code, CssTokenType.COMMENT, 1, 0, 5, 2);
+
+    int numberOfLineReturn = 1000000;
+    code = "/*" + StringUtils.repeat(" *\n", numberOfLineReturn) + " */";
+    assertToken(code, 0, code, CssTokenType.COMMENT, 1, 0, numberOfLineReturn + 1, 3);
   }
 
   @Test
