@@ -82,6 +82,7 @@ public class TokenizerTest {
     assertToken("1.15%", 0, "1.15%", CssTokenType.NUMBER);
     assertToken("1px", 0, "1px", CssTokenType.NUMBER);
     assertToken("1em/150%", 0, "1em", CssTokenType.NUMBER);
+    assertToken("1T1", 0, "1", CssTokenType.NUMBER);
   }
 
   @Test
