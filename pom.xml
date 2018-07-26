@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <name>SonarCSS</name>
-    <description>SonarQube CSS Analyzer</description>
+    <description>Code Analyzer for CSS, Less, SCSS</description>
     <url>http://redirect.sonarsource.com/plugins/css.html</url>
     <inceptionYear>2018</inceptionYear>
     <organization>
