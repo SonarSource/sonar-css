@@ -48,18 +48,12 @@ public class MetricsTest {
 
     assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file1.css").getValue())
         .contains("1=1;", "2=1;", "3=1;", "4=1;", "5=1;", "6=1;", "7=1");
-    assertThat(getMeasure("comment_lines_data", PROJECT_KEY + ":src/file1.css").getValue())
-        .contains("9=1");
 
     assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file2.less").getValue())
         .contains("1=1;", "2=1;", "3=1;", "4=1;", "5=1;", "6=1;", "7=1;", "8=1;", "9=1");
-    assertThat(getMeasure("comment_lines_data", PROJECT_KEY + ":src/file2.less").getValue())
-        .contains("11=1");
 
     assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file3.scss").getValue())
         .contains("1=1;", "3=1;", "5=1;", "6=1;", "7=1;", "8=1");
-    assertThat(getMeasure("comment_lines_data", PROJECT_KEY + ":src/file3.scss").getValue())
-        .contains("10=1;", "12=1");
   }
 
 }
