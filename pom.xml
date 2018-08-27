@@ -76,7 +76,7 @@
         <junit.version>4.12</junit.version>
         <sonar.version>7.2</sonar.version>
         <sonar.min.version>6.7</sonar.min.version>
-        <sonar-orchestrator.version>3.19.0.1641</sonar-orchestrator.version>
+        <sonar-orchestrator.version>3.21.0.1721</sonar-orchestrator.version>
         <sonarlint.version>3.1.0.1376</sonarlint.version>
         <jsr305.version>3.0.2</jsr305.version>
         <mockito.version>2.18.3</mockito.version>
