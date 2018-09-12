@@ -24,7 +24,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -56,8 +55,11 @@ public class CssRuleSensor implements Sensor {
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
   private final LinterCommandProvider linterCommandProvider;
+  private final ExternalProcessStreamConsumer externalProcessStreamConsumer = new ExternalProcessStreamConsumer();
 
-  public CssRuleSensor(BundleHandler bundleHandler, CheckFactory checkFactory, LinterCommandProvider linterCommandProvider) {
+  public CssRuleSensor(BundleHandler bundleHandler,
+                       CheckFactory checkFactory,
+                       LinterCommandProvider linterCommandProvider) {
     this.bundleHandler = bundleHandler;
     this.linterCommandProvider = linterCommandProvider;
     this.cssRules = new CssRules(checkFactory);
@@ -83,25 +85,40 @@ public class CssRuleSensor implements Sensor {
 
     File deployDestination = context.fileSystem().workDir();
     bundleHandler.deployBundle(deployDestination);
-
     String[] commandParts = linterCommandProvider.commandParts(deployDestination, context);
-    ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
-    String command = String.join(" ", commandParts);
 
     try {
-      createConfig(deployDestination);
+      ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
+      createLinterConfig(deployDestination);
       Process process = processBuilder.start();
-
-      try (InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-        IssuesPerFile[] issues = new Gson().fromJson(inputStreamReader, IssuesPerFile[].class);
-        saveIssues(context, issues);
+      StringBuilder output = new StringBuilder();
+      externalProcessStreamConsumer.consumeStream(process.getInputStream(), output::append);
+      externalProcessStreamConsumer.consumeStream(process.getErrorStream(), LOG::error);
+      if (isSuccessful(process)) {
+        saveIssues(context, output.toString());
       }
+    } catch (Exception e) {
+      LOG.error("Failed to run external linting process " + String.join(" ", commandParts), e);
+    } finally {
+      externalProcessStreamConsumer.shutdownNow();
+    }
+  }
 
-    } catch (IOException e) {
-      throw new IllegalStateException(String.format("Failed to run external process '%s'", command), e);
-
-    } catch (JsonSyntaxException e) {
-      throw new IllegalStateException(String.format("Failed to parse json result of external process execution '%s'. To diagnose, try to run it manually.", command), e);
+  private boolean isSuccessful(Process process) {
+    try {
+      int exitValue = process.waitFor();
+      externalProcessStreamConsumer.await();
+      // exit codes 0 and 2 are expected. 0 - means no issues were found, 2 - means that at least one "error-level" rule found issue
+      // see https://github.com/stylelint/stylelint/blob/master/docs/user-guide/cli.md#exit-codes
+      boolean isSuccessful = exitValue == 0 || exitValue == 2;
+      if (!isSuccessful) {
+        LOG.error("Analysis didn't terminate normally, please verify ERROR and WARN logs above. Exit code {}", exitValue);
+      }
+      return isSuccessful;
+    } catch (InterruptedException e) {
+      LOG.warn("InterruptedException while waiting for external process to finish", e);
+      Thread.currentThread().interrupt();
+      return false;
     }
   }
 
@@ -138,7 +155,7 @@ public class CssRuleSensor implements Sensor {
     return true;
   }
 
-  private void createConfig(File deployDestination) throws IOException {
+  private void createLinterConfig(File deployDestination) throws IOException {
     String configPath = linterCommandProvider.configPath(deployDestination);
     StylelintConfig config = cssRules.getConfig();
     final GsonBuilder gsonBuilder = new GsonBuilder();
@@ -159,7 +176,14 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private void saveIssues(SensorContext context, IssuesPerFile[] issues) {
+  private void saveIssues(SensorContext context, String issuesAsJson) {
+    IssuesPerFile[] issues;
+    try {
+      issues = new Gson().fromJson(issuesAsJson, IssuesPerFile[].class);
+    } catch (JsonSyntaxException e) {
+      throw new IllegalStateException("Failed to parse JSON result of external linting process execution: \n-------\n" + issuesAsJson + "\n-------", e);
+    }
+
     FileSystem fileSystem = context.fileSystem();
 
     for (IssuesPerFile issuesPerFile : issues) {
