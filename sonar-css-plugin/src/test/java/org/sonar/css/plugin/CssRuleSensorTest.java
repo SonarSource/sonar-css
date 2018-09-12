@@ -26,6 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,6 +48,7 @@ import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 public class CssRuleSensorTest {
 
@@ -68,6 +71,7 @@ public class CssRuleSensorTest {
   @Before
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
+    Awaitility.setDefaultTimeout(5, TimeUnit.MINUTES);
   }
 
   @Test
@@ -128,12 +132,11 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_error() {
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Failed to parse json result of external process execution");
-
     TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockError.js", inputFile.absolutePath());
     CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
     sensor.execute(context);
+
+    assertThat(logTester.logs(LoggerLevel.ERROR)).anyMatch(s -> s.startsWith("Failed to run external linting process"));
   }
 
   @Test
@@ -143,6 +146,26 @@ public class CssRuleSensorTest {
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.WARN)).contains("No rules are activated in CSS Quality Profile");
+  }
+
+  @Test
+  public void test_stylelint_throws() {
+    TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockThrow.js", inputFile.absolutePath());
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    sensor.execute(context);
+
+    await().until(() -> logTester.logs(LoggerLevel.ERROR)
+      .contains("throw new Error('houps!');"));
+  }
+
+  @Test
+  public void test_stylelint_exitvalue() {
+    TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockExit.js", "1");
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    sensor.execute(context);
+
+    await().until(() -> logTester.logs(LoggerLevel.ERROR)
+      .contains("Analysis didn't terminate normally, please verify ERROR and WARN logs above. Exit code 1"));
   }
 
   @Test
