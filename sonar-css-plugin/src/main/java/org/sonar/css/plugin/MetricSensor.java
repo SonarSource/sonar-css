@@ -151,7 +151,6 @@ public class MetricSensor implements Sensor {
 
     FileLinesContext fileLinesContext = fileLinesContextFactory.createFor(file);
     linesOfCode.forEach(line -> fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, line, 1));
-    linesOfComment.forEach(line -> fileLinesContext.setIntValue(CoreMetrics.COMMENT_LINES_DATA_KEY, line, 1));
     fileLinesContext.save();
   }
 
