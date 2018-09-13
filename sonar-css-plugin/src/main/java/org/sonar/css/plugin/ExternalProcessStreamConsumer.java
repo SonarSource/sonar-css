@@ -55,15 +55,10 @@ class ExternalProcessStreamConsumer {
     });
   }
 
-  void await() {
+  void await() throws InterruptedException {
     executorService.shutdown();
-    try {
-      if (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
-        LOG.error("External process stream consumer timed out");
-      }
-    } catch (InterruptedException e) {
-      LOG.warn("InterruptedException while waiting for external process stream consumer to finish", e);
-      Thread.currentThread().interrupt();
+    if (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
+      LOG.error("External process stream consumer timed out");
     }
   }
 
