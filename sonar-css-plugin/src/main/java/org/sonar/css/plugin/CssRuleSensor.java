@@ -104,22 +104,16 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private boolean isSuccessful(Process process) {
-    try {
-      int exitValue = process.waitFor();
-      externalProcessStreamConsumer.await();
-      // exit codes 0 and 2 are expected. 0 - means no issues were found, 2 - means that at least one "error-level" rule found issue
-      // see https://github.com/stylelint/stylelint/blob/master/docs/user-guide/cli.md#exit-codes
-      boolean isSuccessful = exitValue == 0 || exitValue == 2;
-      if (!isSuccessful) {
-        LOG.error("Analysis didn't terminate normally, please verify ERROR and WARN logs above. Exit code {}", exitValue);
-      }
-      return isSuccessful;
-    } catch (InterruptedException e) {
-      LOG.warn("InterruptedException while waiting for external process to finish", e);
-      Thread.currentThread().interrupt();
-      return false;
+  private boolean isSuccessful(Process process) throws InterruptedException {
+    int exitValue = process.waitFor();
+    externalProcessStreamConsumer.await();
+    // exit codes 0 and 2 are expected. 0 - means no issues were found, 2 - means that at least one "error-level" rule found issue
+    // see https://github.com/stylelint/stylelint/blob/master/docs/user-guide/cli.md#exit-codes
+    boolean isSuccessful = exitValue == 0 || exitValue == 2;
+    if (!isSuccessful) {
+      LOG.error("Analysis didn't terminate normally, please verify ERROR and WARN logs above. Exit code {}", exitValue);
     }
+    return isSuccessful;
   }
 
   private boolean checkCompatibleNodeVersion(SensorContext context) {
