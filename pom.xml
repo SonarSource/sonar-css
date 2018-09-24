@@ -74,7 +74,8 @@
         <slf4j.version>1.7.25</slf4j.version>
         <assertj.version>3.10.0</assertj.version>
         <junit.version>4.12</junit.version>
-        <sonar.version>7.2</sonar.version>
+        <!-- TODO replace with release/milestone build when available -->
+        <sonar.version>7.4.0.16876</sonar.version>
         <sonar.min.version>6.7</sonar.min.version>
         <sonar-orchestrator.version>3.21.0.1721</sonar-orchestrator.version>
         <sonarlint.version>3.1.0.1376</sonarlint.version>
