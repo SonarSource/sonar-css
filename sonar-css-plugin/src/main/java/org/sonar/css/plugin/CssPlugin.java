@@ -20,12 +20,16 @@
 package org.sonar.css.plugin;
 
 import org.sonar.api.Plugin;
+import org.sonar.api.SonarProduct;
+import org.sonar.api.SonarRuntime;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.utils.Version;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 public class CssPlugin implements Plugin {
+
+  private static final Version ANALYSIS_WARNINGS_MIN_SUPPORTED_SQ_VERSION = Version.create(7, 4);
 
   static final String FILE_SUFFIXES_KEY = "sonar.css.file.suffixes";
   public static final String FILE_SUFFIXES_DEFVALUE = ".css,.less,.scss";
@@ -86,5 +90,17 @@ public class CssPlugin implements Plugin {
           .multiValues(true)
           .build());
     }
+
+    if (isAnalysisWarningsSupported(context.getRuntime())) {
+      context.addExtension(AnalysisWarningsWrapper.class);
+    }
+  }
+
+  /**
+   * Drop this and related when the minimum supported version of SonarQube API reaches 7.4.
+   */
+  private static boolean isAnalysisWarningsSupported(SonarRuntime runtime) {
+    return runtime.getApiVersion().isGreaterThanOrEqual(ANALYSIS_WARNINGS_MIN_SUPPORTED_SQ_VERSION)
+      && runtime.getProduct() != SonarProduct.SONARLINT;
   }
 }
