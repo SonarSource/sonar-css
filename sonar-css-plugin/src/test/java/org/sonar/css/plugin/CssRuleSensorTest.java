@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,6 +50,11 @@ import org.sonar.css.plugin.bundle.CssBundleHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class CssRuleSensorTest {
 
@@ -67,6 +73,7 @@ public class CssRuleSensorTest {
 
   private SensorContextTester context = SensorContextTester.create(BASE_DIR);
   private DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
+  private AnalysisWarningsWrapper analysisWarnings = mock(AnalysisWarningsWrapper.class);
 
   @Before
   public void setUp() {
@@ -76,7 +83,7 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_descriptor() {
-    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintCommandProvider());
+    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintCommandProvider(), analysisWarnings);
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     sensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
@@ -86,7 +93,7 @@ public class CssRuleSensorTest {
   @Test
   public void test_execute() throws IOException {
     TestLinterCommandProvider commandProvider = getCommandProvider();
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(1);
@@ -95,45 +102,100 @@ public class CssRuleSensorTest {
 
     Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
     assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
+    verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
   public void test_invalid_node() {
     TestLinterCommandProvider commandProvider = getCommandProvider();
     commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
+    verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
   public void test_no_node() {
     TestLinterCommandProvider commandProvider = getCommandProvider();
     commandProvider.nodeExecutable = TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to get Node.js version. No CSS files will be analyzed.");
+    verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
   public void test_old_node() {
     TestLinterCommandProvider commandProvider = getCommandProvider();
     commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/oldNodeVersion.js");
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Only Node.js v6 or later is supported, got 3.2.1. No CSS files will be analyzed.");
+    verifyZeroInteractions(analysisWarnings);
+  }
+
+  @Test
+  public void test_execute_with_analysisWarnings() throws IOException {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(1);
+    Issue issue = context.allIssues().iterator().next();
+    assertThat(issue.primaryLocation().message()).isEqualTo("some message");
+
+    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
+    assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
+    verifyZeroInteractions(analysisWarnings);
+  }
+
+  @Test
+  public void test_invalid_node_with_analysisWarnings() {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(0);
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
+    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Failed to parse Node.js version, got 'Invalid version'."));
+  }
+
+  @Test
+  public void test_no_node_with_analysisWarnings() {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    commandProvider.nodeExecutable = TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(0);
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to get Node.js version. No CSS files will be analyzed.");
+    verify(analysisWarnings).addUnique(matches("CSS files were not analyzed. Node.js version could not be detected using command: .* -v"));
+  }
+
+  @Test
+  public void test_old_node_with_analysisWarnings() {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/oldNodeVersion.js");
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(0);
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Only Node.js v6 or later is supported, got 3.2.1. No CSS files will be analyzed.");
+    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Only Node.js v6 or later is supported, got 3.2.1."));
   }
 
   @Test
   public void test_error() {
     TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockError.js", inputFile.absolutePath());
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.ERROR)).anyMatch(s -> s.startsWith("Failed to run external linting process"));
@@ -142,7 +204,7 @@ public class CssRuleSensorTest {
   @Test
   public void test_not_execute_rules_if_nothing_enabled() {
     TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockError.js", inputFile.absolutePath());
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), new CheckFactory(new TestActiveRules()), commandProvider);
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), new CheckFactory(new TestActiveRules()), commandProvider, analysisWarnings);
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.WARN)).contains("No rules are activated in CSS Quality Profile");
@@ -151,7 +213,7 @@ public class CssRuleSensorTest {
   @Test
   public void test_stylelint_throws() {
     TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockThrow.js", inputFile.absolutePath());
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     await().until(() -> logTester.logs(LoggerLevel.ERROR)
@@ -161,7 +223,7 @@ public class CssRuleSensorTest {
   @Test
   public void test_stylelint_exitvalue() {
     TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockExit.js", "1");
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     await().until(() -> logTester.logs(LoggerLevel.ERROR)
@@ -174,7 +236,7 @@ public class CssRuleSensorTest {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
     TestLinterCommandProvider rulesExecution = new TestLinterCommandProvider().nodeScript("/executables/mockSyntaxError.js", inputFile.absolutePath());
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
+    CssRuleSensor sensor = createCssRuleSensor(rulesExecution);
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri());
@@ -186,7 +248,7 @@ public class CssRuleSensorTest {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
     TestLinterCommandProvider rulesExecution = new TestLinterCommandProvider().nodeScript("/executables/mockUnknownRule.js", inputFile.absolutePath());
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), checkFactory, rulesExecution);
+    CssRuleSensor sensor = createCssRuleSensor(rulesExecution);
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Unknown stylelint rule or rule not enabled: 'unknown-rule-key'");
@@ -203,6 +265,14 @@ public class CssRuleSensorTest {
 
     sensorContext.fileSystem().add(inputFile);
     return inputFile;
+  }
+
+  private CssRuleSensor createCssRuleSensor(TestLinterCommandProvider commandProvider) {
+    return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+  }
+
+  private CssRuleSensor createCssRuleSensor(TestLinterCommandProvider commandProvider, @Nullable AnalysisWarningsWrapper analysisWarnings) {
+    return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider, analysisWarnings);
   }
 
   private TestLinterCommandProvider getCommandProvider() {

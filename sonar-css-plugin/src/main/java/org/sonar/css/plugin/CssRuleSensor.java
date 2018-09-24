@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.apache.commons.io.IOUtils;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
@@ -51,18 +52,29 @@ public class CssRuleSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(CssRuleSensor.class);
   private static final int MIN_NODE_VERSION = 6;
+  private static final String WARNING_PREFIX = "CSS files were not analyzed. ";
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
   private final LinterCommandProvider linterCommandProvider;
+  @Nullable
+  private final AnalysisWarningsWrapper analysisWarnings;
   private final ExternalProcessStreamConsumer externalProcessStreamConsumer = new ExternalProcessStreamConsumer();
 
   public CssRuleSensor(BundleHandler bundleHandler,
                        CheckFactory checkFactory,
-                       LinterCommandProvider linterCommandProvider) {
+                       LinterCommandProvider linterCommandProvider,
+                       @Nullable AnalysisWarningsWrapper analysisWarnings) {
     this.bundleHandler = bundleHandler;
     this.linterCommandProvider = linterCommandProvider;
     this.cssRules = new CssRules(checkFactory);
+    this.analysisWarnings = analysisWarnings;
+  }
+
+  public CssRuleSensor(BundleHandler bundleHandler,
+                       CheckFactory checkFactory,
+                       LinterCommandProvider linterCommandProvider) {
+    this(bundleHandler, checkFactory, linterCommandProvider, null);
   }
 
   @Override
@@ -127,6 +139,9 @@ public class CssRuleSensor implements Sensor {
       version = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8).trim();
     } catch (Exception e) {
       LOG.error("Failed to get Node.js version. " + messageSuffix, e);
+      if (analysisWarnings != null) {
+        analysisWarnings.addUnique(WARNING_PREFIX + "Node.js version could not be detected using command: " + nodeExecutable + " -v");
+      }
       return false;
     }
 
@@ -135,13 +150,19 @@ public class CssRuleSensor implements Sensor {
     if (versionMatcher.matches()) {
       int major = Integer.parseInt(versionMatcher.group(1));
       if (major < MIN_NODE_VERSION) {
-        String message = String.format("Only Node.js v%s or later is supported, got %s. %s", MIN_NODE_VERSION, version, messageSuffix);
-        LOG.error(message);
+        String message = String.format("Only Node.js v%s or later is supported, got %s.", MIN_NODE_VERSION, version);
+        LOG.error(message + ' ' + messageSuffix);
+        if (analysisWarnings != null) {
+          analysisWarnings.addUnique(WARNING_PREFIX + message);
+        }
         return false;
       }
     } else {
-      String message = String.format("Failed to parse Node.js version, got '%s'. %s", version, messageSuffix);
-      LOG.error(message);
+      String message = String.format("Failed to parse Node.js version, got '%s'.", version);
+      LOG.error(message + ' ' + messageSuffix);
+      if (analysisWarnings != null) {
+        analysisWarnings.addUnique(WARNING_PREFIX + message);
+      }
       return false;
     }
 
