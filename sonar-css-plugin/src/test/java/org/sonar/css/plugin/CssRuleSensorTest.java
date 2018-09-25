@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Rule;
@@ -113,7 +114,7 @@ public class CssRuleSensorTest {
 
     assertThat(context.allIssues()).hasSize(0);
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Failed to parse Node.js version, got 'Invalid version'."));
+    verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
@@ -125,7 +126,7 @@ public class CssRuleSensorTest {
 
     assertThat(context.allIssues()).hasSize(0);
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to get Node.js version. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(matches("CSS files were not analyzed. Node.js version could not be detected using command: .* -v"));
+    verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
@@ -133,6 +134,57 @@ public class CssRuleSensorTest {
     TestLinterCommandProvider commandProvider = getCommandProvider();
     commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/oldNodeVersion.js");
     CssRuleSensor sensor = createCssRuleSensor(commandProvider);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(0);
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Only Node.js v6 or later is supported, got 3.2.1. No CSS files will be analyzed.");
+    verifyZeroInteractions(analysisWarnings);
+  }
+
+  @Test
+  public void test_execute_with_analysisWarnings() throws IOException {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(1);
+    Issue issue = context.allIssues().iterator().next();
+    assertThat(issue.primaryLocation().message()).isEqualTo("some message");
+
+    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
+    assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
+    verifyZeroInteractions(analysisWarnings);
+  }
+
+  @Test
+  public void test_invalid_node_with_analysisWarnings() {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(0);
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
+    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Failed to parse Node.js version, got 'Invalid version'."));
+  }
+
+  @Test
+  public void test_no_node_with_analysisWarnings() {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    commandProvider.nodeExecutable = TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(0);
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to get Node.js version. No CSS files will be analyzed.");
+    verify(analysisWarnings).addUnique(matches("CSS files were not analyzed. Node.js version could not be detected using command: .* -v"));
+  }
+
+  @Test
+  public void test_old_node_with_analysisWarnings() {
+    TestLinterCommandProvider commandProvider = getCommandProvider();
+    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/oldNodeVersion.js");
+    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
@@ -216,6 +268,10 @@ public class CssRuleSensorTest {
   }
 
   private CssRuleSensor createCssRuleSensor(TestLinterCommandProvider commandProvider) {
+    return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+  }
+
+  private CssRuleSensor createCssRuleSensor(TestLinterCommandProvider commandProvider, @Nullable AnalysisWarningsWrapper analysisWarnings) {
     return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider, analysisWarnings);
   }
 
