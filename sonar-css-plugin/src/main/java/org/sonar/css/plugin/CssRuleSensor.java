@@ -52,12 +52,11 @@ public class CssRuleSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(CssRuleSensor.class);
   private static final int MIN_NODE_VERSION = 6;
-  private static final String WARNING_PREFIX = "CSS files were not analyzed. ";
+  private static final String WARNING_PREFIX = "CSS files were not analyzed.";
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
   private final LinterCommandProvider linterCommandProvider;
-  @Nullable
   private final AnalysisWarningsWrapper analysisWarnings;
   private final ExternalProcessStreamConsumer externalProcessStreamConsumer = new ExternalProcessStreamConsumer();
 
@@ -139,9 +138,8 @@ public class CssRuleSensor implements Sensor {
       version = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8).trim();
     } catch (Exception e) {
       LOG.error("Failed to get Node.js version. " + messageSuffix, e);
-      if (analysisWarnings != null) {
-        analysisWarnings.addUnique(WARNING_PREFIX + "Node.js version could not be detected using command: " + nodeExecutable + " -v");
-      }
+      String message = String.format("%s Node.js version could not be detected using command: %s -v", WARNING_PREFIX, nodeExecutable);
+      logWithUiWarning(message);
       return false;
     }
 
@@ -150,24 +148,25 @@ public class CssRuleSensor implements Sensor {
     if (versionMatcher.matches()) {
       int major = Integer.parseInt(versionMatcher.group(1));
       if (major < MIN_NODE_VERSION) {
-        String message = String.format("Only Node.js v%s or later is supported, got %s.", MIN_NODE_VERSION, version);
-        LOG.error(message + ' ' + messageSuffix);
-        if (analysisWarnings != null) {
-          analysisWarnings.addUnique(WARNING_PREFIX + message);
-        }
+        String message = String.format("%s Only Node.js v%s or later is supported, got %s.", WARNING_PREFIX, MIN_NODE_VERSION, version);
+        logWithUiWarning(message);
         return false;
       }
     } else {
-      String message = String.format("Failed to parse Node.js version, got '%s'.", version);
-      LOG.error(message + ' ' + messageSuffix);
-      if (analysisWarnings != null) {
-        analysisWarnings.addUnique(WARNING_PREFIX + message);
-      }
+      String message = String.format("%s Failed to parse Node.js version, got '%s'.", WARNING_PREFIX, version);
+      logWithUiWarning(message);
       return false;
     }
 
     LOG.debug(String.format("Using Node.js %s", version));
     return true;
+  }
+
+  private void logWithUiWarning(String message) {
+    LOG.error(message);
+    if (analysisWarnings != null) {
+      analysisWarnings.addUnique(message);
+    }
   }
 
   private void createLinterConfig(File deployDestination) throws IOException {

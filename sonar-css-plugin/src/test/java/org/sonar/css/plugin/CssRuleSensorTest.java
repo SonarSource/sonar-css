@@ -113,7 +113,7 @@ public class CssRuleSensorTest {
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("CSS files were not analyzed. Failed to parse Node.js version, got 'Invalid version'.");
     verifyZeroInteractions(analysisWarnings);
   }
 
@@ -137,7 +137,7 @@ public class CssRuleSensorTest {
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Only Node.js v6 or later is supported, got 3.2.1. No CSS files will be analyzed.");
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("CSS files were not analyzed. Only Node.js v6 or later is supported, got 3.2.1.");
     verifyZeroInteractions(analysisWarnings);
   }
 
@@ -163,9 +163,10 @@ public class CssRuleSensorTest {
     CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
     sensor.execute(context);
 
+    String message = "CSS files were not analyzed. Failed to parse Node.js version, got 'Invalid version'.";
     assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Failed to parse Node.js version, got 'Invalid version'."));
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains(message);
+    verify(analysisWarnings).addUnique(eq(message));
   }
 
   @Test
@@ -187,9 +188,11 @@ public class CssRuleSensorTest {
     CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
     sensor.execute(context);
 
+    String message = "CSS files were not analyzed. Only Node.js v6 or later is supported, got 3.2.1.";
+
     assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Only Node.js v6 or later is supported, got 3.2.1. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Only Node.js v6 or later is supported, got 3.2.1."));
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains(message);
+    verify(analysisWarnings).addUnique(eq(message));
   }
 
   @Test
