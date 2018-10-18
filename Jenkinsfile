@@ -113,5 +113,5 @@ def withQAEnv(def body) {
 
 String itBuildArguments(String sqRuntimeVersion) {
     "-Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
-         "-Dorchestrator.configUrl=http://infra.internal.sonarsource.com/jenkins/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
+         "-Dorchestrator.configUrl=https://repox.sonarsource.com/orchestrator.properties/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
 }
