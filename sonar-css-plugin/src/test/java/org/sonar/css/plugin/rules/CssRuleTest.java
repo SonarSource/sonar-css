@@ -21,7 +21,10 @@ package org.sonar.css.plugin.rules;
 
 import com.google.gson.Gson;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Set;
 import org.junit.Test;
+import org.mockito.internal.util.collections.Sets;
 import org.sonar.css.plugin.CssRules;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,14 +42,25 @@ public class CssRuleTest {
 
   @Test
   public void rules_default_is_empty() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    Set<Class> rulesWithStylelintOptions = Sets.newSet(
+      AtRuleNoUnknown.class,
+      DeclarationBlockNoDuplicateProperties.class,
+      SelectorPseudoClassNoUnknown.class);
+
     for (Class ruleClass : CssRules.getRuleClasses()) {
       CssRule rule = (CssRule)ruleClass.getConstructor().newInstance();
-      if (rule instanceof AtRuleNoUnknown || rule instanceof DeclarationBlockNoDuplicateProperties) {
-        continue;
+      if (rulesWithStylelintOptions.contains(rule.getClass())) {
+        assertThat(rule.stylelintOptions()).isNotEmpty();
+      } else {
+        assertThat(rule.stylelintOptions()).isEmpty();
       }
-
-      assertThat(rule.stylelintOptions()).isEmpty();
     }
+  }
+
+  @Test
+  public void selector_pseudo_class_options() {
+    String optionsAsJson = new Gson().toJson(new SelectorPseudoClassNoUnknown().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoClasses\":[\"local\",\"global\"]}]");
   }
 
   @Test

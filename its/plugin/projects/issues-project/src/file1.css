@@ -62,3 +62,7 @@ unknown {                                                     /* S4670 | selecto
 @media screen and (unknown) {                                 /* S4661 | media-feature-name-no-unknown */
   width: 2px;
 }
+
+:global(.nestedClassParent) {                                 /* ignored by S4658 | selector-pseudo-class-no-unknown */
+   color: blue;
+}
