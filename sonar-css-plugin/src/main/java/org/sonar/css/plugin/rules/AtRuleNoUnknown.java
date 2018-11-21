@@ -27,7 +27,7 @@ import org.sonar.check.RuleProperty;
 @Rule(key = "S4662")
 public class AtRuleNoUnknown implements CssRule {
 
-  private static final String DEFAULT_IGNORED_AT_RULES = "at-root,content,debug,each,else,error,for,function,if,include,mixin,return,warn,while";
+  private static final String DEFAULT_IGNORED_AT_RULES = "at-root,content,debug,each,else,error,for,function,if,include,mixin,return,warn,while,extend";
 
   @RuleProperty(
     key = "ignoreAtRules",
