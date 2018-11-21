@@ -20,6 +20,8 @@
 package org.sonar.css.its;
 
 import com.sonar.orchestrator.Orchestrator;
+import com.sonar.orchestrator.locator.FileLocation;
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import org.junit.BeforeClass;
@@ -28,6 +30,7 @@ import org.junit.Test;
 import org.sonar.css.plugin.CssRules;
 import org.sonarqube.ws.Issues.Issue;
 import org.sonarqube.ws.client.issues.SearchRequest;
+import org.sonarsource.analyzer.commons.ProfileGenerator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.css.its.Tests.newWsClient;
@@ -41,6 +44,12 @@ public class IssuesTest {
 
   @BeforeClass
   public static void prepare() {
+    File profile = ProfileGenerator.generateProfile(orchestrator.getServer().getUrl(), "css", "css", new ProfileGenerator.RulesConfiguration(), Collections.emptySet());
+    orchestrator.getServer().restoreProfile(FileLocation.of(profile));
+
+    orchestrator.getServer().provisionProject(PROJECT_KEY, PROJECT_KEY);
+    orchestrator.getServer().associateProjectToQualityProfile(PROJECT_KEY, "css", "rules");
+
     orchestrator.executeBuild(Tests.createScanner(PROJECT_KEY));
   }
 
