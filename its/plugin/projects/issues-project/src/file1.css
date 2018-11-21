@@ -63,6 +63,6 @@ unknown {                                                     /* S4670 | selecto
   width: 2px;
 }
 
-:global(.nestedClassParent) {                                 /* ignored by S4658 | selector-pseudo-class-no-unknown */
+:global(.nestedClassParent) {                                 /* ignored by S4659 | selector-pseudo-class-no-unknown */
    color: blue;
 }
