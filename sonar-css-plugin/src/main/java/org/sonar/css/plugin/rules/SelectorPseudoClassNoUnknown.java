@@ -19,6 +19,8 @@
  */
 package org.sonar.css.plugin.rules;
 
+import java.util.Arrays;
+import java.util.List;
 import org.sonar.check.Rule;
 
 @Rule(key = "S4659")
@@ -27,5 +29,16 @@ public class SelectorPseudoClassNoUnknown implements CssRule {
   @Override
   public String stylelintKey() {
     return "selector-pseudo-class-no-unknown";
+  }
+
+  @Override
+  public List<Object> stylelintOptions() {
+    return Arrays.asList(true, new StylelintIgnoreOption());
+  }
+
+
+  private static class StylelintIgnoreOption {
+    // Used by GSON serialization
+    private final String[] ignorePseudoClasses = {"local", "global"};
   }
 }
