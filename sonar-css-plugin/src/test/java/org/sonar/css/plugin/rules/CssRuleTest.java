@@ -45,6 +45,7 @@ public class CssRuleTest {
     Set<Class> rulesWithStylelintOptions = Sets.newSet(
       AtRuleNoUnknown.class,
       DeclarationBlockNoDuplicateProperties.class,
+      PropertyNoUnknown.class,
       SelectorPseudoClassNoUnknown.class);
 
     for (Class ruleClass : CssRules.getRuleClasses()) {
@@ -60,13 +61,19 @@ public class CssRuleTest {
   @Test
   public void selector_pseudo_class_options() {
     String optionsAsJson = new Gson().toJson(new SelectorPseudoClassNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoClasses\":[\"local\",\"global\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoClasses\":[\"local\",\"global\",\"export\",\"import\"]}]");
+  }
+
+  @Test
+  public void property_no_unknown_options() {
+    String optionsAsJson = new Gson().toJson(new PropertyNoUnknown().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreProperties\":[\"composes\"]}]");
   }
 
   @Test
   public void at_rule_unknown_default() {
     String optionsAsJson = new Gson().toJson(new AtRuleNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"at-root\",\"content\",\"debug\",\"each\",\"else\",\"error\",\"for\",\"function\",\"if\",\"include\",\"mixin\",\"return\",\"warn\",\"while\",\"extend\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"value\",\"at-root\",\"content\",\"debug\",\"each\",\"else\",\"error\",\"for\",\"function\",\"if\",\"include\",\"mixin\",\"return\",\"warn\",\"while\",\"extend\"]}]");
   }
 
   @Test
