@@ -66,3 +66,7 @@ unknown {                                                     /* S4670 | selecto
 :global(.nestedClassParent) {                                 /* ignored by S4659 | selector-pseudo-class-no-unknown */
    color: blue;
 }
+
+:export {                                                     /* ignored by S4659 | selector-pseudo-class-no-unknown */
+  exportedKey: exportedValue;
+}

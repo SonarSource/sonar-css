@@ -39,6 +39,6 @@ public class SelectorPseudoClassNoUnknown implements CssRule {
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignorePseudoClasses = {"local", "global"};
+    private final String[] ignorePseudoClasses = {"local", "global","export", "import"};
   }
 }
