@@ -46,12 +46,12 @@ pipeline {
                         runITs "LATEST_RELEASE"
                     }
                 }
-                stage('ITs-dev') {
+                stage('ITs-dogfood') {
                     agent {
                         label 'linux'
                     }
                     steps {
-                        runITs "DEV"
+                        runITs "DOGFOOD"
                     }
                 }
 
@@ -101,7 +101,7 @@ def runITs(String sqRuntimeVersion) {
 
 def withQAEnv(def body) {
     checkout scm
-    withCredentials([string(credentialsId: 'ARTIFACTORY_PRIVATE_API_KEY', variable: 'ARTIFACTORY_PRIVATE_API_KEY'),
+    withCredentials([string(credentialsId: 'ARTIFACTORY_PRIVATE_API_KEY', variable: 'ARTIFACTORY_API_KEY'),
                      usernamePassword(credentialsId: 'ARTIFACTORY_PRIVATE_USER', passwordVariable: 'ARTIFACTORY_PRIVATE_PASSWORD', usernameVariable: 'ARTIFACTORY_PRIVATE_USERNAME')]) {
         wrap([$class: 'Xvfb']) {
             body.call()
@@ -110,6 +110,6 @@ def withQAEnv(def body) {
 }
 
 String itBuildArguments(String sqRuntimeVersion) {
-    "-Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_PRIVATE_API_KEY} " +
+    "-Pits -Dsonar.runtimeVersion=${sqRuntimeVersion} -Dorchestrator.artifactory.apiKey=${env.ARTIFACTORY_API_KEY} " +
          "-Dorchestrator.configUrl=https://repox.jfrog.io/repox/orchestrator.properties/orch-h2.properties -Dmaven.test.redirectTestOutputToFile=false clean verify -e -V"
 }
