@@ -11,7 +11,8 @@ pipeline {
     }
     environment {
         SONARSOURCE_QA = 'true'
-        MAVEN_TOOL = 'Maven 3.3.x'
+        MAVEN_TOOL = 'Maven 3.5.x'
+        JDK_VERSION = 'Java 11'
     }
     stages {
         stage('Notify') {
@@ -60,8 +61,10 @@ pipeline {
                         label 'windows'
                     }
                     steps {
-                        withMaven(maven: MAVEN_TOOL) {
-                            sh 'mvn.cmd clean test'
+                        withQAEnv {
+                            withMaven(maven: MAVEN_TOOL) {
+                                sh 'mvn.cmd clean test'
+                            }
                         }
                     }
                 }
@@ -86,25 +89,28 @@ pipeline {
 }
 
 def runITs(String sqRuntimeVersion) {
-    withQAEnv {
-        withMaven(maven: MAVEN_TOOL) {
-            mavenSetBuildVersion()
-            dir('its') {
-                nodejs('NodeJS 10.4.1') {
-                    def mvn = isUnix() ? 'mvn' : 'mvn.cmd'
-                    sh "${mvn} ${itBuildArguments sqRuntimeVersion}"
-                }
-            }
+  withQAEnv {
+    nodejs(configId: 'npm-artifactory', nodeJSInstallationName: 'NodeJS latest') {
+      withMaven(maven: MAVEN_TOOL) {
+        mavenSetBuildVersion()
+        dir('its') {
+          def mvn = isUnix() ? 'mvn' : 'mvn.cmd'
+          sh "${mvn} ${itBuildArguments sqRuntimeVersion}"
         }
+      }
     }
+  }
 }
 
 def withQAEnv(def body) {
     checkout scm
-    withCredentials([string(credentialsId: 'ARTIFACTORY_PRIVATE_API_KEY', variable: 'ARTIFACTORY_API_KEY'),
-                     usernamePassword(credentialsId: 'ARTIFACTORY_PRIVATE_USER', passwordVariable: 'ARTIFACTORY_PRIVATE_PASSWORD', usernameVariable: 'ARTIFACTORY_PRIVATE_USERNAME')]) {
-        wrap([$class: 'Xvfb']) {
-            body.call()
+    def javaHome = tool name: env.JDK_VERSION, type: 'hudson.model.JDK'
+    withEnv(["JAVA_HOME=${javaHome}"]) {
+        withCredentials([string(credentialsId: 'ARTIFACTORY_PRIVATE_API_KEY', variable: 'ARTIFACTORY_API_KEY'),
+                         usernamePassword(credentialsId: 'ARTIFACTORY_PRIVATE_USER', passwordVariable: 'ARTIFACTORY_PRIVATE_PASSWORD', usernameVariable: 'ARTIFACTORY_PRIVATE_USERNAME')]) {
+            wrap([$class: 'Xvfb']) {
+                body.call()
+            }
         }
     }
 }
