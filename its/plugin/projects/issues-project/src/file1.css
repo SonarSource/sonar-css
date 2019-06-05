@@ -17,8 +17,7 @@ a:unknown {                                                   /* S4659 | selecto
   background-color: #ffw;                                     /* S4647 | color-no-invalid-hex */
   /* */                                                       /* S4663 | comment-no-empty */
   content: "first
-  second";                                                  /* S4652 | string-no-newline */
-  composes: class1;                                           /* S4654 | property-no-unknown exclusion */
+    second";                                                  /* S4652 | string-no-newline */
   color: pink;
   color: pink;                                                /* S4656 | declaration-block-no-duplicate-properties */
   color: orange;                                              /* S4656 | declaration-block-no-duplicate-properties | Not raised because property has a different value */
@@ -67,12 +66,3 @@ unknown {                                                     /* S4670 | selecto
 :global(.nestedClassParent) {                                 /* ignored by S4659 | selector-pseudo-class-no-unknown */
    color: blue;
 }
-
-:export {                                                     /* ignored by S4659 | selector-pseudo-class-no-unknown */
-  exportedKey: exportedValue;
-}
-
-@value                                                        /* S4662 | at-rule-no-unknown */
-primary,
-primaryActive
-from 'colors.css';

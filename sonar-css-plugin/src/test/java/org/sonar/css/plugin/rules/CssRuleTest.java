@@ -21,7 +21,6 @@ package org.sonar.css.plugin.rules;
 
 import com.google.gson.Gson;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
 import java.util.Set;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
@@ -67,7 +66,7 @@ public class CssRuleTest {
   @Test
   public void property_no_unknown_options() {
     String optionsAsJson = new Gson().toJson(new PropertyNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreProperties\":[\"composes\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreProperties\":[\"composes\",\"exportedKey\",\"localAlias\"]}]");
   }
 
   @Test

@@ -34,11 +34,11 @@ public class PropertyNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new PropertyNoUnknown.StylelintIgnoreOption());
+    return Arrays.asList(true, new StylelintIgnoreOption());
   }
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignoreProperties = {"composes"};
+    private final String[] ignoreProperties = {"composes", "exportedKey", "localAlias"};
   }
 }
