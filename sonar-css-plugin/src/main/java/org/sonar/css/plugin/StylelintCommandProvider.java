@@ -21,38 +21,43 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.Optional;
+import java.util.function.Consumer;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.config.Configuration;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+import org.sonarsource.nodejs.NodeCommand;
+import org.sonarsource.nodejs.NodeCommandException;
 
 @ScannerSide
 public class StylelintCommandProvider implements LinterCommandProvider {
 
-  private static final Logger LOG = Loggers.get(StylelintCommandProvider.class);
-
   private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
-  private static final String NODE_EXECUTABLE_DEFAULT = "node";
-
-  private String nodeExecutable = null;
 
   @Override
-  public String[] commandParts(File deployDestination, SensorContext context) {
+  public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) {
     String projectBaseDir = context.fileSystem().baseDir().getAbsolutePath();
     String[] suffixes = context.config().getStringArray(CssPlugin.FILE_SUFFIXES_KEY);
     String filesGlob = "**" + File.separator + "*{" + String.join(",", suffixes) + "}";
     String filesToAnalyze = Paths.get(projectBaseDir, "TOREPLACE").toString();
     filesToAnalyze = filesToAnalyze.replace("TOREPLACE", filesGlob);
 
-    return new String[]{
-      nodeExecutable(context.config()),
+    String[] args = {
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
       filesToAnalyze,
       "--config", new File(deployDestination, CONFIG_PATH).getAbsolutePath(),
       "-f", "json"
     };
+
+    try {
+      return NodeCommand.builder()
+        .outputConsumer(output)
+        .errorConsumer(error)
+        .minNodeVersion(6)
+        .configuration(context.config())
+        .nodeJsArgs(args)
+        .build();
+    } catch (IllegalArgumentException e) {
+      throw new NodeCommandException(e.getMessage(), e);
+    }
   }
 
   @Override
@@ -60,27 +65,4 @@ public class StylelintCommandProvider implements LinterCommandProvider {
     return new File(deployDestination, CONFIG_PATH).getAbsolutePath();
   }
 
-  @Override
-  public String nodeExecutable(Configuration configuration) {
-    if (nodeExecutable == null) {
-      nodeExecutable = retrieveNodeExecutableFromConfig(configuration);
-    }
-
-    return nodeExecutable;
-  }
-
-  private static String retrieveNodeExecutableFromConfig(Configuration configuration) {
-    Optional<String> nodeExecutableOptional = configuration.get(CssPlugin.NODE_EXECUTABLE);
-    if (nodeExecutableOptional.isPresent()) {
-      String nodeExecutable = nodeExecutableOptional.get();
-      File file = new File(nodeExecutable);
-      if (file.exists()) {
-        return nodeExecutable;
-      }
-
-      LOG.warn("Provided node executable file does not exist: " + file + ". Fallback to using 'node' from path.");
-    }
-
-    return NODE_EXECUTABLE_DEFAULT;
-  }
 }

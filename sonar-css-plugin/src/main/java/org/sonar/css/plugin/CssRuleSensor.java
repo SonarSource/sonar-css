@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.apache.commons.io.IOUtils;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -47,33 +46,36 @@ import org.sonar.css.plugin.CssRules.StylelintConfig;
 import org.sonar.css.plugin.StylelintReport.Issue;
 import org.sonar.css.plugin.StylelintReport.IssuesPerFile;
 import org.sonar.css.plugin.bundle.BundleHandler;
+import org.sonarsource.nodejs.NodeCommand;
+import org.sonarsource.nodejs.NodeCommandException;
 
 public class CssRuleSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(CssRuleSensor.class);
-  private static final int MIN_NODE_VERSION = 6;
-  private static final String WARNING_PREFIX = "CSS files were not analyzed. ";
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
   private final LinterCommandProvider linterCommandProvider;
   @Nullable
   private final AnalysisWarningsWrapper analysisWarnings;
-  private final ExternalProcessStreamConsumer externalProcessStreamConsumer = new ExternalProcessStreamConsumer();
 
-  public CssRuleSensor(BundleHandler bundleHandler,
-                       CheckFactory checkFactory,
-                       LinterCommandProvider linterCommandProvider,
-                       @Nullable AnalysisWarningsWrapper analysisWarnings) {
+  public CssRuleSensor(
+    BundleHandler bundleHandler,
+    CheckFactory checkFactory,
+    LinterCommandProvider linterCommandProvider,
+    @Nullable AnalysisWarningsWrapper analysisWarnings
+  ) {
     this.bundleHandler = bundleHandler;
     this.linterCommandProvider = linterCommandProvider;
     this.cssRules = new CssRules(checkFactory);
     this.analysisWarnings = analysisWarnings;
   }
 
-  public CssRuleSensor(BundleHandler bundleHandler,
-                       CheckFactory checkFactory,
-                       LinterCommandProvider linterCommandProvider) {
+  public CssRuleSensor(
+    BundleHandler bundleHandler,
+    CheckFactory checkFactory,
+    LinterCommandProvider linterCommandProvider
+  ) {
     this(bundleHandler, checkFactory, linterCommandProvider, null);
   }
 
@@ -86,39 +88,38 @@ public class CssRuleSensor implements Sensor {
 
   @Override
   public void execute(SensorContext context) {
+    // fixme add log and UI warn when old property is provided
+
     if (cssRules.isEmpty()) {
       LOG.warn("No rules are activated in CSS Quality Profile");
       return;
     }
 
-    if (!checkCompatibleNodeVersion(context)) {
-      return;
-    }
-
     File deployDestination = context.fileSystem().workDir();
-    bundleHandler.deployBundle(deployDestination);
-    String[] commandParts = linterCommandProvider.commandParts(deployDestination, context);
 
     try {
-      ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
+      bundleHandler.deployBundle(deployDestination);
       createLinterConfig(deployDestination);
-      Process process = processBuilder.start();
       StringBuilder output = new StringBuilder();
-      externalProcessStreamConsumer.consumeStream(process.getInputStream(), output::append);
-      externalProcessStreamConsumer.consumeStream(process.getErrorStream(), LOG::error);
-      if (isSuccessful(process)) {
+
+      NodeCommand nodeCommand = linterCommandProvider.nodeCommand(deployDestination, context, output::append, LOG::error);
+      LOG.debug("Starting process: " + nodeCommand.toString());
+      nodeCommand.start();
+
+      if (isSuccessful(nodeCommand.waitFor())) {
         saveIssues(context, output.toString());
       }
+    } catch (NodeCommandException e) {
+      LOG.error(e.getMessage() + " No CSS files will be analyzed.", e);
+      if (analysisWarnings != null) {
+        analysisWarnings.addUnique("CSS files were not analyzed. " + e.getMessage());
+      }
     } catch (Exception e) {
-      LOG.error("Failed to run external linting process " + String.join(" ", commandParts), e);
-    } finally {
-      externalProcessStreamConsumer.shutdownNow();
+      LOG.error("Failed to run external linting process", e);
     }
   }
 
-  private boolean isSuccessful(Process process) throws InterruptedException {
-    int exitValue = process.waitFor();
-    externalProcessStreamConsumer.await();
+  private boolean isSuccessful(int exitValue) {
     // exit codes 0 and 2 are expected. 0 - means no issues were found, 2 - means that at least one "error-level" rule found issue
     // see https://github.com/stylelint/stylelint/blob/master/docs/user-guide/cli.md#exit-codes
     boolean isSuccessful = exitValue == 0 || exitValue == 2;
@@ -126,48 +127,6 @@ public class CssRuleSensor implements Sensor {
       LOG.error("Analysis didn't terminate normally, please verify ERROR and WARN logs above. Exit code {}", exitValue);
     }
     return isSuccessful;
-  }
-
-  private boolean checkCompatibleNodeVersion(SensorContext context) {
-    String nodeExecutable = linterCommandProvider.nodeExecutable(context.config());
-    LOG.debug("Checking node version");
-    String messageSuffix = "No CSS files will be analyzed.";
-
-    String version;
-    try {
-      Process process = Runtime.getRuntime().exec(nodeExecutable + " -v");
-      version = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8).trim();
-    } catch (Exception e) {
-      LOG.error("Failed to get Node.js version. " + messageSuffix, e);
-      if (analysisWarnings != null) {
-        analysisWarnings.addUnique(WARNING_PREFIX + "Node.js version could not be detected using command: " + nodeExecutable + " -v");
-      }
-      return false;
-    }
-
-    Pattern versionPattern = Pattern.compile("v?(\\d+)\\.\\d+\\.\\d+");
-    Matcher versionMatcher = versionPattern.matcher(version);
-    if (versionMatcher.matches()) {
-      int major = Integer.parseInt(versionMatcher.group(1));
-      if (major < MIN_NODE_VERSION) {
-        String message = String.format("Only Node.js v%s or later is supported, got %s.", MIN_NODE_VERSION, version);
-        LOG.error(message + ' ' + messageSuffix);
-        if (analysisWarnings != null) {
-          analysisWarnings.addUnique(WARNING_PREFIX + message);
-        }
-        return false;
-      }
-    } else {
-      String message = String.format("Failed to parse Node.js version, got '%s'.", version);
-      LOG.error(message + ' ' + messageSuffix);
-      if (analysisWarnings != null) {
-        analysisWarnings.addUnique(WARNING_PREFIX + message);
-      }
-      return false;
-    }
-
-    LOG.debug(String.format("Using Node.js %s", version));
-    return true;
   }
 
   private void createLinterConfig(File deployDestination) throws IOException {

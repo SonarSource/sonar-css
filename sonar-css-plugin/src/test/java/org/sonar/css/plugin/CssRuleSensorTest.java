@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.awaitility.Awaitility;
 import org.junit.Before;
@@ -42,16 +43,16 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
-import org.sonar.api.config.Configuration;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
 import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
+import org.sonarsource.nodejs.NodeCommand;
+import org.sonarsource.nodejs.NodeCommandException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -78,6 +79,13 @@ public class CssRuleSensorTest {
   @Before
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
+    try {
+      String nodeFromMavenPlugin = "target/node/node";
+      Runtime.getRuntime().exec(nodeFromMavenPlugin);
+      context.settings().setProperty("sonar.nodejs.executable", nodeFromMavenPlugin);
+    } catch (IOException e) {
+      // do nothing, "node" will be used by default
+    }
     Awaitility.setDefaultTimeout(5, TimeUnit.MINUTES);
   }
 
@@ -107,37 +115,12 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_invalid_node() {
-    TestLinterCommandProvider commandProvider = getCommandProvider();
-    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
+    InvalidCommandProvider commandProvider = new InvalidCommandProvider();
     CssRuleSensor sensor = createCssRuleSensor(commandProvider);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
-    verifyZeroInteractions(analysisWarnings);
-  }
-
-  @Test
-  public void test_no_node() {
-    TestLinterCommandProvider commandProvider = getCommandProvider();
-    commandProvider.nodeExecutable = TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
-    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to get Node.js version. No CSS files will be analyzed.");
-    verifyZeroInteractions(analysisWarnings);
-  }
-
-  @Test
-  public void test_old_node() {
-    TestLinterCommandProvider commandProvider = getCommandProvider();
-    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/oldNodeVersion.js");
-    CssRuleSensor sensor = createCssRuleSensor(commandProvider);
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Only Node.js v6 or later is supported, got 3.2.1. No CSS files will be analyzed.");
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Some problem happened. No CSS files will be analyzed.");
     verifyZeroInteractions(analysisWarnings);
   }
 
@@ -157,39 +140,14 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_invalid_node_with_analysisWarnings() {
-    TestLinterCommandProvider commandProvider = getCommandProvider();
-    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
+  public void test_invalid_node_command_with_analysisWarnings() {
+    InvalidCommandProvider commandProvider = new InvalidCommandProvider();
     CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse Node.js version, got 'Invalid version'. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Failed to parse Node.js version, got 'Invalid version'."));
-  }
-
-  @Test
-  public void test_no_node_with_analysisWarnings() {
-    TestLinterCommandProvider commandProvider = getCommandProvider();
-    commandProvider.nodeExecutable = TestLinterCommandProvider.resourceScript("/executables/invalidNodeVersion.js");
-    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to get Node.js version. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(matches("CSS files were not analyzed. Node.js version could not be detected using command: .* -v"));
-  }
-
-  @Test
-  public void test_old_node_with_analysisWarnings() {
-    TestLinterCommandProvider commandProvider = getCommandProvider();
-    commandProvider.nodeExecutable += " " + TestLinterCommandProvider.resourceScript("/executables/oldNodeVersion.js");
-    CssRuleSensor sensor = createCssRuleSensor(commandProvider, analysisWarnings);
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Only Node.js v6 or later is supported, got 3.2.1. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Only Node.js v6 or later is supported, got 3.2.1."));
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Some problem happened. No CSS files will be analyzed.");
+    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Some problem happened."));
   }
 
   @Test
@@ -267,11 +225,11 @@ public class CssRuleSensorTest {
     return inputFile;
   }
 
-  private CssRuleSensor createCssRuleSensor(TestLinterCommandProvider commandProvider) {
+  private CssRuleSensor createCssRuleSensor(LinterCommandProvider commandProvider) {
     return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
   }
 
-  private CssRuleSensor createCssRuleSensor(TestLinterCommandProvider commandProvider, @Nullable AnalysisWarningsWrapper analysisWarnings) {
+  private CssRuleSensor createCssRuleSensor(LinterCommandProvider commandProvider, @Nullable AnalysisWarningsWrapper analysisWarnings) {
     return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider, analysisWarnings);
   }
 
@@ -281,19 +239,7 @@ public class CssRuleSensorTest {
 
   private static class TestLinterCommandProvider implements LinterCommandProvider {
 
-    String nodeExecutable = findNodeExecutable();
-
     private String[] elements;
-
-    private static String findNodeExecutable() {
-      try {
-        String nodeFromMavenPlugin = "target/node/node";
-        Runtime.getRuntime().exec(nodeFromMavenPlugin);
-        return nodeFromMavenPlugin;
-      } catch (IOException e) {
-        return "node";
-      }
-    }
 
     private static String resourceScript(String script) {
       try {
@@ -304,31 +250,54 @@ public class CssRuleSensorTest {
     }
 
     TestLinterCommandProvider nodeScript(String script, String args) {
-      this.elements = new String[]{ nodeExecutable, resourceScript(script), args};
+      this.elements = new String[]{ resourceScript(script), args};
       return this;
     }
 
     @Override
-    public String[] commandParts(File deployDestination, SensorContext context) {
-      return elements;
+    public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) {
+      return NodeCommand.builder()
+        .outputConsumer(output)
+        .errorConsumer(error)
+        .minNodeVersion(6)
+        .configuration(context.config())
+        .nodeJsArgs(elements)
+        .build();
     }
 
     @Override
     public String configPath(File deployDestination) {
       return new File(deployDestination, "testconfig.json").getAbsolutePath();
     }
+  }
+
+  private static class InvalidCommandProvider implements LinterCommandProvider {
 
     @Override
-    public String nodeExecutable(Configuration configuration) {
-      return nodeExecutable;
+    public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) {
+      throw new NodeCommandException("Some problem happened.");
+    }
+
+    @Override
+    public String configPath(File deployDestination) {
+      return new File(deployDestination, "testconfig.json").getAbsolutePath();
     }
   }
 
   private static class TestBundleHandler implements BundleHandler {
-
     @Override
     public void deployBundle(File deployDestination) {
       // do nothing
+    }
+  }
+
+  private static String findNodeExecutable() {
+    try {
+      String nodeFromMavenPlugin = "target/node/node";
+      Runtime.getRuntime().exec(nodeFromMavenPlugin);
+      return nodeFromMavenPlugin;
+    } catch (IOException e) {
+      return "node";
     }
   }
 }
