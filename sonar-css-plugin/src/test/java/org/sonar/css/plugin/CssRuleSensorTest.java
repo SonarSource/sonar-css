@@ -239,7 +239,7 @@ public class CssRuleSensorTest {
     CssRuleSensor sensor = createCssRuleSensor(rulesExecution);
     sensor.execute(context);
 
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri());
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri() + ", line 2, Missed semicolon");
   }
 
   @Test

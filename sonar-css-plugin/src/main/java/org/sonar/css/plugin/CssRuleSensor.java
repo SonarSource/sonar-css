@@ -219,7 +219,8 @@ public class CssRuleSensor implements Sensor {
 
     if (ruleKey == null) {
       if ("CssSyntaxError".equals(issue.rule)) {
-        LOG.error("Failed to parse " + inputFile.uri());
+        String errorMessage = issue.text.replace("(CssSyntaxError)", "").trim();
+        LOG.error("Failed to parse {}, line {}, {}", inputFile.uri(), issue.line, errorMessage);
       } else {
         LOG.error("Unknown stylelint rule or rule not enabled: '" + issue.rule + "'");
       }
