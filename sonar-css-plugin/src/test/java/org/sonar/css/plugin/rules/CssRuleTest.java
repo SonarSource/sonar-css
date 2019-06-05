@@ -21,7 +21,6 @@ package org.sonar.css.plugin.rules;
 
 import com.google.gson.Gson;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
 import java.util.Set;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
@@ -45,6 +44,7 @@ public class CssRuleTest {
     Set<Class> rulesWithStylelintOptions = Sets.newSet(
       AtRuleNoUnknown.class,
       DeclarationBlockNoDuplicateProperties.class,
+      PropertyNoUnknown.class,
       SelectorPseudoClassNoUnknown.class);
 
     for (Class ruleClass : CssRules.getRuleClasses()) {
@@ -60,13 +60,19 @@ public class CssRuleTest {
   @Test
   public void selector_pseudo_class_options() {
     String optionsAsJson = new Gson().toJson(new SelectorPseudoClassNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoClasses\":[\"local\",\"global\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoClasses\":[\"local\",\"global\",\"export\",\"import\"]}]");
+  }
+
+  @Test
+  public void property_no_unknown_options() {
+    String optionsAsJson = new Gson().toJson(new PropertyNoUnknown().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreProperties\":[\"composes\",\"exportedKey\",\"localAlias\"]}]");
   }
 
   @Test
   public void at_rule_unknown_default() {
     String optionsAsJson = new Gson().toJson(new AtRuleNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"at-root\",\"content\",\"debug\",\"each\",\"else\",\"error\",\"for\",\"function\",\"if\",\"include\",\"mixin\",\"return\",\"warn\",\"while\",\"extend\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"value\",\"at-root\",\"content\",\"debug\",\"each\",\"else\",\"error\",\"for\",\"function\",\"if\",\"include\",\"mixin\",\"return\",\"warn\",\"while\",\"extend\"]}]");
   }
 
   @Test

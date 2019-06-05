@@ -21,11 +21,24 @@ package org.sonar.css.plugin.rules;
 
 import org.sonar.check.Rule;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Rule(key = "S4654")
 public class PropertyNoUnknown implements CssRule {
 
   @Override
   public String stylelintKey() {
     return "property-no-unknown";
+  }
+
+  @Override
+  public List<Object> stylelintOptions() {
+    return Arrays.asList(true, new StylelintIgnoreOption());
+  }
+
+  private static class StylelintIgnoreOption {
+    // Used by GSON serialization
+    private final String[] ignoreProperties = {"composes", "exportedKey", "localAlias"};
   }
 }
