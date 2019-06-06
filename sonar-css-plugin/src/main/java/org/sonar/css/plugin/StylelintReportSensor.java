@@ -125,7 +125,8 @@ public class StylelintReportSensor implements Sensor {
 
     newExternalIssue
       .at(primaryLocation)
-      .forRule(RuleKey.of(STYLELINT, stylelintKey))
+      .engineId(STYLELINT)
+      .ruleId(stylelintKey)
       .type(stylelintRuleLoader.ruleType(stylelintKey))
       .severity(stylelintRuleLoader.ruleSeverity(stylelintKey))
       .remediationEffortMinutes(stylelintRuleLoader.ruleConstantDebtMinutes(stylelintKey))
