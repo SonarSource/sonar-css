@@ -37,7 +37,7 @@ public class CssPlugin implements Plugin {
   public static final String STYLELINT_REPORT_PATHS = "sonar.css.stylelint.reportPaths";
   public static final String STYLELINT_REPORT_PATHS_DEFAULT_VALUE = "";
 
-  public static final String NODE_EXECUTABLE = "sonar.css.node";
+  public static final String FORMER_NODE_EXECUTABLE = "sonar.css.node";
 
   private static final String CSS_CATEGORY = "CSS";
   private static final String LINTER_SUBCATEGORY = "Popular Rule Engines";
@@ -66,14 +66,6 @@ public class CssPlugin implements Plugin {
         .category(CSS_CATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
         .multiValues(true)
-        .build(),
-
-      PropertyDefinition.builder(NODE_EXECUTABLE)
-        .name("Node.js executable")
-        .description("Path to the Node.js executable that will be used to run the analysis of CSS files. When not set, expects 'node' to be in the path.")
-        .subCategory(GENERAL_SUBCATEGORY)
-        .category(CSS_CATEGORY)
-        .hidden()
         .build()
     );
 

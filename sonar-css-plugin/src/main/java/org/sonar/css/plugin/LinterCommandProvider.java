@@ -20,14 +20,14 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
+import java.util.function.Consumer;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.config.Configuration;
+import org.sonarsource.nodejs.NodeCommand;
 
 public interface LinterCommandProvider {
 
-  String[] commandParts(File deployDestination, SensorContext context);
+  NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error);
 
   String configPath(File deployDestination);
 
-  String nodeExecutable(Configuration configuration);
 }

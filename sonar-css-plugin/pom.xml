@@ -37,6 +37,10 @@
             <artifactId>sonar-analyzer-commons</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.sonarsource.javascript</groupId>
+            <artifactId>nodejs-utils</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
@@ -127,8 +131,8 @@
                         <configuration>
                             <rules>
                                 <requireFilesSize>
-                                    <minsize>6500000</minsize>
-                                    <maxsize>7000000</maxsize>
+                                    <minsize>6800000</minsize>
+                                    <maxsize>8000000</maxsize>
                                     <files>
                                         <file>${project.build.directory}/${project.build.finalName}.jar</file>
                                     </files>
@@ -164,6 +168,16 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <environmentVariables>
+                        <!-- modify the path to include node installed with frontend plugin -->
+                        <PATH>target${file.separator}node${path.separator}${env.PATH}</PATH>
+                    </environmentVariables>
+                </configuration>
             </plugin>
 
             <plugin>
