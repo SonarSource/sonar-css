@@ -79,13 +79,6 @@ public class CssRuleSensorTest {
   @Before
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
-    try {
-      String nodeFromMavenPlugin = "target/node/node";
-      Runtime.getRuntime().exec(nodeFromMavenPlugin);
-      context.settings().setProperty("sonar.nodejs.executable", nodeFromMavenPlugin);
-    } catch (IOException e) {
-      // do nothing, "node" will be used by default
-    }
     Awaitility.setDefaultTimeout(5, TimeUnit.MINUTES);
   }
 
@@ -291,13 +284,4 @@ public class CssRuleSensorTest {
     }
   }
 
-  private static String findNodeExecutable() {
-    try {
-      String nodeFromMavenPlugin = "target/node/node";
-      Runtime.getRuntime().exec(nodeFromMavenPlugin);
-      return nodeFromMavenPlugin;
-    } catch (IOException e) {
-      return "node";
-    }
-  }
 }
