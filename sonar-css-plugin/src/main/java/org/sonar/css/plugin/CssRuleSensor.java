@@ -88,7 +88,13 @@ public class CssRuleSensor implements Sensor {
 
   @Override
   public void execute(SensorContext context) {
-    // fixme add log and UI warn when old property is provided
+    if (context.config().hasKey(CssPlugin.FORMER_NODE_EXECUTABLE)) {
+      String msg = "Property '" + CssPlugin.FORMER_NODE_EXECUTABLE + "' is ignored, 'sonar.nodejs.executable' will be used instead";
+      LOG.warn(msg);
+      if (analysisWarnings != null) {
+        analysisWarnings.addUnique(msg);
+      }
+    }
 
     if (cssRules.isEmpty()) {
       LOG.warn("No rules are activated in CSS Quality Profile");
