@@ -89,7 +89,7 @@ public class CssRuleSensor implements Sensor {
   @Override
   public void execute(SensorContext context) {
     if (context.config().hasKey(CssPlugin.FORMER_NODE_EXECUTABLE)) {
-      String msg = "Property '" + CssPlugin.FORMER_NODE_EXECUTABLE + "' is ignored, 'sonar.nodejs.executable' will be used instead";
+      String msg = "Property '" + CssPlugin.FORMER_NODE_EXECUTABLE + "' is ignored, 'sonar.nodejs.executable' should be used instead";
       LOG.warn(msg);
       if (analysisWarnings != null) {
         analysisWarnings.addUnique(msg);

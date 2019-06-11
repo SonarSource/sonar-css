@@ -113,8 +113,8 @@ public class CssRuleSensorTest {
     context.settings().setProperty(CssPlugin.FORMER_NODE_EXECUTABLE, "foo");
     sensor.execute(context);
 
-    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Property 'sonar.css.node' is ignored, 'sonar.nodejs.executable' will be used instead");
-    verify(analysisWarnings).addUnique(eq("Property 'sonar.css.node' is ignored, 'sonar.nodejs.executable' will be used instead"));
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Property 'sonar.css.node' is ignored, 'sonar.nodejs.executable' should be used instead");
+    verify(analysisWarnings).addUnique(eq("Property 'sonar.css.node' is ignored, 'sonar.nodejs.executable' should be used instead"));
 
     assertThat(context.allIssues()).hasSize(1);
   }
