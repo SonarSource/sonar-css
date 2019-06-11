@@ -22,12 +22,14 @@ package org.sonar.css.plugin;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.BOMInputStream;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -50,9 +52,9 @@ public class StylelintReportSensor implements Sensor {
 
   public static final String STYLELINT = "stylelint";
 
-
   private static final Logger LOG = Loggers.get(StylelintReportSensor.class);
   private static final String FILE_EXCEPTION_MESSAGE = "No issues information will be saved as the report file can't be read.";
+  private static final ByteOrderMark[] BYTE_ORDER_MARKS = {ByteOrderMark.UTF_8, ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE};
 
   private final CssRules cssRules;
   private ExternalRuleLoader stylelintRuleLoader = getStylelintRuleLoader();
@@ -78,8 +80,13 @@ public class StylelintReportSensor implements Sensor {
   private void importReport(File report, SensorContext context) {
     LOG.info("Importing {}", report.getAbsoluteFile());
 
-    try (InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(report), StandardCharsets.UTF_8)) {
-      IssuesPerFile[] issues = new Gson().fromJson(inputStreamReader, IssuesPerFile[].class);
+    try (BOMInputStream bomInputStream = new BOMInputStream(Files.newInputStream(report.toPath()), BYTE_ORDER_MARKS)) {
+      String charsetName = bomInputStream.getBOMCharsetName();
+      if (charsetName == null) {
+        charsetName = StandardCharsets.UTF_8.name();
+      }
+
+      IssuesPerFile[] issues = new Gson().fromJson(new InputStreamReader(bomInputStream, charsetName), IssuesPerFile[].class);
       for (IssuesPerFile issuesPerFile : issues) {
         InputFile inputFile = getInputFile(context, issuesPerFile.source);
         if (inputFile != null) {

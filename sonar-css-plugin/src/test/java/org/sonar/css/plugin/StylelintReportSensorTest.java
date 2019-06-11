@@ -71,7 +71,7 @@ public class StylelintReportSensorTest {
   }
 
   @Test
-  public void should_add_issues_from_report() throws Exception {
+  public void should_add_issues_from_report() {
     setReport("report.json");
     stylelintReportSensor.execute(context);
 
@@ -88,6 +88,24 @@ public class StylelintReportSensorTest {
     assertThat(first.severity()).isEqualTo(Severity.MAJOR);
     assertThat(first.primaryLocation().message()).isEqualTo("external issue message (color-no-invalid-hex)");
     assertThat(first.primaryLocation().textRange().start().line()).isEqualTo(1);
+  }
+
+  @Test
+  public void should_read_report_utf8_bom() {
+    setReport("report-utf8-bom.json");
+    stylelintReportSensor.execute(context);
+
+    Collection<ExternalIssue> externalIssues = context.allExternalIssues();
+    assertThat(externalIssues).hasSize(2);
+  }
+
+  @Test
+  public void should_read_report_utf16() {
+    setReport("report-utf16.json");
+    stylelintReportSensor.execute(context);
+
+    Collection<ExternalIssue> externalIssues = context.allExternalIssues();
+    assertThat(externalIssues).hasSize(2);
   }
 
   @Test
