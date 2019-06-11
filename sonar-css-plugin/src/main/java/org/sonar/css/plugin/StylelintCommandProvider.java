@@ -25,7 +25,6 @@ import java.util.function.Consumer;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonarsource.nodejs.NodeCommand;
-import org.sonarsource.nodejs.NodeCommandException;
 
 @ScannerSide
 public class StylelintCommandProvider implements LinterCommandProvider {
@@ -47,17 +46,13 @@ public class StylelintCommandProvider implements LinterCommandProvider {
       "-f", "json"
     };
 
-    try {
-      return NodeCommand.builder()
-        .outputConsumer(output)
-        .errorConsumer(error)
-        .minNodeVersion(6)
-        .configuration(context.config())
-        .nodeJsArgs(args)
-        .build();
-    } catch (IllegalArgumentException e) {
-      throw new NodeCommandException(e.getMessage(), e);
-    }
+    return NodeCommand.builder()
+      .outputConsumer(output)
+      .errorConsumer(error)
+      .minNodeVersion(6)
+      .configuration(context.config())
+      .nodeJsArgs(args)
+      .build();
   }
 
   @Override
