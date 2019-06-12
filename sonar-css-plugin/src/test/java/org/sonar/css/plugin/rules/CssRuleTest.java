@@ -45,7 +45,8 @@ public class CssRuleTest {
       AtRuleNoUnknown.class,
       DeclarationBlockNoDuplicateProperties.class,
       PropertyNoUnknown.class,
-      SelectorPseudoClassNoUnknown.class);
+      SelectorPseudoClassNoUnknown.class,
+      SelectorTypeNoUnknown.class);
 
     for (Class ruleClass : CssRules.getRuleClasses()) {
       CssRule rule = (CssRule)ruleClass.getConstructor().newInstance();
@@ -67,6 +68,12 @@ public class CssRuleTest {
   public void property_no_unknown_options() {
     String optionsAsJson = new Gson().toJson(new PropertyNoUnknown().stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreProperties\":[\"composes\",\"exportedKey\",\"localAlias\"]}]");
+  }
+
+  @Test
+  public void selector_type_no_unknown_options() {
+    String optionsAsJson = new Gson().toJson(new SelectorTypeNoUnknown().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^mat-/\"]}]");
   }
 
   @Test
