@@ -46,7 +46,8 @@ public class CssRuleTest {
       DeclarationBlockNoDuplicateProperties.class,
       PropertyNoUnknown.class,
       SelectorPseudoClassNoUnknown.class,
-      SelectorTypeNoUnknown.class);
+      SelectorTypeNoUnknown.class,
+      UnitNoUnknown.class);
 
     for (Class ruleClass : CssRules.getRuleClasses()) {
       CssRule rule = (CssRule)ruleClass.getConstructor().newInstance();
@@ -74,6 +75,12 @@ public class CssRuleTest {
   public void selector_type_no_unknown_options() {
     String optionsAsJson = new Gson().toJson(new SelectorTypeNoUnknown().stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^mat-/\"]}]");
+  }
+
+  @Test
+  public void units_no_unknown_options() {
+    String optionsAsJson = new Gson().toJson(new UnitNoUnknown().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreUnits\":[\"x\"]}]");
   }
 
   @Test
