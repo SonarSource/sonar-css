@@ -70,3 +70,9 @@ unknown {                                                     /* S4670 | selecto
 mat-form-field {                                              /* Angular Material, ignored by S4670 | selector-type-no-unknown */
   width: 100%;
 }
+
+div {
+  background-image: image-set(
+	  '/images/some-image-1x.jpg' 1x,                       /* 'x' is synonym to 'dppx', ignored by S4653 | unit-no-unknown */
+	);
+}
