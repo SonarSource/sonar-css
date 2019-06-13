@@ -20,8 +20,11 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
-import java.nio.file.Paths;
+import java.nio.file.Paths;import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonarsource.nodejs.NodeCommand;
@@ -30,11 +33,17 @@ import org.sonarsource.nodejs.NodeCommand;
 public class StylelintCommandProvider implements LinterCommandProvider {
 
   private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
+  private static final List<String> LANGUAGES_TO_ANALYZE = Arrays.asList("css", "html", "php", "javascript", "typescript");
 
   @Override
   public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) {
     String projectBaseDir = context.fileSystem().baseDir().getAbsolutePath();
-    String[] suffixes = context.config().getStringArray(CssPlugin.FILE_SUFFIXES_KEY);
+
+    List<String> suffixes = LANGUAGES_TO_ANALYZE.stream()
+      .map(language -> context.config().getStringArray("sonar." + language + ".file.suffixes"))
+      .flatMap(Stream::of)
+      .collect(Collectors.toList());
+
     String filesGlob = "**" + File.separator + "*{" + String.join(",", suffixes) + "}";
     String filesToAnalyze = Paths.get(projectBaseDir, "TOREPLACE").toString();
     filesToAnalyze = filesToAnalyze.replace("TOREPLACE", filesGlob);

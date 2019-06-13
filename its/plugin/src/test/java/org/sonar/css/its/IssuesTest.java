@@ -20,6 +20,7 @@
 package org.sonar.css.its;
 
 import com.sonar.orchestrator.Orchestrator;
+import com.sonar.orchestrator.build.SonarScanner;
 import com.sonar.orchestrator.locator.FileLocation;
 import java.io.File;
 import java.util.Collections;
@@ -50,7 +51,9 @@ public class IssuesTest {
     orchestrator.getServer().provisionProject(PROJECT_KEY, PROJECT_KEY);
     orchestrator.getServer().associateProjectToQualityProfile(PROJECT_KEY, "css", "rules");
 
-    orchestrator.executeBuild(Tests.createScanner(PROJECT_KEY));
+    SonarScanner scanner = Tests.createScanner(PROJECT_KEY);
+    scanner.setProperty("sonar.html.file.suffixes", ".htm");
+    orchestrator.executeBuild(scanner);
   }
 
   @Test
@@ -61,6 +64,7 @@ public class IssuesTest {
 
     assertThat(issuesList).extracting("rule").hasSize(
       CssRules.getRuleClasses().size() * 3 /* issues are raised against .css, .less and .scss */
+      + 2 /* for html and vue files */
       + 1 /* issue S4654 is raised for comment */
       + 1 /* issue S4662 is raised for cssModules.css */
       - 2 /* issue S4668 not raised on .less nor .scss */);

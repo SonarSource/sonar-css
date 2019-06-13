@@ -44,13 +44,15 @@ public class StylelintCommandProviderTest {
     File deployDestination = new File("deploy_destination");
     File baseDir = new File("src/test/resources").getAbsoluteFile();
     SensorContextTester context = SensorContextTester.create(baseDir);
-    context.settings().setProperty(CssPlugin.FILE_SUFFIXES_KEY, ".foo,.bar");
+    context.settings().setProperty(CssPlugin.FILE_SUFFIXES_KEY, ".foo,.bar")
+      .setProperty("sonar.javascript.file.suffixes", ".js")
+      .setProperty("sonar.java.file.suffixes", ".java");
     Consumer<String> noop = a -> {};
     NodeCommand nodeCommand = stylelintCommandProvider.nodeCommand(deployDestination, context, noop, noop);
     assertThat(nodeCommand.toString()).endsWith(
       String.join(" ",
       new File(deployDestination, "css-bundle/node_modules/stylelint/bin/stylelint").getAbsolutePath(),
-      baseDir.getAbsolutePath() + File.separator + "**" + File.separator + "*{.foo,.bar}",
+      baseDir.getAbsolutePath() + File.separator + "**" + File.separator + "*{.foo,.bar,.js}",
       "--config",
       new File(deployDestination, "css-bundle/stylelintconfig.json").getAbsolutePath(),
       "-f",
