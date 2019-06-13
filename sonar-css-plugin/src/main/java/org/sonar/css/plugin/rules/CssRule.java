@@ -19,8 +19,10 @@
  */
 package org.sonar.css.plugin.rules;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface CssRule {
 
@@ -28,5 +30,10 @@ public interface CssRule {
 
   default List<Object> stylelintOptions() {
     return Collections.emptyList();
+  }
+
+  default List<String> split(String parameterValue) {
+    String[] split = parameterValue.split(",");
+    return Arrays.stream(split).map(value -> value.trim()).collect(Collectors.toList());
   }
 }

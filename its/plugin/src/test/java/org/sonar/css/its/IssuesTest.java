@@ -32,6 +32,7 @@ import org.sonar.css.plugin.CssRules;
 import org.sonarqube.ws.Issues.Issue;
 import org.sonarqube.ws.client.issues.SearchRequest;
 import org.sonarsource.analyzer.commons.ProfileGenerator;
+import org.sonarsource.analyzer.commons.ProfileGenerator.RulesConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.css.its.Tests.newWsClient;
@@ -45,7 +46,9 @@ public class IssuesTest {
 
   @BeforeClass
   public static void prepare() {
-    File profile = ProfileGenerator.generateProfile(orchestrator.getServer().getUrl(), "css", "css", new ProfileGenerator.RulesConfiguration(), Collections.emptySet());
+    RulesConfiguration rulesConfiguration = new RulesConfiguration();
+    rulesConfiguration.add("S4670", "ignoreTypes", "/^mat-/, /^fa-/");
+    File profile = ProfileGenerator.generateProfile(orchestrator.getServer().getUrl(), "css", "css", rulesConfiguration, Collections.emptySet());
     orchestrator.getServer().restoreProfile(FileLocation.of(profile));
 
     orchestrator.getServer().provisionProject(PROJECT_KEY, PROJECT_KEY);

@@ -42,14 +42,14 @@ public class AtRuleNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption(ignoredAtRules.split(",")));
+    return Arrays.asList(true, new StylelintIgnoreOption(split(ignoredAtRules)));
   }
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignoreAtRules;
+    private final List<String> ignoreAtRules;
 
-    StylelintIgnoreOption(String[] ignoreAtRules) {
+    StylelintIgnoreOption(List<String> ignoreAtRules) {
       this.ignoreAtRules = ignoreAtRules;
     }
   }
