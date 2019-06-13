@@ -161,7 +161,16 @@ public class IssuesTest {
       tuple("css:S4658", "issues-project:src/file3.scss"),
       tuple("css:S4661", "issues-project:src/file3.scss"),
       tuple("css:S1116", "issues-project:src/file5.htm"),
-      tuple("css:S1116", "issues-project:src/file6.vue")
+      tuple("css:S1116", "issues-project:src/file6.vue"),
+      tuple("css:S5362", "issues-project:src/file1.css"),
+      tuple("css:S5362", "issues-project:src/file1.css"),
+      tuple("css:S5362", "issues-project:src/file1.css"),
+      tuple("css:S5362", "issues-project:src/file2.less"),
+      tuple("css:S5362", "issues-project:src/file2.less"),
+      tuple("css:S5362", "issues-project:src/file2.less"),
+      tuple("css:S5362", "issues-project:src/file3.scss"),
+      tuple("css:S5362", "issues-project:src/file3.scss"),
+      tuple("css:S5362", "issues-project:src/file3.scss")
     );
   }
 
