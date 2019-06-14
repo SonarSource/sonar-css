@@ -70,7 +70,6 @@ public class IssuesTest {
       + 2 /* for html and vue files */
       + 1 /* issue S4654 is raised for comment */
       + 1 /* issue S4662 is raised for cssModules.css */
-      + 6 /* S5362 raises at the same place as S4650 */
       - 2 /* issue S4668 not raised on .less nor .scss */);
   }
 
