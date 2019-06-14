@@ -24,6 +24,8 @@ import java.util.List;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 
+import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
+
 @Rule(key = "S4670")
 public class SelectorTypeNoUnknown implements CssRule {
 
@@ -42,7 +44,7 @@ public class SelectorTypeNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption(split(ignoreTypes)));
+    return Arrays.asList(true, new StylelintIgnoreOption(splitAndTrim(ignoreTypes)));
   }
 
   private static class StylelintIgnoreOption {
