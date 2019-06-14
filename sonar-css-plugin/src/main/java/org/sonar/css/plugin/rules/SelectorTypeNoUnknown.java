@@ -22,9 +22,20 @@ package org.sonar.css.plugin.rules;
 import java.util.Arrays;
 import java.util.List;
 import org.sonar.check.Rule;
+import org.sonar.check.RuleProperty;
+
+import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
 
 @Rule(key = "S4670")
 public class SelectorTypeNoUnknown implements CssRule {
+
+  private static final String DEFAULT_IGNORED_TYPES = "/^mat-/";
+
+  @RuleProperty(
+    key = "ignoreTypes",
+    description = "Comma-separated list of regular expressions for selector types to consider as valid.",
+    defaultValue = "" + DEFAULT_IGNORED_TYPES)
+  String ignoreTypes = DEFAULT_IGNORED_TYPES;
 
   @Override
   public String stylelintKey() {
@@ -33,11 +44,15 @@ public class SelectorTypeNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption());
+    return Arrays.asList(true, new StylelintIgnoreOption(splitAndTrim(ignoreTypes)));
   }
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignoreTypes = {"/^mat-/"};
+    private final List<String> ignoreTypes;
+
+    StylelintIgnoreOption(List<String> ignoreTypes) {
+      this.ignoreTypes = ignoreTypes;
+    }
   }
 }

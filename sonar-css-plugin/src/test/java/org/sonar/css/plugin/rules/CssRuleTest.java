@@ -72,9 +72,17 @@ public class CssRuleTest {
   }
 
   @Test
-  public void selector_type_no_unknown_options() {
+  public void selector_type_no_unknown_default() {
     String optionsAsJson = new Gson().toJson(new SelectorTypeNoUnknown().stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^mat-/\"]}]");
+  }
+
+  @Test
+  public void selector_type_no_unknown_custom() {
+    SelectorTypeNoUnknown selectorTypeNoUnknown = new SelectorTypeNoUnknown();
+    selectorTypeNoUnknown.ignoreTypes = "/^mat-/, /^fa-/";
+    String optionsAsJson = new Gson().toJson(selectorTypeNoUnknown.stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^mat-/\",\"/^fa-/\"]}]");
   }
 
   @Test
@@ -92,9 +100,9 @@ public class CssRuleTest {
   @Test
   public void at_rule_unknown_custom() {
     AtRuleNoUnknown instance = new AtRuleNoUnknown();
-    instance.ignoredAtRules = "foo";
+    instance.ignoredAtRules = "foo, bar";
     String optionsAsJson = new Gson().toJson(instance.stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"foo\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreAtRules\":[\"foo\",\"bar\"]}]");
   }
 
   @Test

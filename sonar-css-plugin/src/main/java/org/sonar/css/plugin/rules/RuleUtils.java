@@ -19,15 +19,17 @@
  */
 package org.sonar.css.plugin.rules;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public interface CssRule {
+public class RuleUtils {
 
-  String stylelintKey();
-
-  default List<Object> stylelintOptions() {
-    return Collections.emptyList();
+  private RuleUtils(){
   }
 
+  public static List<String> splitAndTrim(String parameterValue) {
+    String[] split = parameterValue.split(",");
+    return Arrays.stream(split).map(String::trim).collect(Collectors.toList());
+  }
 }

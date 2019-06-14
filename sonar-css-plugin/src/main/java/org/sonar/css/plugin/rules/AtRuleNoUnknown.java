@@ -24,6 +24,8 @@ import java.util.List;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 
+import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
+
 @Rule(key = "S4662")
 public class AtRuleNoUnknown implements CssRule {
 
@@ -42,14 +44,14 @@ public class AtRuleNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption(ignoredAtRules.split(",")));
+    return Arrays.asList(true, new StylelintIgnoreOption(splitAndTrim(ignoredAtRules)));
   }
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignoreAtRules;
+    private final List<String> ignoreAtRules;
 
-    StylelintIgnoreOption(String[] ignoreAtRules) {
+    StylelintIgnoreOption(List<String> ignoreAtRules) {
       this.ignoreAtRules = ignoreAtRules;
     }
   }
