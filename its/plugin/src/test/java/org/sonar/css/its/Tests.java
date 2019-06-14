@@ -23,6 +23,7 @@ import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.OrchestratorBuilder;
 import com.sonar.orchestrator.build.SonarScanner;
 import com.sonar.orchestrator.locator.FileLocation;
+import com.sonar.orchestrator.locator.MavenLocation;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -48,12 +49,15 @@ public class Tests {
   private static final FileLocation PLUGIN_LOCATION = FileLocation.byWildcardMavenFilename(
     new File("../../sonar-css-plugin/target"), "sonar-css-plugin-*.jar");
 
+
   @ClassRule
   public static final Orchestrator ORCHESTRATOR;
 
   static {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
       .addPlugin(PLUGIN_LOCATION)
+      .addPlugin(MavenLocation.of("org.sonarsource.html", "sonar-html-plugin", "DEV"))
+      .addPlugin(MavenLocation.of("org.sonarsource.javascript", "sonar-javascript-plugin", "DEV"))
       .setSonarVersion(System.getProperty("sonar.runtimeVersion", "LATEST_RELEASE"));
     ORCHESTRATOR = orchestratorBuilder.build();
   }
