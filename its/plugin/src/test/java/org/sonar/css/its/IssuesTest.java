@@ -67,7 +67,7 @@ public class IssuesTest {
 
     assertThat(issuesList).extracting("rule").hasSize(
       CssRules.getRuleClasses().size() * 3 /* issues are raised against .css, .less and .scss */
-      + 2 /* for html and vue files */
+      + 1 /* for html file */
       + 1 /* issue S4654 is raised for comment */
       + 1 /* issue S4662 is raised for cssModules.css */
       - 2 /* issue S4668 not raised on .less nor .scss */);
