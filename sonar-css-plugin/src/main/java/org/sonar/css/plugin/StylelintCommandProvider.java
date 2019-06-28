@@ -33,7 +33,7 @@ import org.sonarsource.nodejs.NodeCommand;
 public class StylelintCommandProvider implements LinterCommandProvider {
 
   private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
-  private static final List<String> LANGUAGES_TO_ANALYZE = Arrays.asList("css", "html", "php", "javascript", "typescript");
+  private static final List<String> LANGUAGES_TO_ANALYZE = Arrays.asList("css", "html", "php");
 
   @Override
   public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) {
