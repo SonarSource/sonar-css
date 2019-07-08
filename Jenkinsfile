@@ -27,7 +27,7 @@ pipeline {
                         label 'linux'
                     }
                     steps {
-                        runITs "LATEST_RELEASE[6.7]"
+                        runITs "LATEST_RELEASE[7.9]"
                     }
                 }
 
