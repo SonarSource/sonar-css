@@ -25,6 +25,7 @@ import com.sonar.orchestrator.locator.FileLocation;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -63,7 +64,9 @@ public class IssuesTest {
   public void test() {
     SearchRequest request = new SearchRequest();
     request.setComponentKeys(Collections.singletonList(PROJECT_KEY));
-    List<Issue> issuesList = newWsClient().issues().search(request).getIssuesList();
+    List<Issue> issuesList = newWsClient().issues().search(request).getIssuesList().stream()
+      .filter(i -> i.getRule().startsWith("css:"))
+      .collect(Collectors.toList());
 
     assertThat(issuesList).extracting("rule").hasSize(
       CssRules.getRuleClasses().size() * 3 /* issues are raised against .css, .less and .scss */
