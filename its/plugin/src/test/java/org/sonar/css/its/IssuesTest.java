@@ -29,13 +29,13 @@ import java.util.stream.Collectors;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.sonar.css.plugin.CssRules;
 import org.sonarqube.ws.Issues.Issue;
 import org.sonarqube.ws.client.issues.SearchRequest;
 import org.sonarsource.analyzer.commons.ProfileGenerator;
 import org.sonarsource.analyzer.commons.ProfileGenerator.RulesConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.css.its.Tests.newWsClient;
 
 public class IssuesTest {
@@ -68,12 +68,81 @@ public class IssuesTest {
       .filter(i -> i.getRule().startsWith("css:"))
       .collect(Collectors.toList());
 
-    assertThat(issuesList).extracting("rule").hasSize(
-      CssRules.getRuleClasses().size() * 3 /* issues are raised against .css, .less and .scss */
-      + 1 /* for html file */
-      + 1 /* issue S4654 is raised for comment */
-      + 1 /* issue S4662 is raised for cssModules.css */
-      - 2 /* issue S4668 not raised on .less nor .scss */);
+    assertThat(issuesList).extracting(Issue::getRule, Issue::getComponent).containsExactlyInAnyOrder(
+      tuple("css:S4662", "issues-project:src/cssModules.css"),
+      tuple("css:S4667", "issues-project:src/empty1.css"),
+      tuple("css:S4667", "issues-project:src/empty2.less"),
+      tuple("css:S4667", "issues-project:src/empty3.scss"),
+      tuple("css:S1128", "issues-project:src/file1.css"),
+      tuple("css:S1116", "issues-project:src/file1.css"),
+      tuple("css:S4664", "issues-project:src/file1.css"),
+      tuple("css:S4660", "issues-project:src/file1.css"),
+      tuple("css:S4659", "issues-project:src/file1.css"),
+      tuple("css:S4647", "issues-project:src/file1.css"),
+      tuple("css:S4663", "issues-project:src/file1.css"),
+      tuple("css:S4652", "issues-project:src/file1.css"),
+      tuple("css:S4656", "issues-project:src/file1.css"),
+      tuple("css:S4649", "issues-project:src/file1.css"),
+      tuple("css:S4648", "issues-project:src/file1.css"),
+      tuple("css:S4654", "issues-project:src/file1.css"),
+      tuple("css:S4657", "issues-project:src/file1.css"),
+      tuple("css:S4650", "issues-project:src/file1.css"),
+      tuple("css:S4653", "issues-project:src/file1.css"),
+      tuple("css:S4668", "issues-project:src/file1.css"),
+      tuple("css:S4654", "issues-project:src/file1.css"),
+      tuple("css:S4651", "issues-project:src/file1.css"),
+      tuple("css:S4666", "issues-project:src/file1.css"),
+      tuple("css:S4670", "issues-project:src/file1.css"),
+      tuple("css:S4662", "issues-project:src/file1.css"),
+      tuple("css:S4655", "issues-project:src/file1.css"),
+      tuple("css:S4658", "issues-project:src/file1.css"),
+      tuple("css:S4661", "issues-project:src/file1.css"),
+      tuple("css:S1128", "issues-project:src/file2.less"),
+      tuple("css:S1116", "issues-project:src/file2.less"),
+      tuple("css:S4664", "issues-project:src/file2.less"),
+      tuple("css:S4660", "issues-project:src/file2.less"),
+      tuple("css:S4659", "issues-project:src/file2.less"),
+      tuple("css:S4647", "issues-project:src/file2.less"),
+      tuple("css:S4663", "issues-project:src/file2.less"),
+      tuple("css:S4652", "issues-project:src/file2.less"),
+      tuple("css:S4656", "issues-project:src/file2.less"),
+      tuple("css:S4649", "issues-project:src/file2.less"),
+      tuple("css:S4648", "issues-project:src/file2.less"),
+      tuple("css:S4654", "issues-project:src/file2.less"),
+      tuple("css:S4657", "issues-project:src/file2.less"),
+      tuple("css:S4650", "issues-project:src/file2.less"),
+      tuple("css:S4653", "issues-project:src/file2.less"),
+      tuple("css:S4651", "issues-project:src/file2.less"),
+      tuple("css:S4666", "issues-project:src/file2.less"),
+      tuple("css:S4670", "issues-project:src/file2.less"),
+      tuple("css:S4662", "issues-project:src/file2.less"),
+      tuple("css:S4655", "issues-project:src/file2.less"),
+      tuple("css:S4658", "issues-project:src/file2.less"),
+      tuple("css:S4661", "issues-project:src/file2.less"),
+      tuple("css:S1128", "issues-project:src/file3.scss"),
+      tuple("css:S1116", "issues-project:src/file3.scss"),
+      tuple("css:S4664", "issues-project:src/file3.scss"),
+      tuple("css:S4660", "issues-project:src/file3.scss"),
+      tuple("css:S4659", "issues-project:src/file3.scss"),
+      tuple("css:S4647", "issues-project:src/file3.scss"),
+      tuple("css:S4663", "issues-project:src/file3.scss"),
+      tuple("css:S4652", "issues-project:src/file3.scss"),
+      tuple("css:S4656", "issues-project:src/file3.scss"),
+      tuple("css:S4649", "issues-project:src/file3.scss"),
+      tuple("css:S4648", "issues-project:src/file3.scss"),
+      tuple("css:S4654", "issues-project:src/file3.scss"),
+      tuple("css:S4657", "issues-project:src/file3.scss"),
+      tuple("css:S4650", "issues-project:src/file3.scss"),
+      tuple("css:S4653", "issues-project:src/file3.scss"),
+      tuple("css:S4651", "issues-project:src/file3.scss"),
+      tuple("css:S4666", "issues-project:src/file3.scss"),
+      tuple("css:S4670", "issues-project:src/file3.scss"),
+      tuple("css:S4662", "issues-project:src/file3.scss"),
+      tuple("css:S4655", "issues-project:src/file3.scss"),
+      tuple("css:S4658", "issues-project:src/file3.scss"),
+      tuple("css:S4661", "issues-project:src/file3.scss"),
+      tuple("css:S1116", "issues-project:src/file5.htm")
+    );
   }
 
 }
