@@ -65,7 +65,7 @@ plugin_qa_task:
     - build
   only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
   gke_container:
-    image: gcr.io/language-team/base:v1
+    dockerfile: .cirrus/nodejs-lts.Dockerfile
     <<: *CONTAINER_DEFINITION
     cpu: 3
     memory: 8G
@@ -91,7 +91,7 @@ ruling_task:
     - build
   only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
   gke_container:
-    image: gcr.io/language-team/base:v1
+    dockerfile: .cirrus/nodejs-lts.Dockerfile
     <<: *CONTAINER_DEFINITION
     cpu: 4
     memory: 8G
