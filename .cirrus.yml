@@ -85,34 +85,9 @@ plugin_qa_task:
   cleanup_before_cache_script:
     - rm -rf "$HOME/.m2/repository/org/sonarsource/"
     - find ~/.m2 -name resolver-status.properties -delete
-
-ruling_task:
-  depends_on:
-    - build
-  only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
-  gke_container:
-    dockerfile: .cirrus/nodejs-lts.Dockerfile
-    <<: *CONTAINER_DEFINITION
-    cpu: 4
-    memory: 8G
-  env:
-    CIRRUS_CLONE_DEPTH: 1
-    SONARSOURCE_QA: true
-  maven_cache:
-    folder: ~/.m2/repository
-  submodules_script:
-    - git submodule update --init
-  ruling_script:
-    - source cirrus-env QA
-    - source set_maven_build_version $BUILD_NUMBER
-    - cd its/ruling
-    - mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -Dmaven.test.redirectTestOutputToFile=false -B -e -V
-  cleanup_before_cache_script:
-    - rm -rf "$HOME/.m2/repository/org/sonarsource/"
  
 promote_task:
   depends_on:
-    - ruling
     - plugin_qa
   only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
   gke_container:
