@@ -1,4 +1,4 @@
-FROM gcr.io/language-team/base:v1
+FROM gcr.io/language-team/base:latest
 
 USER root
 
