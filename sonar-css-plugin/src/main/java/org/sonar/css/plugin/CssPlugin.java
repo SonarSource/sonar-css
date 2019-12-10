@@ -76,7 +76,7 @@ public class CssPlugin implements Plugin {
           .defaultValue(STYLELINT_REPORT_PATHS_DEFAULT_VALUE)
           .name("Stylelint Report Files")
           .description("Paths (absolute or relative) to the JSON files with stylelint issues.")
-          .onQualifiers(Qualifiers.MODULE, Qualifiers.PROJECT)
+          .onQualifiers(Qualifiers.PROJECT)
           .subCategory(LINTER_SUBCATEGORY)
           .category(CSS_CATEGORY)
           .multiValues(true)
