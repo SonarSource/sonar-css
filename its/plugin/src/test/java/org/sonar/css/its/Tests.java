@@ -40,6 +40,7 @@ import org.sonarqube.ws.client.measures.ComponentRequest;
 @Suite.SuiteClasses({
   MetricsTest.class,
   IssuesTest.class,
+  PhpProjectTest.class,
   StylelintReportTest.class,
   MinifiedTest.class
 })

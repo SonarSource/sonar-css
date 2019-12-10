@@ -82,7 +82,6 @@ public class CssRuleSensor implements Sensor {
   @Override
   public void describe(SensorDescriptor descriptor) {
     descriptor
-      .onlyOnLanguage(CssLanguage.KEY)
       .name("SonarCSS Rules");
   }
 
