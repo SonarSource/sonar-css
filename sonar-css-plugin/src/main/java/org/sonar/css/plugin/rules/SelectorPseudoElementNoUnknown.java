@@ -19,13 +19,41 @@
  */
 package org.sonar.css.plugin.rules;
 
+import java.util.Arrays;
+import java.util.List;
 import org.sonar.check.Rule;
+import org.sonar.check.RuleProperty;
+
+import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
 
 @Rule(key = "S4660")
 public class SelectorPseudoElementNoUnknown implements CssRule {
+
+  private static final String DEFAULT_IGNORE_PSEUDO_ELEMENTS = "ng-deep";
 
   @Override
   public String stylelintKey() {
     return "selector-pseudo-element-no-unknown";
   }
+
+  @RuleProperty(
+    key = "ignorePseudoElements",
+    description = "Comma-separated list of regular expressions or strings to ignore (e.g. /^custom-/).",
+    defaultValue = "" + DEFAULT_IGNORE_PSEUDO_ELEMENTS)
+  String ignorePseudoElements = DEFAULT_IGNORE_PSEUDO_ELEMENTS;
+
+  @Override
+  public List<Object> stylelintOptions() {
+    return Arrays.asList(true, new StylelintIgnorePseudoElementsOption(splitAndTrim(ignorePseudoElements)));
+  }
+
+  private static class StylelintIgnorePseudoElementsOption {
+    // Used by GSON serialization
+    private final List<String> ignorePseudoElements;
+
+    StylelintIgnorePseudoElementsOption(List<String> ignorePseudoElements) {
+      this.ignorePseudoElements = ignorePseudoElements;
+    }
+  }
+
 }

@@ -13,6 +13,10 @@ a::pseudo {                                                   /* S4660 | selecto
   color: red;
 }
 
+a::ng-deep, a::custom-element {                        /* "ng-deep" and "custom-element" ignored by S4660 | selector-pseudo-element-no-unknown */
+  color: red;
+}
+
 a:unknown {                                                   /* S4659 | selector-pseudo-class-no-unknown */
   background-color: #ffw;                                     /* S4647 | color-no-invalid-hex */
   /* */                                                       /* S4663 | comment-no-empty */

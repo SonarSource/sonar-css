@@ -51,6 +51,7 @@ public class IssuesTest {
   @BeforeClass
   public static void prepare() {
     RulesConfiguration rulesConfiguration = new RulesConfiguration();
+    rulesConfiguration.add("S4660", "ignorePseudoElements", "ng-deep, /^custom-/");
     File profile = ProfileGenerator.generateProfile(orchestrator.getServer().getUrl(), "css", "css", rulesConfiguration, Collections.emptySet());
     orchestrator.getServer().restoreProfile(FileLocation.of(profile));
 

@@ -46,6 +46,7 @@ public class CssRuleTest {
       DeclarationBlockNoDuplicateProperties.class,
       PropertyNoUnknown.class,
       SelectorPseudoClassNoUnknown.class,
+      SelectorPseudoElementNoUnknown.class,
       SelectorTypeNoUnknown.class,
       UnitNoUnknown.class);
 
@@ -83,6 +84,20 @@ public class CssRuleTest {
     selectorTypeNoUnknown.ignoreTypes = "/^(mat|md|fa)-/";
     String optionsAsJson = new Gson().toJson(selectorTypeNoUnknown.stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^(mat|md|fa)-/\"]}]");
+  }
+
+  @Test
+  public void selector_pseudo_element_no_unknown_default() {
+    String optionsAsJson = new Gson().toJson(new SelectorPseudoElementNoUnknown().stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoElements\":[\"ng-deep\"]}]");
+  }
+
+  @Test
+  public void selector_pseudo_element_no_unknown_custom() {
+    SelectorPseudoElementNoUnknown selectorPseudoElementNoUnknown = new SelectorPseudoElementNoUnknown();
+    selectorPseudoElementNoUnknown.ignorePseudoElements =  "ng-deep, /^custom-/";
+    String optionsAsJson = new Gson().toJson(selectorPseudoElementNoUnknown.stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoElements\":[\"ng-deep\",\"/^custom-/\"]}]");
   }
 
   @Test
