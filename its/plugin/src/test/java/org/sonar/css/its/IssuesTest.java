@@ -48,7 +48,7 @@ public class IssuesTest {
   @BeforeClass
   public static void prepare() {
     RulesConfiguration rulesConfiguration = new RulesConfiguration();
-    rulesConfiguration.add("S4670", "ignoreTypes", "/^mat-/, /^fa-/");
+    rulesConfiguration.add("S4670", "ignoreTypes", "/^(mat|md|fa)-/");
     File profile = ProfileGenerator.generateProfile(orchestrator.getServer().getUrl(), "css", "css", rulesConfiguration, Collections.emptySet());
     orchestrator.getServer().restoreProfile(FileLocation.of(profile));
 

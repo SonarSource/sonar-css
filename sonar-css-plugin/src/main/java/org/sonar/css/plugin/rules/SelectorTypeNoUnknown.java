@@ -29,7 +29,7 @@ import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
 @Rule(key = "S4670")
 public class SelectorTypeNoUnknown implements CssRule {
 
-  private static final String DEFAULT_IGNORED_TYPES = "/^mat-/";
+  private static final String DEFAULT_IGNORED_TYPES = "/^(mat|md)-/";
 
   @RuleProperty(
     key = "ignoreTypes",
