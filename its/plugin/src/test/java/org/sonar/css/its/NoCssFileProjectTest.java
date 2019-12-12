@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.sonar.css.its.Tests.newWsClient;
 
-public class PhpProjectTest {
+public class NoCssFileProjectTest {
 
   private static String PROJECT_KEY = "php-project";
 
