@@ -17,26 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonarsource.nodejs.server.eslint;
+package org.sonar.css.plugin.server.exception;
 
-import java.io.IOException;
-import org.sonar.api.config.Configuration;
-import org.sonarsource.nodejs.NodeCommandBuilder;
-import org.sonarsource.nodejs.server.AnalyzerBridgeServerImpl;
-import org.sonarsource.nodejs.server.Bundle;
+public class MissingTypeScriptException extends RuntimeException {
 
-public class EslintBridgeServerImpl extends AnalyzerBridgeServerImpl {
-
-  public EslintBridgeServerImpl(Configuration configuration, NodeCommandBuilder nodeCommandBuilder, int timeoutSeconds, Bundle bundle) {
-    super(configuration, nodeCommandBuilder, timeoutSeconds, bundle);
+  public MissingTypeScriptException() {
+    super("Missing TypeScript dependency");
   }
-
-  public AnalysisResponse analyzeJavaScript(AnalysisRequest request) throws IOException {
-    return analyze("analyze-js", request);
-  }
-
-  public AnalysisResponse analyzeTypeScript(AnalysisRequest request) throws IOException {
-    return analyze("analyze-ts", request);
-  }
-
 }

@@ -17,5 +17,26 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-@javax.annotation.ParametersAreNonnullByDefault
-package org.sonarsource.nodejs.server.eslint;
+package org.sonar.css.plugin.server;
+
+import java.io.IOException;
+import org.sonar.api.Startable;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.scanner.ScannerSide;
+import org.sonarsource.api.sonarlint.SonarLintSide;
+
+import static org.sonarsource.api.sonarlint.SonarLintSide.MULTIPLE_ANALYSES;
+
+@ScannerSide
+@SonarLintSide(lifespan = MULTIPLE_ANALYSES)
+public interface AnalyzerBridgeServer extends Startable {
+
+  void startServerLazily(SensorContext context) throws IOException;
+
+  <REQ,RES> RES analyze(String endpoint, REQ request, Class<RES> cls) throws IOException;
+
+  String getCommandInfo();
+
+  boolean isAlive();
+
+}

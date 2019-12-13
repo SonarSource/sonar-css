@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonarsource.nodejs.server.eslint;
+package org.sonar.css.plugin.server;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -28,14 +28,14 @@ import org.sonar.api.utils.internal.JUnitTempFolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class EsLintBundleImplTest {
+public class CssAnalyzerBundleTest {
 
   @Rule
   public JUnitTempFolder tempFolder = new JUnitTempFolder();
 
   @Test
   public void test() throws Exception {
-    EsLintBundleImpl bundle = new EsLintBundleImpl(tempFolder, "/test-bundle.tgz");
+    Bundle bundle = new CssAnalyzerBundle(tempFolder, "/test-bundle.tgz");
     bundle.deploy();
     String script = bundle.startServerScript();
     File scriptFile = new File(script);
@@ -46,7 +46,7 @@ public class EsLintBundleImplTest {
 
   @Test
   public void should_not_fail_when_deployed_twice() throws Exception {
-    EsLintBundleImpl bundle = new EsLintBundleImpl(tempFolder, "/test-bundle.tgz");
+    Bundle bundle = new CssAnalyzerBundle(tempFolder, "/test-bundle.tgz");
     bundle.deploy();
     bundle.deploy();
     // no exception expected

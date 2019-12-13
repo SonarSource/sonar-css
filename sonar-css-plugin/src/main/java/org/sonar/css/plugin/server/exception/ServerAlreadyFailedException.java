@@ -17,23 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonarsource.nodejs.server.eslint;
+package org.sonar.css.plugin.server.exception;
 
-import org.sonar.api.utils.TempFolder;
-import org.sonarsource.nodejs.server.BundleImpl;
-
-public class EsLintBundleImpl extends BundleImpl {
-
-  // this archive is created in eslint-bridge module
-  private static final String BUNDLE_LOCATION = "/eslint-bridge-1.0.0.tgz";
-  private static final String DEPLOY_LOCATION = "eslint-bridge-bundle";
-
-  public EsLintBundleImpl(TempFolder tempFolder) {
-    this(tempFolder, BUNDLE_LOCATION);
-  }
-
-  EsLintBundleImpl(TempFolder tempFolder, String bundleLocation) {
-    super(tempFolder.newDir(DEPLOY_LOCATION).toPath(), bundleLocation, "eslint-bridge");
-  }
-
+/**
+ * This exception is required to inform sensor about analyzer bridge server start up failure in SonarLint
+ * It is required to not try to start it again
+ */
+public class ServerAlreadyFailedException extends RuntimeException {
 }

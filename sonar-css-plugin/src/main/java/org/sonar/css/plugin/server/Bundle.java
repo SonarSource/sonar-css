@@ -17,11 +17,16 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonarsource.nodejs.server;
+package org.sonar.css.plugin.server;
 
-/**
- * This exception is required to inform sensor about analyzer bridge server start up failure in SonarLint
- * It is required to not try to start it again
- */
-public class ServerAlreadyFailedException extends RuntimeException {
+import java.io.IOException;
+import org.sonarsource.nodejs.BundlePathResolver;
+
+public interface Bundle extends BundlePathResolver {
+
+  void deploy() throws IOException;
+
+  String startServerScript();
+
+  String name();
 }
