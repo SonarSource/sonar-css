@@ -147,24 +147,24 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.4</version>
+                <version>1.6</version>
                 <configuration>
                     <workingDirectory>css-bundle</workingDirectory>
                     <installDirectory>target</installDirectory>
                     <nodeVersion>v8.9.4</nodeVersion>
-                    <npmVersion>5.6.0</npmVersion>
+                    <yarnVersion>v1.21.0</yarnVersion>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>install node and npm</id>
+                        <id>install node and yarn</id>
                         <goals>
-                            <goal>install-node-and-npm</goal>
+                            <goal>install-node-and-yarn</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>npm install</id>
+                        <id>yarn install</id>
                         <goals>
-                            <goal>npm</goal>
+                            <goal>yarn</goal>
                         </goals>
                     </execution>
                 </executions>
