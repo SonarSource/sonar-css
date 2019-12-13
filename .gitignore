@@ -43,3 +43,6 @@ node_modules/
 
 # Visual Studio
 .vs/
+
+# coverage
+sonar-css-plugin/css-bundle/test-report.xml
