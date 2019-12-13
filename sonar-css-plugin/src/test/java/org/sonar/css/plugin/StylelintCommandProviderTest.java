@@ -20,6 +20,7 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.function.Consumer;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class StylelintCommandProviderTest {
   public final LogTester logTester = new LogTester();
 
   @Test
-  public void test() {
+  public void test() throws IOException {
     StylelintCommandProvider stylelintCommandProvider = new StylelintCommandProvider();
     File deployDestination = new File("deploy_destination");
     File baseDir = new File("src/test/resources").getAbsoluteFile();

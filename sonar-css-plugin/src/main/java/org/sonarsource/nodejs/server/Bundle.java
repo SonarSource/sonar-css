@@ -17,18 +17,16 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonarsource.nodejs.server;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.function.Consumer;
-import org.sonar.api.batch.sensor.SensorContext;
-import org.sonarsource.nodejs.NodeCommand;
+import org.sonarsource.nodejs.BundlePathResolver;
 
-public interface LinterCommandProvider {
+public interface Bundle extends BundlePathResolver {
 
-  NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) throws IOException;
+  void deploy() throws IOException;
 
-  String configPath(File deployDestination);
+  String startServerScript();
 
+  String name();
 }

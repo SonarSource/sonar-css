@@ -17,18 +17,23 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonarsource.nodejs.server.eslint;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.function.Consumer;
-import org.sonar.api.batch.sensor.SensorContext;
-import org.sonarsource.nodejs.NodeCommand;
+import org.sonar.api.utils.TempFolder;
+import org.sonarsource.nodejs.server.BundleImpl;
 
-public interface LinterCommandProvider {
+public class EsLintBundleImpl extends BundleImpl {
 
-  NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) throws IOException;
+  // this archive is created in eslint-bridge module
+  private static final String BUNDLE_LOCATION = "/eslint-bridge-1.0.0.tgz";
+  private static final String DEPLOY_LOCATION = "eslint-bridge-bundle";
 
-  String configPath(File deployDestination);
+  public EsLintBundleImpl(TempFolder tempFolder) {
+    this(tempFolder, BUNDLE_LOCATION);
+  }
+
+  EsLintBundleImpl(TempFolder tempFolder, String bundleLocation) {
+    super(tempFolder.newDir(DEPLOY_LOCATION).toPath(), bundleLocation, "eslint-bridge");
+  }
 
 }

@@ -261,7 +261,7 @@ public class CssRuleSensorTest {
     }
 
     @Override
-    public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) {
+    public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) throws IOException {
       return NodeCommand.builder()
         .outputConsumer(output)
         .errorConsumer(error)

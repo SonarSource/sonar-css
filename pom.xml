@@ -126,7 +126,12 @@
             <dependency>
                 <groupId>org.sonarsource.javascript</groupId>
                 <artifactId>nodejs-utils</artifactId>
-                <version>5.1.1.7506</version>
+                <version>6.1.0.11503</version>
+            </dependency>
+            <dependency>
+              <groupId>com.squareup.okhttp3</groupId>
+              <artifactId>okhttp</artifactId>
+              <version>3.13.1</version>
             </dependency>
 
             <!-- Test dependencies -->

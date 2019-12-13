@@ -20,6 +20,7 @@
 package org.sonar.css.plugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -36,7 +37,7 @@ public class StylelintCommandProvider implements LinterCommandProvider {
   private static final List<String> LANGUAGES_TO_ANALYZE = Arrays.asList("css", "html", "php");
 
   @Override
-  public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) {
+  public NodeCommand nodeCommand(File deployDestination, SensorContext context, Consumer<String> output, Consumer<String> error) throws IOException {
     String projectBaseDir = context.fileSystem().baseDir().getAbsolutePath();
 
     List<String> suffixes = LANGUAGES_TO_ANALYZE.stream()
