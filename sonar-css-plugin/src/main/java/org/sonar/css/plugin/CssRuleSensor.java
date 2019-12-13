@@ -166,12 +166,16 @@ public class CssRuleSensor implements Sensor {
     FileSystem fileSystem = context.fileSystem();
 
     for (IssuesPerFile issuesPerFile : issues) {
-      InputFile inputFile = fileSystem.inputFile(fileSystem.predicates().hasAbsolutePath(issuesPerFile.source));
+      String filePath = issuesPerFile.source;
+      InputFile inputFile = fileSystem.inputFile(fileSystem.predicates().hasAbsolutePath(filePath));
 
-      if (inputFile != null) {
-        for (Issue issue : issuesPerFile.warnings) {
-          saveIssue(context, inputFile, issue);
-        }
+      if (inputFile == null) {
+        LOG.debug("Following file is not part of the project: [{}]. {} found issue(s) on it will not be reported.", filePath, issuesPerFile.warnings.length);
+        continue;
+      }
+
+      for (Issue issue : issuesPerFile.warnings) {
+        saveIssue(context, inputFile, issue);
       }
     }
   }
