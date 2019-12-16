@@ -28,9 +28,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import org.sonar.api.batch.fs.FilePredicate;
+import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -46,6 +53,10 @@ import org.sonar.css.plugin.CssRules.StylelintConfig;
 import org.sonar.css.plugin.StylelintReport.Issue;
 import org.sonar.css.plugin.StylelintReport.IssuesPerFile;
 import org.sonar.css.plugin.bundle.BundleHandler;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.AnalysisRequest;
+import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
+import org.sonarsource.analyzer.commons.ProgressReport;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandException;
 
@@ -55,28 +66,34 @@ public class CssRuleSensor implements Sensor {
 
   private final BundleHandler bundleHandler;
   private final CssRules cssRules;
+  // TODO remove LinterCommandProvider and only keep CssAnalyzerBridgeServer
   private final LinterCommandProvider linterCommandProvider;
+  private final CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
   @Nullable
   private final AnalysisWarningsWrapper analysisWarnings;
+
 
   public CssRuleSensor(
     BundleHandler bundleHandler,
     CheckFactory checkFactory,
     LinterCommandProvider linterCommandProvider,
+    CssAnalyzerBridgeServer cssAnalyzerBridgeServer,
     @Nullable AnalysisWarningsWrapper analysisWarnings
   ) {
     this.bundleHandler = bundleHandler;
     this.linterCommandProvider = linterCommandProvider;
     this.cssRules = new CssRules(checkFactory);
+    this.cssAnalyzerBridgeServer = cssAnalyzerBridgeServer;
     this.analysisWarnings = analysisWarnings;
   }
 
   public CssRuleSensor(
     BundleHandler bundleHandler,
     CheckFactory checkFactory,
-    LinterCommandProvider linterCommandProvider
+    LinterCommandProvider linterCommandProvider,
+    CssAnalyzerBridgeServer cssAnalyzerBridgeServer
   ) {
-    this(bundleHandler, checkFactory, linterCommandProvider, null);
+    this(bundleHandler, checkFactory, linterCommandProvider, cssAnalyzerBridgeServer,null);
   }
 
   @Override
@@ -98,6 +115,34 @@ public class CssRuleSensor implements Sensor {
     if (cssRules.isEmpty()) {
       LOG.warn("No rules are activated in CSS Quality Profile");
       return;
+    }
+
+    boolean failFast = context.config().getBoolean("sonar.internal.analysis.failFast").orElse(false);
+    try {
+      List<InputFile> inputFiles = getInputFiles(context);
+      if (!inputFiles.isEmpty()) {
+        cssAnalyzerBridgeServer.startServerLazily(context);
+        analyzeFiles(context, inputFiles);
+      }
+    } catch (CancellationException e) {
+      // do not propagate the exception
+      LOG.info(e.toString());
+    } catch (ServerAlreadyFailedException e) {
+      LOG.debug("Skipping start of stylelint-bridge server due to the failure during first analysis");
+      LOG.debug("Skipping execution of stylelint-based rules due to the problems with stylelint-bridge server");
+    } catch (NodeCommandException e) {
+      LOG.error(e.getMessage(), e);
+      if (analysisWarnings != null) {
+        analysisWarnings.addUnique("CSS rules were not executed. " + e.getMessage());
+      }
+      if (failFast) {
+        throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
+      }
+    } catch (Exception e) {
+      LOG.error("Failure during analysis, " + cssAnalyzerBridgeServer.getCommandInfo(), e);
+      if (failFast) {
+        throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
+      }
     }
 
     File deployDestination = context.fileSystem().workDir();
@@ -122,6 +167,80 @@ public class CssRuleSensor implements Sensor {
     } catch (Exception e) {
       LOG.error("Failed to run external linting process", e);
     }
+  }
+
+  private void analyzeFiles(SensorContext context, List<InputFile> inputFiles) throws InterruptedException, IOException {
+    ProgressReport progressReport = new ProgressReport("Analysis progress", TimeUnit.SECONDS.toMillis(10));
+    boolean success = false;
+    try {
+      progressReport.start(inputFiles.stream().map(InputFile::toString).collect(Collectors.toList()));
+      for (InputFile inputFile : inputFiles) {
+        if (context.isCancelled()) {
+          throw new CancellationException("Analysis interrupted because the SensorContext is in cancelled state");
+        }
+        if (cssAnalyzerBridgeServer.isAlive()) {
+          analyzeFile(context, inputFile);
+          progressReport.nextFile();
+        } else {
+          throw new IllegalStateException("stylelint-bridge server is not answering");
+        }
+      }
+      success = true;
+    } finally {
+      if (success) {
+        progressReport.stop();
+      } else {
+        progressReport.cancel();
+      }
+      progressReport.join();
+    }
+  }
+
+  private void analyzeFile(SensorContext context, InputFile inputFile) throws IOException {
+    if (!"file".equalsIgnoreCase(inputFile.uri().getScheme())) {
+      return;
+    }
+    String configFile = null; // TODO
+    CssAnalyzerBridgeServer.Issue[] issues = cssAnalyzerBridgeServer.analyze(new AnalysisRequest(new File(inputFile.uri()).getAbsolutePath(), configFile));
+    saveIssues(context, inputFile, issues);
+  }
+
+  private void saveIssues(SensorContext context, InputFile inputFile, CssAnalyzerBridgeServer.Issue[] issues) {
+    for (CssAnalyzerBridgeServer.Issue issue : issues) {
+      NewIssue sonarIssue = context.newIssue();
+
+      RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
+
+      if (ruleKey == null) {
+        if ("CssSyntaxError".equals(issue.rule)) {
+          String errorMessage = issue.text.replace("(CssSyntaxError)", "").trim();
+          LOG.error("Failed to parse {}, line {}, {}", inputFile.uri(), issue.line, errorMessage);
+        } else {
+          LOG.error("Unknown stylelint rule or rule not enabled: '" + issue.rule + "'");
+        }
+
+      } else {
+        NewIssueLocation location = sonarIssue.newLocation()
+          .on(inputFile)
+          .at(inputFile.selectLine(issue.line))
+          .message(normalizeMessage(issue.text));
+
+        sonarIssue
+          .at(location)
+          .forRule(ruleKey)
+          .save();
+      }
+    }
+  }
+
+  private static List<InputFile> getInputFiles(SensorContext context) {
+    FileSystem fileSystem = context.fileSystem();
+    FilePredicates predicates = context.fileSystem().predicates();
+    FilePredicate mainFilePredicate = predicates.and(
+      fileSystem.predicates().hasType(InputFile.Type.MAIN),
+      fileSystem.predicates().hasLanguages(CssLanguage.KEY, "php", "html", "js"));
+    return StreamSupport.stream(fileSystem.inputFiles(mainFilePredicate).spliterator(), false)
+      .collect(Collectors.toList());
   }
 
   private boolean isSuccessful(int exitValue) {

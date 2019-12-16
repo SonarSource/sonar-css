@@ -230,7 +230,7 @@ public class CssAnalyzerBridgeServerTest {
   }
 
 
-  private CssAnalyzerBridgeServer createCssAnalyzerBridgeServer(String startServerScript) {
+  public static CssAnalyzerBridgeServer createCssAnalyzerBridgeServer(String startServerScript) {
     return new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript));
   }
 

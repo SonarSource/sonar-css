@@ -21,6 +21,7 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -47,6 +48,7 @@ import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
 import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.bundle.CssBundleHandler;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandException;
 
@@ -56,6 +58,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.sonar.css.plugin.server.CssAnalyzerBridgeServerTest.createCssAnalyzerBridgeServer;
 
 public class CssRuleSensorTest {
 
@@ -75,16 +78,18 @@ public class CssRuleSensorTest {
   private SensorContextTester context = SensorContextTester.create(BASE_DIR);
   private DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
   private AnalysisWarningsWrapper analysisWarnings = mock(AnalysisWarningsWrapper.class);
+  private CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
 
   @Before
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     Awaitility.setDefaultTimeout(5, TimeUnit.MINUTES);
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
   }
 
   @Test
   public void test_descriptor() {
-    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintCommandProvider(), analysisWarnings);
+    CssRuleSensor sensor = new CssRuleSensor(new CssBundleHandler(), checkFactory, new StylelintCommandProvider(), cssAnalyzerBridgeServer, analysisWarnings);
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     sensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
@@ -168,7 +173,7 @@ public class CssRuleSensorTest {
   @Test
   public void test_not_execute_rules_if_nothing_enabled() {
     TestLinterCommandProvider commandProvider = new TestLinterCommandProvider().nodeScript("/executables/mockError.js", inputFile.absolutePath());
-    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), new CheckFactory(new TestActiveRules()), commandProvider, analysisWarnings);
+    CssRuleSensor sensor = new CssRuleSensor(new TestBundleHandler(), new CheckFactory(new TestActiveRules()), commandProvider, cssAnalyzerBridgeServer, analysisWarnings);
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.WARN)).contains("No rules are activated in CSS Quality Profile");
@@ -218,6 +223,18 @@ public class CssRuleSensorTest {
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Unknown stylelint rule or rule not enabled: 'unknown-rule-key'");
   }
 
+  @Test
+  public void name() {
+    URI uri = Paths.get("/tmp/f1.txt").toUri();
+    new File(uri);
+    String scheme = uri.getScheme();
+    if ((scheme == null) || !scheme.equalsIgnoreCase("file"))
+
+    System.out.println(uri.getScheme());
+    System.out.println(uri.getPath());
+
+  }
+
   private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
       .setModuleBaseDir(sensorContext.fileSystem().baseDirPath())
@@ -232,11 +249,11 @@ public class CssRuleSensorTest {
   }
 
   private CssRuleSensor createCssRuleSensor(LinterCommandProvider commandProvider) {
-    return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider);
+    return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider, cssAnalyzerBridgeServer);
   }
 
   private CssRuleSensor createCssRuleSensor(LinterCommandProvider commandProvider, @Nullable AnalysisWarningsWrapper analysisWarnings) {
-    return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider, analysisWarnings);
+    return new CssRuleSensor(new TestBundleHandler(), checkFactory, commandProvider, cssAnalyzerBridgeServer, analysisWarnings);
   }
 
   private TestLinterCommandProvider getCommandProvider() {

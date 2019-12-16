@@ -242,10 +242,10 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  class Issue {
-    Integer line;
-    String rule;
-    String text;
+  public class Issue {
+    public Integer line;
+    public String rule;
+    public String text;
   }
 
 }
