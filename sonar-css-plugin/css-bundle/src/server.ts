@@ -14,10 +14,13 @@ export function start(port = 0): Promise<Server> {
     app.get("/status", (_: express.Request, resp: express.Response) =>
       resp.send("OK!")
     );
-    app.use((err: any, _req: express.Request, res: express.Response) => {
-      //console.error(err);
-      res.status(500).send([]);
-    });
+    app.use(
+      (err: any, _req: express.Request, res: express.Response, next: any) => {
+        console.error(err.message);
+        console.log(err.stack);
+        res.send([]);
+      }
+    );
 
     const server = app.listen(port, () => {
       console.log(
@@ -26,7 +29,6 @@ export function start(port = 0): Promise<Server> {
       );
       resolve(server);
     });
-
   });
 }
 
@@ -34,41 +36,43 @@ function analyzeWithStylelint(
   request: express.Request,
   response: express.Response
 ) {
-  //throw new Error("Hey!!");
-  try {
-    const parsedRequest = request.body as AnalysisInput;
-    let { filePath, configFile } = parsedRequest;
-    const code = getFileContent(filePath);
+  const parsedRequest = request.body as AnalysisInput;
+  let { filePath, configFile } = parsedRequest;
+  const code = getFileContent(filePath);
 
-    const options = {
-      code,
-      codeFilename: filePath,
-      configFile
-    };
+  const options = {
+    code,
+    codeFilename: filePath,
+    configFile
+  };
 
-    stylelint
-      .lint(options)
-      .then(result => response.json(toIssues(result.results)))
-      .catch(error => {
-        throw new Error(error);
-      });
-  } catch (e) {
-    console.error(e.stack);
-    response.json({ issues: [] });
-  }
+  stylelint
+    .lint(options)
+    .then(result => response.json(toIssues(result.results, filePath)))
+    .catch(error => {
+      throw error;
+    });
 }
 
-function toIssues(results: stylelint.LintResult[]): Issue[] {
+function toIssues(results: stylelint.LintResult[], filePath: string): Issue[] {
   const analysisResponse: Issue[] = [];
-  results.forEach(result =>
+  // we should have only one element in 'results' as we are analyzing only 1 file
+  results.forEach(result => {
+    // to avoid reporting of "fake" source like <input ccs 1>
+    if (result.source !== filePath) {
+      console.log(
+        `DEBUG For file [${filePath}] received issues with [${result.source}] as a source.`
+      );
+      return;
+    }
     result.warnings.forEach(warning =>
       analysisResponse.push({
         line: warning.line,
         text: warning.text,
         rule: warning.rule
       })
-    )
-  );
+    );
+  });
   return analysisResponse;
 }
 
