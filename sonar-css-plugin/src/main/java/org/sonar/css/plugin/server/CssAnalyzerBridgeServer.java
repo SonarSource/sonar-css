@@ -143,8 +143,8 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  public AnalysisResponse analyze(AnalysisRequest request) throws IOException {
-    return analyze("analyze-css", request, AnalysisResponse.class);
+  public Issue[] analyze(AnalysisRequest request) throws IOException {
+    return analyze("analyze-css", request, Issue[].class);
   }
 
   @Override
@@ -242,8 +242,10 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  public static class AnalysisResponse {
-    String[] issues;
+  class Issue {
+    Integer line;
+    String rule;
+    String text;
   }
 
 }

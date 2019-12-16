@@ -20,8 +20,6 @@
 package org.sonar.css.plugin.server;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +31,7 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.AnalysisRequest;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Issue;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandBuilder;
@@ -79,7 +78,7 @@ public class CssAnalyzerBridgeServerTest {
     cssAnalyzerBridgeServer.deploy();
 
     thrown.expect(NodeCommandException.class);
-    thrown.expectMessage("Node.js script to start eslint-bridge server doesn't exist:");
+    thrown.expectMessage("Node.js script to start stylelint-bridge server doesn't exist:");
 
     cssAnalyzerBridgeServer.startServer(context);
   }
@@ -120,27 +119,29 @@ public class CssAnalyzerBridgeServerTest {
     cssAnalyzerBridgeServer.deploy();
     cssAnalyzerBridgeServer.startServer(context);
 
-    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.js")
-      .setContents("alert('Fly, you fools!')")
+    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
+      .setContents("a { }")
       .build();
     AnalysisRequest request = new AnalysisRequest(inputFile.absolutePath(), null);
-    assertThat(cssAnalyzerBridgeServer.analyze(request).issues).isEmpty();
+    Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
+    assertThat(issues).hasSize(1);
+    assertThat(issues[0].line).isEqualTo(42);
+    assertThat(issues[0].rule).isEqualTo("block-no-empty");
+    assertThat(issues[0].text).isEqualTo("Unexpected empty block");
   }
 
   @Test
-  public void should_get_answer_from_server_for_ts_request() throws Exception {
+  public void should_get_empty_answer_from_server() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
     cssAnalyzerBridgeServer.deploy();
     cssAnalyzerBridgeServer.startServer(context);
 
-    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.ts")
-      .setContents("alert('Fly, you fools!')")
-      .build();
-    DefaultInputFile tsConfig = TestInputFileBuilder.create("foo", "tsconfig.json")
-      .setContents("{\"compilerOptions\": {\"target\": \"es6\", \"allowJs\": true }}")
+    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "empty.css")
+      .setContents("a { width: 100%; }")
       .build();
     AnalysisRequest request = new AnalysisRequest(inputFile.absolutePath(), null);
-    assertThat(cssAnalyzerBridgeServer.analyze(request).issues).isEmpty();
+    Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
+    assertThat(issues).isEmpty();
   }
 
   @Test
@@ -157,19 +158,19 @@ public class CssAnalyzerBridgeServerTest {
   @Test
   public void should_return_command_info() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start eslint-bridge server was not built yet.");
+    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start stylelint-bridge server was not built yet.");
 
     cssAnalyzerBridgeServer.deploy();
     cssAnalyzerBridgeServer.startServer(context);
 
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).contains("Node.js command to start eslint-bridge was: ", "node", START_SERVER_SCRIPT);
+    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).contains("Node.js command to start stylelint-bridge was: ", "node", START_SERVER_SCRIPT);
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).doesNotContain("--max-old-space-size");
   }
 
   @Test
   public void should_set_max_old_space_size() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start eslint-bridge server was not built yet.");
+    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start stylelint-bridge server was not built yet.");
 
     cssAnalyzerBridgeServer.deploy();
     context.setSettings(new MapSettings().setProperty("sonar.javascript.node.maxspace", 2048));
@@ -190,8 +191,8 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void test_lazy_start() throws Exception {
-    String alreadyStarted = "eslint-bridge server is up, no need to start.";
-    String starting = "Starting Node.js process to start eslint-bridge server at port";
+    String alreadyStarted = "stylelint-bridge server is up, no need to start.";
+    String starting = "Starting Node.js process to start stylelint-bridge server at port";
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
     cssAnalyzerBridgeServer.startServerLazily(context);
     assertThat(logTester.logs(DEBUG).stream().anyMatch(s -> s.startsWith(starting))).isTrue();
@@ -220,25 +221,14 @@ public class CssAnalyzerBridgeServerTest {
     cssAnalyzerBridgeServer.deploy();
     cssAnalyzerBridgeServer.startServerLazily(context);
 
-    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.js")
-      .setContents("alert('Fly, you fools!')")
+    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
+      .setContents("a { }")
       .build();
     AnalysisRequest request = new AnalysisRequest(inputFile.absolutePath(), null);
     assertThatThrownBy(() -> cssAnalyzerBridgeServer.analyze(request)).isInstanceOf(IllegalStateException.class);
     assertThat(context.allIssues()).isEmpty();
   }
 
-  @Test
-  public void should_not_search_typescript_when_no_ts_file() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    cssAnalyzerBridgeServer.deploy();
-    Path baseDir = tempFolder.newDir().toPath();
-    SensorContextTester ctx = SensorContextTester.create(baseDir);
-    Path tsDir = baseDir.resolve("dir/node_modules/typescript");
-    Files.createDirectories(tsDir);
-    cssAnalyzerBridgeServer.startServer(ctx);
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).doesNotContain("NODE_PATH");
-  }
 
   private CssAnalyzerBridgeServer createCssAnalyzerBridgeServer(String startServerScript) {
     return new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript));
@@ -254,7 +244,7 @@ public class CssAnalyzerBridgeServerTest {
 
     @Override
     public String name() {
-      return "eslint-bridge";
+      return "stylelint-bridge";
     }
 
     @Override
