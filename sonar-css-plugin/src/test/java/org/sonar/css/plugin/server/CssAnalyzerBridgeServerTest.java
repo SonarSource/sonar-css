@@ -78,7 +78,7 @@ public class CssAnalyzerBridgeServerTest {
     cssAnalyzerBridgeServer.deploy();
 
     thrown.expect(NodeCommandException.class);
-    thrown.expectMessage("Node.js script to start stylelint-bridge server doesn't exist:");
+    thrown.expectMessage("Node.js script to start css-bundle server doesn't exist:");
 
     cssAnalyzerBridgeServer.startServer(context);
   }
@@ -158,19 +158,19 @@ public class CssAnalyzerBridgeServerTest {
   @Test
   public void should_return_command_info() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start stylelint-bridge server was not built yet.");
+    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start css-bundle server was not built yet.");
 
     cssAnalyzerBridgeServer.deploy();
     cssAnalyzerBridgeServer.startServer(context);
 
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).contains("Node.js command to start stylelint-bridge was: ", "node", START_SERVER_SCRIPT);
+    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).contains("Node.js command to start css-bundle was: ", "node", START_SERVER_SCRIPT);
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).doesNotContain("--max-old-space-size");
   }
 
   @Test
   public void should_set_max_old_space_size() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start stylelint-bridge server was not built yet.");
+    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start css-bundle server was not built yet.");
 
     cssAnalyzerBridgeServer.deploy();
     context.setSettings(new MapSettings().setProperty("sonar.javascript.node.maxspace", 2048));
@@ -191,8 +191,8 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void test_lazy_start() throws Exception {
-    String alreadyStarted = "stylelint-bridge server is up, no need to start.";
-    String starting = "Starting Node.js process to start stylelint-bridge server at port";
+    String alreadyStarted = "css-bundle server is up, no need to start.";
+    String starting = "Starting Node.js process to start css-bundle server at port";
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
     cssAnalyzerBridgeServer.startServerLazily(context);
     assertThat(logTester.logs(DEBUG).stream().anyMatch(s -> s.startsWith(starting))).isTrue();
@@ -240,11 +240,6 @@ public class CssAnalyzerBridgeServerTest {
 
     TestBundle(String startServerScript) {
       this.startServerScript = startServerScript;
-    }
-
-    @Override
-    public String name() {
-      return "stylelint-bridge";
     }
 
     @Override

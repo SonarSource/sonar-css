@@ -28,5 +28,4 @@ public interface Bundle extends BundlePathResolver {
 
   String startServerScript();
 
-  String name();
 }

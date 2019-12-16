@@ -19,20 +19,66 @@
  */
 package org.sonar.css.plugin.server;
 
+import java.io.InputStream;
+import java.nio.file.Path;
+import org.sonar.api.scanner.ScannerSide;
 import org.sonar.api.utils.TempFolder;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
+import org.sonar.api.utils.log.Profiler;
+import org.sonar.css.plugin.Zip;
+import org.sonarsource.api.sonarlint.SonarLintSide;
 
-public class CssAnalyzerBundle extends BundleImpl {
+import static org.sonarsource.api.sonarlint.SonarLintSide.MULTIPLE_ANALYSES;
 
-  // this archive is created in eslint-bridge module
-  private static final String BUNDLE_LOCATION = "/css-analyzer-bridge-1.0.0.tgz";
-  private static final String DEPLOY_LOCATION = "css-analyzer-bridge-bundle";
+@ScannerSide
+@SonarLintSide(lifespan = MULTIPLE_ANALYSES)
+public class CssAnalyzerBundle implements Bundle {
+
+  private static final Logger LOG = Loggers.get(CssAnalyzerBundle.class);
+  private static final Profiler PROFILER = Profiler.createIfDebug(LOG);
+
+  // this archive is created in css-bundle module
+  private static final String DEFAULT_BUNDLE_LOCATION = "/css-bundle.zip";
+  private static final String DEFAULT_STARTUP_SCRIPT = "css-bundle/bin/server";
+
+  final String bundleLocation;
+  final Path deployLocation;
 
   public CssAnalyzerBundle(TempFolder tempFolder) {
-    this(tempFolder, BUNDLE_LOCATION);
+    this(DEFAULT_BUNDLE_LOCATION, tempFolder);
   }
 
-  CssAnalyzerBundle(TempFolder tempFolder, String bundleLocation) {
-    super(tempFolder.newDir(DEPLOY_LOCATION).toPath(), bundleLocation, "css-analyzer-bridge");
+  CssAnalyzerBundle(String bundleLocation, TempFolder tempFolder) {
+    this.bundleLocation = bundleLocation;
+    this.deployLocation = tempFolder.newDir("bundles").toPath();
+  }
+
+  @Override
+  public void deploy() {
+    PROFILER.startDebug("Deploying bundle");
+    LOG.debug("Deploying css-bundle into {}", deployLocation);
+    InputStream bundle = getClass().getResourceAsStream(bundleLocation);
+    if (bundle == null) {
+      throw new IllegalStateException("css-bundle not found in " + bundleLocation);
+    }
+    try {
+      LOG.debug("Deploying css-bundle to {}", deployLocation.toAbsolutePath());
+      Zip.extract(bundle, deployLocation.toFile());
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to deploy css-bundle (with classpath '" + bundleLocation + "')", e);
+    }
+    PROFILER.stopDebug();
+  }
+
+  @Override
+  public String startServerScript() {
+    return resolve(DEFAULT_STARTUP_SCRIPT);
+  }
+
+  @Override
+  public String resolve(String relativePath) {
+    return deployLocation.resolve(relativePath).toAbsolutePath().toString();
   }
 
 }

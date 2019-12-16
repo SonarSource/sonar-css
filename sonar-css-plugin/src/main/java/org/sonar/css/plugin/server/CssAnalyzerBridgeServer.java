@@ -85,12 +85,12 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
 
     File scriptFile = new File(bundle.startServerScript());
     if (!scriptFile.exists()) {
-      throw new NodeCommandException("Node.js script to start " + bundle.name() + " server doesn't exist: " + scriptFile.getAbsolutePath());
+      throw new NodeCommandException("Node.js script to start css-bundle server doesn't exist: " + scriptFile.getAbsolutePath());
     }
 
     initNodeCommand(context, scriptFile);
 
-    LOG.debug("Starting Node.js process to start " + bundle.name() + " server at port " + port);
+    LOG.debug("Starting Node.js process to start css-bundle server at port " + port);
     nodeCommand.start();
 
     if (!NetUtils.waitServerToStart("localhost", port, timeoutSeconds * 1000)) {
@@ -132,7 +132,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
 
     try {
       if (isAlive()) {
-        LOG.debug(bundle.name() + " server is up, no need to start.");
+        LOG.debug("css-bundle server is up, no need to start.");
         return;
       }
       deploy();
@@ -198,9 +198,9 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
   @Override
   public String getCommandInfo() {
     if (nodeCommand == null) {
-      return "Node.js command to start " + bundle.name() + " server was not built yet.";
+      return "Node.js command to start css-bundle server was not built yet.";
     } else {
-      return "Node.js command to start " + bundle.name() + " was: " + nodeCommand.toString();
+      return "Node.js command to start css-bundle was: " + nodeCommand.toString();
     }
   }
 
@@ -232,9 +232,9 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
   }
 
   public static class AnalysisRequest {
-    String filePath;
+    public String filePath;
     @Nullable
-    String configFile;
+    public String configFile;
 
     public AnalysisRequest(String filePath, @Nullable String configFile) {
       this.filePath = filePath;
@@ -242,7 +242,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  public class Issue {
+  public static class Issue {
     public Integer line;
     public String rule;
     public String text;

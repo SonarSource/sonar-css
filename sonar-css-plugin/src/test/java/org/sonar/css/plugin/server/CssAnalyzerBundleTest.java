@@ -34,8 +34,15 @@ public class CssAnalyzerBundleTest {
   public JUnitTempFolder tempFolder = new JUnitTempFolder();
 
   @Test
-  public void test() throws Exception {
-    Bundle bundle = new CssAnalyzerBundle(tempFolder, "/test-bundle.tgz");
+  public void default_css_bundle_location() throws Exception {
+    CssAnalyzerBundle bundle = new CssAnalyzerBundle(tempFolder);
+    assertThat(bundle.bundleLocation).isEqualTo("/css-bundle.zip");
+    assertThat(bundle.deployLocation.toString()).endsWith("bundles");
+  }
+
+  @Test
+  public void almost_empty_css_bundle() throws Exception {
+    Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip", tempFolder);
     bundle.deploy();
     String script = bundle.startServerScript();
     File scriptFile = new File(script);
@@ -46,7 +53,7 @@ public class CssAnalyzerBundleTest {
 
   @Test
   public void should_not_fail_when_deployed_twice() throws Exception {
-    Bundle bundle = new CssAnalyzerBundle(tempFolder, "/test-bundle.tgz");
+    Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip", tempFolder);
     bundle.deploy();
     bundle.deploy();
     // no exception expected
