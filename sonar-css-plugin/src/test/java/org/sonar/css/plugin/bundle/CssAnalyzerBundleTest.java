@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CssAnalyzerBundleTest {
@@ -71,8 +72,9 @@ public class CssAnalyzerBundleTest {
   @Test
   public void should_not_fail_when_deployed_twice() throws Exception {
     Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip", tempFolder);
-    bundle.deploy();
-    bundle.deploy();
-    // no exception expected
+    assertThatCode(() -> {
+      bundle.deploy();
+      bundle.deploy();
+    }).doesNotThrowAnyException();
   }
 }
