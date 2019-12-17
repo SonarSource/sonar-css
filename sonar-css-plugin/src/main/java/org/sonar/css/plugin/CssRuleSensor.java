@@ -153,6 +153,7 @@ public class CssRuleSensor implements Sensor {
       return;
     }
     Request request = new Request(new File(inputFile.uri()).getAbsolutePath(), configFile.toString());
+    LOG.debug("Analyzing " + request.filePath);
     CssAnalyzerBridgeServer.Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     saveIssues(context, inputFile, issues);
   }
@@ -190,7 +191,7 @@ public class CssRuleSensor implements Sensor {
     FilePredicates predicates = context.fileSystem().predicates();
     FilePredicate mainFilePredicate = predicates.and(
       fileSystem.predicates().hasType(InputFile.Type.MAIN),
-      fileSystem.predicates().hasLanguages(CssLanguage.KEY, "php", "html"));
+      fileSystem.predicates().hasLanguages(CssLanguage.KEY, "php", "web"));
     return StreamSupport.stream(fileSystem.inputFiles(mainFilePredicate).spliterator(), false)
       .collect(Collectors.toList());
   }

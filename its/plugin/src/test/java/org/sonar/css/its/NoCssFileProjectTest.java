@@ -47,9 +47,6 @@ public class NoCssFileProjectTest {
   public static void prepare() {
     orchestrator.getServer().provisionProject(PROJECT_KEY, PROJECT_KEY);
     SonarScanner scanner = Tests.createScanner(PROJECT_KEY);
-    scanner.setProperty("sonar.php.file.suffixes", ".php");
-    scanner.setProperty("sonar.exclusions", "**/index1.php");
-    scanner.setDebugLogs(true);
     buildResult = orchestrator.executeBuild(scanner);
   }
 
@@ -64,7 +61,6 @@ public class NoCssFileProjectTest {
     assertThat(issuesList).extracting(Issues.Issue::getRule, Issues.Issue::getLine, Issues.Issue::getComponent).containsExactlyInAnyOrder(
       tuple("css:S4658", 7, "php-project:src/index.php"));
 
-    assertThat(buildResult.getLogs()).doesNotContain("Following file is not part of the project");
   }
 
 }
