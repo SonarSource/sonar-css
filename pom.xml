@@ -88,6 +88,8 @@
 
         <artifactsToPublish>${project.groupId}:sonar-css-plugin:jar</artifactsToPublish>
         <maven.compiler.release>8</maven.compiler.release>
+
+        <sonar.sources>css-bundle/src</sonar.sources>
     </properties>
 
     <dependencyManagement>
