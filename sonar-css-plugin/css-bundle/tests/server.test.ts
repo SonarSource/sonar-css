@@ -44,6 +44,34 @@ describe("server", () => {
     expect(errorSpy).toBeCalledTimes(0);
   });
 
+  it("should respond to analysis request for html and php", async () => {
+    expect(server.listening).toEqual(true);
+    const requestPhp = JSON.stringify({
+      filePath: __dirname + "/fixtures/file.php",
+      configFile: __dirname + "/fixtures/stylelintconfig.json"
+    });
+    const responsePhp = await post(requestPhp, "/analyze");
+    expect(JSON.parse(responsePhp)).toEqual([
+      {
+        line: 7,
+        rule: "block-no-empty",
+        text: "Unexpected empty block (block-no-empty)"
+      }
+    ]);
+    const requestHtml = JSON.stringify({
+      filePath: __dirname + "/fixtures/file.html",
+      configFile: __dirname + "/fixtures/stylelintconfig.json"
+    });
+    const responseHtml = await post(requestHtml, "/analyze");
+    expect(JSON.parse(responseHtml)).toEqual([
+      {
+        line: 6,
+        rule: "block-no-empty",
+        text: "Unexpected empty block (block-no-empty)"
+      }
+    ]);
+  });
+
   it("should cut BOM", async () => {
     expect(server.listening).toEqual(true);
     const response = await post(
