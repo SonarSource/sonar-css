@@ -45,5 +45,5 @@ node_modules/
 
 # coverage
 sonar-css-plugin/css-bundle/test-report.xml
-css-bundle/coverage
+css-bundle/coverage/
 lib/

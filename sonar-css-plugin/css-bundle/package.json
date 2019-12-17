@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "yarn install && yarn check-format && yarn clear && yarn compile",
+    "prepare-package": "rm -rf node_modules && yarn install --prod",
     "clear": "tsc -b . --clean",
     "compile": "tsc -b .",
     "check-format": "prettier --list-different \"{src,tests}/**/*.ts\"",

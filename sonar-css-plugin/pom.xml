@@ -136,7 +136,7 @@
                             <rules>
                                 <requireFilesSize>
                                     <minsize>6800000</minsize>
-                                    <maxsize>30000000</maxsize>
+                                    <maxsize>9000000</maxsize>
                                     <files>
                                         <file>${project.build.directory}/${project.build.finalName}.jar</file>
                                     </files>
@@ -182,6 +182,16 @@
                         </goals>
                         <configuration>
                             <arguments>test --coverage</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>yarn prepare-package</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>prepare-package</arguments>
                         </configuration>
                     </execution>
                 </executions>

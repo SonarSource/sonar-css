@@ -10,11 +10,10 @@
         <fileSet>
             <directory>css-bundle</directory>
             <includes>
-                <include>**/*</include>
+                <include>lib/**/*</include>
+                <include>bin/**/*</include>
+                <include>node_modules/**/*</include>
             </includes>
-            <excludes>
-                <exclude>package-lock.json</exclude>
-            </excludes>
         </fileSet>
     </fileSets>
 </assembly>
