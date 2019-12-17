@@ -39,6 +39,8 @@ const requestHandler = (request, response) => {
               line: 2,
               rule: "unknown-rule-key"
             }]));
+    } else if (filePath !== null && filePath.endsWith("invalid-json-response.css")) {
+      response.end("[");
     } else {
       throw "Unexpected filePath: " + filePath;
     }
