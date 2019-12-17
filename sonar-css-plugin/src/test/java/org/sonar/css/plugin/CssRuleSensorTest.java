@@ -21,16 +21,13 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import org.awaitility.Awaitility;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -42,12 +39,12 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.notifications.AnalysisWarnings;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -70,13 +67,13 @@ public class CssRuleSensorTest {
   private static final File BASE_DIR = new File("src/test/resources").getAbsoluteFile();
 
   private SensorContextTester context = SensorContextTester.create(BASE_DIR);
-  private DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
-  private AnalysisWarningsWrapper analysisWarnings = mock(AnalysisWarningsWrapper.class);
+  private AnalysisWarnings analysisWarnings = mock(AnalysisWarnings.class);
   private CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
 
   @Before
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
+    createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
     Awaitility.setDefaultTimeout(5, TimeUnit.MINUTES);
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
   }
@@ -99,14 +96,14 @@ public class CssRuleSensorTest {
     Issue issue = context.allIssues().iterator().next();
     assertThat(issue.primaryLocation().message()).isEqualTo("some message");
 
-    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
+    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "css-bundle/stylelintconfig.json");
     assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
     verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
   public void test_old_property_is_provided() {
-    CssRuleSensor sensor = createCssRuleSensor(analysisWarnings);
+    CssRuleSensor sensor = createCssRuleSensor();
     context.settings().setProperty(CssPlugin.FORMER_NODE_EXECUTABLE, "foo");
     sensor.execute(context);
 
@@ -117,51 +114,21 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_invalid_node() {
-    CssRuleSensor sensor = createCssRuleSensor();
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Some problem happened. No CSS files will be analyzed.");
-    verifyZeroInteractions(analysisWarnings);
-  }
-
-  @Test
   public void test_execute_with_analysisWarnings() throws IOException {
-    CssRuleSensor sensor = createCssRuleSensor(analysisWarnings);
+    CssRuleSensor sensor = createCssRuleSensor();
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(1);
     Issue issue = context.allIssues().iterator().next();
     assertThat(issue.primaryLocation().message()).isEqualTo("some message");
 
-    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "testconfig.json");
+    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "css-bundle/stylelintconfig.json");
     assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
     verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
-  public void test_invalid_node_command_with_analysisWarnings() {
-    CssRuleSensor sensor = createCssRuleSensor(analysisWarnings);
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(0);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Some problem happened. No CSS files will be analyzed.");
-    verify(analysisWarnings).addUnique(eq("CSS files were not analyzed. Some problem happened."));
-  }
-
-  @Test
-  public void test_error() {
-    // to do /executables/mockError.js inputFile.absolutePath()
-    CssRuleSensor sensor = createCssRuleSensor();
-    sensor.execute(context);
-
-    assertThat(logTester.logs(LoggerLevel.ERROR)).anyMatch(s -> s.startsWith("Failed to run external linting process"));
-  }
-
-  @Test
   public void test_not_execute_rules_if_nothing_enabled() {
-    // TODO /executables/mockError.js inputFile.absolutePath()
     CssRuleSensor sensor = new CssRuleSensor(new CheckFactory(new TestActiveRules()), cssAnalyzerBridgeServer, analysisWarnings);
     sensor.execute(context);
 
@@ -169,36 +136,13 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  @Ignore
-  public void test_stylelint_throws() {
-    // TODO /executables/mockThrow.js inputFile.absolutePath()
-    CssRuleSensor sensor = createCssRuleSensor();
-    sensor.execute(context);
-
-    await().until(() -> logTester.logs(LoggerLevel.ERROR)
-      .contains("throw new Error('houps!');"));
-  }
-
-  @Test
-  @Ignore
-  public void test_stylelint_exitvalue() {
-    // TODO "/executables/mockExit.js", "1"
-    CssRuleSensor sensor = createCssRuleSensor();
-    sensor.execute(context);
-
-    await().until(() -> logTester.logs(LoggerLevel.ERROR)
-      .contains("Analysis didn't terminate normally, please verify ERROR and WARN logs above. Exit code 1"));
-  }
-
-  @Test
   public void test_syntax_error() {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
-    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
-    // TODO /executables/mockSyntaxError.js inputFile.absolutePath()
+    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "syntax-error.css");
     CssRuleSensor sensor = createCssRuleSensor();
     sensor.execute(context);
-
+    assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri() + ", line 2, Missed semicolon");
   }
 
@@ -206,24 +150,12 @@ public class CssRuleSensorTest {
   public void test_unknown_rule() {
     SensorContextTester context = SensorContextTester.create(BASE_DIR);
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
-    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
-    // TODO /executables/mockUnknownRule.js inputFile.absolutePath()
+    createInputFile(context, "some css content\n on 2 lines", "unknown-rule.css");
     CssRuleSensor sensor = createCssRuleSensor();
     sensor.execute(context);
 
+    assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Unknown stylelint rule or rule not enabled: 'unknown-rule-key'");
-  }
-
-  @Test
-  public void name() {
-    URI uri = Paths.get("/tmp/f1.txt").toUri();
-    new File(uri);
-    String scheme = uri.getScheme();
-    if ((scheme == null) || !scheme.equalsIgnoreCase("file"))
-
-    System.out.println(uri.getScheme());
-    System.out.println(uri.getPath());
-
   }
 
   private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
@@ -240,10 +172,6 @@ public class CssRuleSensorTest {
   }
 
   private CssRuleSensor createCssRuleSensor() {
-    return new CssRuleSensor(checkFactory, cssAnalyzerBridgeServer);
-  }
-
-  private CssRuleSensor createCssRuleSensor(@Nullable AnalysisWarningsWrapper analysisWarnings) {
     return new CssRuleSensor(checkFactory, cssAnalyzerBridgeServer, analysisWarnings);
   }
 

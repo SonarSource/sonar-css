@@ -23,6 +23,20 @@ const requestHandler = (request, response) => {
       response.end("[ {'line': 2, rule: 'color-no-invalid-hex', 'text': 'some message (color-no-invalid-hex)'} ]");
     } else if (filePath !== null && filePath.endsWith("empty.css")) {
       response.end("[]");
+    } else if (filePath !== null && filePath.endsWith("syntax-error.css")) {
+      response.end(JSON.stringify([
+      {
+        text: "Missed semicolon (CssSyntaxError)",
+        line: 2,
+        rule: "CssSyntaxError"
+      }]));
+    } else if (filePath !== null && filePath.endsWith("unknown-rule.css")) {
+      response.end(JSON.stringify([
+            {
+              text: "some message",
+              line: 2,
+              rule: "unknown-rule-key"
+            }]));
     } else {
       throw "Unexpected filePath: " + filePath;
     }

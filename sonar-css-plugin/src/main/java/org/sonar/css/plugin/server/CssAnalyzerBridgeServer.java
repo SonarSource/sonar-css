@@ -111,7 +111,6 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
           LOG.info(message);
         }
       })
-      .pathResolver(bundle)
       .minNodeVersion(8)
       .configuration(context.config())
       .script(scriptFile.getAbsolutePath())

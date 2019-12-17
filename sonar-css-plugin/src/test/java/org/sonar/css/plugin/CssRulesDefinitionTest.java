@@ -28,7 +28,7 @@ public class CssRulesDefinitionTest {
 
   @Test
   public void test_with_external_rules() {
-    CssRulesDefinition rulesDefinition = new CssRulesDefinition(true);
+    CssRulesDefinition rulesDefinition = new CssRulesDefinition();
     RulesDefinition.Context context = new RulesDefinition.Context();
     rulesDefinition.define(context);
 
@@ -45,20 +45,5 @@ public class CssRulesDefinitionTest {
     assertThat(mainRepository.language()).isEqualTo("css");
     assertThat(mainRepository.isExternal()).isEqualTo(false);
     assertThat(mainRepository.rules()).hasSize(CssRules.getRuleClasses().size());
-  }
-
-  @Test
-  public void test_no_external_rules() throws Exception {
-    CssRulesDefinition rulesDefinition = new CssRulesDefinition(false);
-    RulesDefinition.Context context = new RulesDefinition.Context();
-    rulesDefinition.define(context);
-
-    assertThat(context.repositories()).hasSize(1);
-
-    RulesDefinition.Repository repository = context.repository("css");
-    assertThat(repository.name()).isEqualTo("SonarAnalyzer");
-    assertThat(repository.language()).isEqualTo("css");
-    assertThat(repository.isExternal()).isEqualTo(false);
-    assertThat(repository.rules()).hasSize(CssRules.getRuleClasses().size());
   }
 }

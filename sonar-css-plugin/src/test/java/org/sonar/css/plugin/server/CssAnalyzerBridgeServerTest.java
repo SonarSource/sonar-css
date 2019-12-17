@@ -19,7 +19,6 @@
  */
 package org.sonar.css.plugin.server;
 
-import java.io.File;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -138,7 +137,6 @@ public class CssAnalyzerBridgeServerTest {
     cssAnalyzerBridgeServer.startServer(context);
 
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "empty.css")
-      .setContents("a { width: 100%; }")
       .build();
     AnalysisRequest request = new AnalysisRequest(inputFile.absolutePath(), null);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
@@ -253,12 +251,6 @@ public class CssAnalyzerBridgeServerTest {
     @Override
     public String startServerScript() {
       return "src/test/resources/mock-css-analyzer-bridge/" + startServerScript;
-    }
-
-    @Override
-    public String resolve(String relativePath) {
-      File file = new File("src/test/resources");
-      return new File(file.getAbsoluteFile(), relativePath).getAbsolutePath();
     }
   }
 }

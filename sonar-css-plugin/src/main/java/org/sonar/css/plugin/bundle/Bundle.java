@@ -20,9 +20,8 @@
 package org.sonar.css.plugin.bundle;
 
 import java.io.IOException;
-import org.sonarsource.nodejs.BundlePathResolver;
 
-public interface Bundle extends BundlePathResolver {
+public interface Bundle  {
 
   void deploy() throws IOException;
 

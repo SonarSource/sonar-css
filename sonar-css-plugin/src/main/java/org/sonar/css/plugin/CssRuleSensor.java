@@ -33,7 +33,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
@@ -44,6 +43,7 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
+import org.sonar.api.notifications.AnalysisWarnings;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -61,25 +61,17 @@ public class CssRuleSensor implements Sensor {
 
   private final CssRules cssRules;
   private final CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
-  @Nullable
-  private final AnalysisWarningsWrapper analysisWarnings;
+  private final AnalysisWarnings analysisWarnings;
 
 
   public CssRuleSensor(
     CheckFactory checkFactory,
     CssAnalyzerBridgeServer cssAnalyzerBridgeServer,
-    @Nullable AnalysisWarningsWrapper analysisWarnings
+    AnalysisWarnings analysisWarnings
   ) {
     this.cssRules = new CssRules(checkFactory);
     this.cssAnalyzerBridgeServer = cssAnalyzerBridgeServer;
     this.analysisWarnings = analysisWarnings;
-  }
-
-  public CssRuleSensor(
-    CheckFactory checkFactory,
-    CssAnalyzerBridgeServer cssAnalyzerBridgeServer
-  ) {
-    this(checkFactory, cssAnalyzerBridgeServer,null);
   }
 
   @Override
@@ -93,9 +85,7 @@ public class CssRuleSensor implements Sensor {
     if (context.config().hasKey(CssPlugin.FORMER_NODE_EXECUTABLE)) {
       String msg = "Property '" + CssPlugin.FORMER_NODE_EXECUTABLE + "' is ignored, 'sonar.nodejs.executable' should be used instead";
       LOG.warn(msg);
-      if (analysisWarnings != null) {
-        analysisWarnings.addUnique(msg);
-      }
+      analysisWarnings.addUnique(msg);
     }
 
     if (cssRules.isEmpty()) {
@@ -119,9 +109,7 @@ public class CssRuleSensor implements Sensor {
       LOG.debug("Skipping execution of stylelint-based rules due to the problems with stylelint-bridge server");
     } catch (NodeCommandException e) {
       LOG.error(e.getMessage(), e);
-      if (analysisWarnings != null) {
-        analysisWarnings.addUnique("CSS rules were not executed. " + e.getMessage());
-      }
+      analysisWarnings.addUnique("CSS rules were not executed. " + e.getMessage());
       if (failFast) {
         throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
       }
@@ -214,6 +202,7 @@ public class CssRuleSensor implements Sensor {
     final Gson gson = gsonBuilder.create();
     String configAsJson = gson.toJson(config);
     File configFile = new File(context.fileSystem().workDir(), CONFIG_PATH).getAbsoluteFile();
+    Files.createDirectories(configFile.toPath().getParent());
     Files.write(configFile.toPath(), Collections.singletonList(configAsJson), StandardCharsets.UTF_8);
     return configFile;
   }

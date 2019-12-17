@@ -73,12 +73,7 @@ public class CssAnalyzerBundle implements Bundle {
 
   @Override
   public String startServerScript() {
-    return resolve(DEFAULT_STARTUP_SCRIPT);
-  }
-
-  @Override
-  public String resolve(String relativePath) {
-    return deployLocation.resolve(relativePath).toAbsolutePath().toString();
+    return deployLocation.resolve(DEFAULT_STARTUP_SCRIPT).toAbsolutePath().toString();
   }
 
 }
