@@ -20,8 +20,7 @@ const requestHandler = (request, response) => {
     } else if (filePath !== null && filePath.endsWith("foo.css")) {
       response.end("[ {'line': 42, rule: 'block-no-empty', 'text': 'Unexpected empty block'} ]");
     } else if (filePath !== null && filePath.endsWith("file.css")) {
-      // response.end("[ {'line': 2, rule: 'color-no-invalid-hex', 'text': 'some message (color-no-invalid-hex)'} ]");
-      response.end("[]");
+      response.end("[ {'line': 2, rule: 'color-no-invalid-hex', 'text': 'some message (color-no-invalid-hex)'} ]");
     } else if (filePath !== null && filePath.endsWith("empty.css")) {
       response.end("[]");
     } else {

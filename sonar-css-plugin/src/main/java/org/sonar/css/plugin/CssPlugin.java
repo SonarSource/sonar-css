@@ -25,9 +25,8 @@ import org.sonar.api.SonarRuntime;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.utils.Version;
-import org.sonar.css.plugin.bundle.CssBundleHandler;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
-import org.sonar.css.plugin.server.CssAnalyzerBundle;
+import org.sonar.css.plugin.bundle.CssAnalyzerBundle;
 
 public class CssPlugin implements Plugin {
 
@@ -54,11 +53,9 @@ public class CssPlugin implements Plugin {
       CssLanguage.class,
       SonarWayProfile.class,
       new CssRulesDefinition(externalIssuesSupported),
-      CssBundleHandler.class,
       CssAnalyzerBundle.class,
       CssAnalyzerBridgeServer.class,
       CssRuleSensor.class,
-      StylelintCommandProvider.class,
       StylelintReportSensor.class,
       MinifiedFilesFilter.class,
 

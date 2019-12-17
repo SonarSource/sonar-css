@@ -21,12 +21,10 @@ package org.sonar.css.plugin;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -50,50 +48,38 @@ import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
-import org.sonar.css.plugin.StylelintReport.Issue;
-import org.sonar.css.plugin.StylelintReport.IssuesPerFile;
-import org.sonar.css.plugin.bundle.BundleHandler;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.AnalysisRequest;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.analyzer.commons.ProgressReport;
-import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandException;
 
 public class CssRuleSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(CssRuleSensor.class);
+  private static final String CONFIG_PATH = "css-bundle/stylelintconfig.json";
 
-  private final BundleHandler bundleHandler;
   private final CssRules cssRules;
-  // TODO remove LinterCommandProvider and only keep CssAnalyzerBridgeServer
-  private final LinterCommandProvider linterCommandProvider;
   private final CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
   @Nullable
   private final AnalysisWarningsWrapper analysisWarnings;
 
 
   public CssRuleSensor(
-    BundleHandler bundleHandler,
     CheckFactory checkFactory,
-    LinterCommandProvider linterCommandProvider,
     CssAnalyzerBridgeServer cssAnalyzerBridgeServer,
     @Nullable AnalysisWarningsWrapper analysisWarnings
   ) {
-    this.bundleHandler = bundleHandler;
-    this.linterCommandProvider = linterCommandProvider;
     this.cssRules = new CssRules(checkFactory);
     this.cssAnalyzerBridgeServer = cssAnalyzerBridgeServer;
     this.analysisWarnings = analysisWarnings;
   }
 
   public CssRuleSensor(
-    BundleHandler bundleHandler,
     CheckFactory checkFactory,
-    LinterCommandProvider linterCommandProvider,
     CssAnalyzerBridgeServer cssAnalyzerBridgeServer
   ) {
-    this(bundleHandler, checkFactory, linterCommandProvider, cssAnalyzerBridgeServer,null);
+    this(checkFactory, cssAnalyzerBridgeServer,null);
   }
 
   @Override
@@ -122,7 +108,8 @@ public class CssRuleSensor implements Sensor {
       List<InputFile> inputFiles = getInputFiles(context);
       if (!inputFiles.isEmpty()) {
         cssAnalyzerBridgeServer.startServerLazily(context);
-        analyzeFiles(context, inputFiles);
+        File configFile = createLinterConfig(context);
+        analyzeFiles(context, inputFiles, configFile);
       }
     } catch (CancellationException e) {
       // do not propagate the exception
@@ -144,32 +131,9 @@ public class CssRuleSensor implements Sensor {
         throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
       }
     }
-
-    File deployDestination = context.fileSystem().workDir();
-
-    try {
-      bundleHandler.deployBundle(deployDestination);
-      createLinterConfig(deployDestination);
-      StringBuilder output = new StringBuilder();
-
-      NodeCommand nodeCommand = linterCommandProvider.nodeCommand(deployDestination, context, output::append, LOG::error);
-      LOG.debug("Starting process: " + nodeCommand.toString());
-      nodeCommand.start();
-
-      if (isSuccessful(nodeCommand.waitFor())) {
-        saveIssues(context, output.toString());
-      }
-    } catch (NodeCommandException e) {
-      LOG.error(e.getMessage() + " No CSS files will be analyzed.", e);
-      if (analysisWarnings != null) {
-        analysisWarnings.addUnique("CSS files were not analyzed. " + e.getMessage());
-      }
-    } catch (Exception e) {
-      LOG.error("Failed to run external linting process", e);
-    }
   }
 
-  private void analyzeFiles(SensorContext context, List<InputFile> inputFiles) throws InterruptedException, IOException {
+  private void analyzeFiles(SensorContext context, List<InputFile> inputFiles, File configFile) throws InterruptedException, IOException {
     ProgressReport progressReport = new ProgressReport("Analysis progress", TimeUnit.SECONDS.toMillis(10));
     boolean success = false;
     try {
@@ -179,7 +143,7 @@ public class CssRuleSensor implements Sensor {
           throw new CancellationException("Analysis interrupted because the SensorContext is in cancelled state");
         }
         if (cssAnalyzerBridgeServer.isAlive()) {
-          analyzeFile(context, inputFile);
+          analyzeFile(context, inputFile, configFile);
           progressReport.nextFile();
         } else {
           throw new IllegalStateException("stylelint-bridge server is not answering");
@@ -196,12 +160,12 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private void analyzeFile(SensorContext context, InputFile inputFile) throws IOException {
+  private void analyzeFile(SensorContext context, InputFile inputFile, File configFile) throws IOException {
     if (!"file".equalsIgnoreCase(inputFile.uri().getScheme())) {
       return;
     }
-    String configFile = null; // TODO
-    CssAnalyzerBridgeServer.Issue[] issues = cssAnalyzerBridgeServer.analyze(new AnalysisRequest(new File(inputFile.uri()).getAbsolutePath(), configFile));
+    AnalysisRequest request = new AnalysisRequest(new File(inputFile.uri()).getAbsolutePath(), configFile.toString());
+    CssAnalyzerBridgeServer.Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     saveIssues(context, inputFile, issues);
   }
 
@@ -238,29 +202,20 @@ public class CssRuleSensor implements Sensor {
     FilePredicates predicates = context.fileSystem().predicates();
     FilePredicate mainFilePredicate = predicates.and(
       fileSystem.predicates().hasType(InputFile.Type.MAIN),
-      fileSystem.predicates().hasLanguages(CssLanguage.KEY, "php", "html", "js"));
+      fileSystem.predicates().hasLanguages(CssLanguage.KEY, "php", "html"));
     return StreamSupport.stream(fileSystem.inputFiles(mainFilePredicate).spliterator(), false)
       .collect(Collectors.toList());
   }
 
-  private boolean isSuccessful(int exitValue) {
-    // exit codes 0 and 2 are expected. 0 - means no issues were found, 2 - means that at least one "error-level" rule found issue
-    // see https://github.com/stylelint/stylelint/blob/master/docs/user-guide/cli.md#exit-codes
-    boolean isSuccessful = exitValue == 0 || exitValue == 2;
-    if (!isSuccessful) {
-      LOG.error("Analysis didn't terminate normally, please verify ERROR and WARN logs above. Exit code {}", exitValue);
-    }
-    return isSuccessful;
-  }
-
-  private void createLinterConfig(File deployDestination) throws IOException {
-    String configPath = linterCommandProvider.configPath(deployDestination);
+  private File createLinterConfig(SensorContext context) throws IOException {
     StylelintConfig config = cssRules.getConfig();
     final GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.registerTypeAdapter(StylelintConfig.class, config);
     final Gson gson = gsonBuilder.create();
     String configAsJson = gson.toJson(config);
-    Files.write(Paths.get(configPath), Collections.singletonList(configAsJson), StandardCharsets.UTF_8);
+    File configFile = new File(context.fileSystem().workDir(), CONFIG_PATH).getAbsoluteFile();
+    Files.write(configFile.toPath(), Collections.singletonList(configAsJson), StandardCharsets.UTF_8);
+    return configFile;
   }
 
   private static String normalizeMessage(String message) {
@@ -271,57 +226,6 @@ public class CssRuleSensor implements Sensor {
       return matcher.group(1);
     } else {
       return message;
-    }
-  }
-
-  private void saveIssues(SensorContext context, String issuesAsJson) {
-    IssuesPerFile[] issues;
-    try {
-      issues = new Gson().fromJson(issuesAsJson, IssuesPerFile[].class);
-    } catch (JsonSyntaxException e) {
-      throw new IllegalStateException("Failed to parse JSON result of external linting process execution: \n-------\n" + issuesAsJson + "\n-------", e);
-    }
-
-    FileSystem fileSystem = context.fileSystem();
-
-    for (IssuesPerFile issuesPerFile : issues) {
-      String filePath = issuesPerFile.source;
-      InputFile inputFile = fileSystem.inputFile(fileSystem.predicates().hasAbsolutePath(filePath));
-
-      if (inputFile == null) {
-        LOG.debug("Following file is not part of the project: [{}]. {} found issue(s) on it will not be reported.", filePath, issuesPerFile.warnings.length);
-        continue;
-      }
-
-      for (Issue issue : issuesPerFile.warnings) {
-        saveIssue(context, inputFile, issue);
-      }
-    }
-  }
-
-  private void saveIssue(SensorContext context, InputFile inputFile, Issue issue) {
-    NewIssue sonarIssue = context.newIssue();
-
-    RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);
-
-    if (ruleKey == null) {
-      if ("CssSyntaxError".equals(issue.rule)) {
-        String errorMessage = issue.text.replace("(CssSyntaxError)", "").trim();
-        LOG.error("Failed to parse {}, line {}, {}", inputFile.uri(), issue.line, errorMessage);
-      } else {
-        LOG.error("Unknown stylelint rule or rule not enabled: '" + issue.rule + "'");
-      }
-
-    } else {
-      NewIssueLocation location = sonarIssue.newLocation()
-        .on(inputFile)
-        .at(inputFile.selectLine(issue.line))
-        .message(normalizeMessage(issue.text));
-
-      sonarIssue
-        .at(location)
-        .forRule(ruleKey)
-        .save();
     }
   }
 

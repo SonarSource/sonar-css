@@ -30,6 +30,7 @@ import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 import org.sonar.api.utils.log.LogTester;
+import org.sonar.css.plugin.bundle.Bundle;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.AnalysisRequest;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Issue;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
@@ -245,6 +246,8 @@ public class CssAnalyzerBridgeServerTest {
     @Override
     public void deploy() {
       // no-op for unit test
+      // css-bundle
+
     }
 
     @Override
