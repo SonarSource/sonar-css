@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CssAnalyzerBundleTest {
 
@@ -49,6 +50,22 @@ public class CssAnalyzerBundleTest {
     assertThat(scriptFile).exists();
     String content = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
     assertThat(content).startsWith("#!/usr/bin/env node");
+  }
+
+  @Test
+  public void missing_bundle() throws Exception {
+    Bundle bundle = new CssAnalyzerBundle("/bundle/invalid-bundle-path.zip", tempFolder);
+    assertThatThrownBy(bundle::deploy)
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessage("css-bundle not found in /bundle/invalid-bundle-path.zip");
+  }
+
+  @Test
+  public void invalid_bundle_zip() throws Exception {
+    Bundle bundle = new CssAnalyzerBundle("/bundle/invalid-zip-file.zip", tempFolder);
+    assertThatThrownBy(bundle::deploy)
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessage("Failed to deploy css-bundle (with classpath '/bundle/invalid-zip-file.zip')");
   }
 
   @Test

@@ -30,8 +30,8 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.css.plugin.bundle.Bundle;
-import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.AnalysisRequest;
-import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Issue;
+import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
+import org.sonar.css.plugin.server.AnalyzerBridgeServer.Issue;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandBuilder;
@@ -69,7 +69,15 @@ public class CssAnalyzerBridgeServerTest {
 
   @After
   public void tearDown() throws Exception {
-    cssAnalyzerBridgeServer.clean();
+    if (cssAnalyzerBridgeServer != null) {
+      cssAnalyzerBridgeServer.clean();
+    }
+  }
+
+  @Test
+  public void default_timeout() {
+    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(mock(Bundle.class));
+    assertThat(server.timeoutSeconds).isEqualTo(60);
   }
 
   @Test
@@ -122,7 +130,7 @@ public class CssAnalyzerBridgeServerTest {
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
       .setContents("a { }")
       .build();
-    AnalysisRequest request = new AnalysisRequest(inputFile.absolutePath(), null);
+    Request request = new Request(inputFile.absolutePath(), null);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).hasSize(1);
     assertThat(issues[0].line).isEqualTo(42);
@@ -138,7 +146,7 @@ public class CssAnalyzerBridgeServerTest {
 
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "empty.css")
       .build();
-    AnalysisRequest request = new AnalysisRequest(inputFile.absolutePath(), null);
+    Request request = new Request(inputFile.absolutePath(), null);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).isEmpty();
   }
@@ -223,7 +231,7 @@ public class CssAnalyzerBridgeServerTest {
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
       .setContents("a { }")
       .build();
-    AnalysisRequest request = new AnalysisRequest(inputFile.absolutePath(), null);
+    Request request = new Request(inputFile.absolutePath(), null);
     assertThatThrownBy(() -> cssAnalyzerBridgeServer.analyze(request)).isInstanceOf(IllegalStateException.class);
     assertThat(context.allIssues()).isEmpty();
   }

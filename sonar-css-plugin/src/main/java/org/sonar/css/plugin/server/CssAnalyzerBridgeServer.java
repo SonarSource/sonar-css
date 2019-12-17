@@ -24,11 +24,9 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import javax.annotation.Nullable;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -53,7 +51,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
 
   private final OkHttpClient client;
   private final NodeCommandBuilder nodeCommandBuilder;
-  private final int timeoutSeconds;
+  final int timeoutSeconds;
   private final Bundle bundle;
   private int port;
   private NodeCommand nodeCommand;
@@ -61,12 +59,11 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
 
   // Used by pico container for dependency injection
   @SuppressWarnings("unused")
-  public CssAnalyzerBridgeServer(NodeCommandBuilder nodeCommandBuilder, Bundle bundle) {
-    this(nodeCommandBuilder, DEFAULT_TIMEOUT_SECONDS, bundle);
+  public CssAnalyzerBridgeServer(Bundle bundle) {
+    this(NodeCommand.builder(), DEFAULT_TIMEOUT_SECONDS, bundle);
   }
 
-  protected CssAnalyzerBridgeServer(NodeCommandBuilder nodeCommandBuilder, int timeoutSeconds,
-                         Bundle bundle) {
+  protected CssAnalyzerBridgeServer(NodeCommandBuilder nodeCommandBuilder, int timeoutSeconds, Bundle bundle) {
     this.nodeCommandBuilder = nodeCommandBuilder;
     this.timeoutSeconds = timeoutSeconds;
     this.bundle = bundle;
@@ -143,19 +140,15 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  public Issue[] analyze(AnalysisRequest request) throws IOException {
-    return analyze("analyze-css", request, Issue[].class);
-  }
-
   @Override
-  public <REQ, RES> RES analyze(String endpoint, REQ request, Class<RES> cls) throws IOException {
+  public  Issue[] analyze(Request request) throws IOException {
     String json = GSON.toJson(request);
-    return response(request(json, endpoint), cls);
+    return response(request(json));
   }
 
-  private String request(String json, String endpoint) throws IOException {
-    Request request = new Request.Builder()
-      .url(url(endpoint))
+  private String request(String json) throws IOException {
+    okhttp3.Request request = new okhttp3.Request.Builder()
+      .url(url("analyze"))
       .post(RequestBody.create(MediaType.get("application/json"), json))
       .build();
 
@@ -165,9 +158,9 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  private static <RES> RES response(String result, Class<RES> cls) {
+  private static Issue[] response(String result) {
     try {
-      return GSON.fromJson(result, cls);
+      return GSON.fromJson(result, Issue[].class);
     } catch (JsonSyntaxException e) {
       String msg = "Failed to parse response for file " + /*TODO*/ ": \n-----\n" + result + "\n-----\n";
       LOG.error(msg, e);
@@ -180,7 +173,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     if (nodeCommand == null) {
       return false;
     }
-    Request request = new Request.Builder()
+    okhttp3.Request request = new okhttp3.Request.Builder()
       .url(url("status"))
       .get()
       .build();
@@ -229,23 +222,6 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       .port(port)
       .addPathSegment(endpoint)
       .build();
-  }
-
-  public static class AnalysisRequest {
-    public String filePath;
-    @Nullable
-    public String configFile;
-
-    public AnalysisRequest(String filePath, @Nullable String configFile) {
-      this.filePath = filePath;
-      this.configFile = configFile;
-    }
-  }
-
-  public static class Issue {
-    public Integer line;
-    public String rule;
-    public String text;
   }
 
 }

@@ -27,11 +27,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.InputFile.Type;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
@@ -69,18 +71,25 @@ public class CssRuleSensorTest {
   private SensorContextTester context = SensorContextTester.create(BASE_DIR);
   private AnalysisWarnings analysisWarnings = mock(AnalysisWarnings.class);
   private CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
+  private CssRuleSensor sensor;
 
   @Before
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
-    createInputFile(context, "some css content\n on 2 lines", "dir/file.css");
     Awaitility.setDefaultTimeout(5, TimeUnit.MINUTES);
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
+    sensor = new CssRuleSensor(checkFactory, cssAnalyzerBridgeServer, analysisWarnings);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    if (cssAnalyzerBridgeServer != null) {
+      cssAnalyzerBridgeServer.stop();
+    }
   }
 
   @Test
   public void test_descriptor() {
-    CssRuleSensor sensor = new CssRuleSensor(checkFactory, cssAnalyzerBridgeServer, analysisWarnings);
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     sensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
@@ -89,22 +98,42 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_execute() throws IOException {
-    CssRuleSensor sensor = createCssRuleSensor();
+    addInputFile( "dir/file.css", "some css content\n on 2 lines");
     sensor.execute(context);
 
     assertThat(context.allIssues()).hasSize(1);
     Issue issue = context.allIssues().iterator().next();
     assertThat(issue.primaryLocation().message()).isEqualTo("some message");
 
-    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "css-bundle/stylelintconfig.json");
+    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "css-bundle", "stylelintconfig.json");
     assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
     verifyZeroInteractions(analysisWarnings);
   }
 
   @Test
+  public void test_stylelint_message_without_rule_id() throws IOException {
+    addInputFile( "dir/message-without-rule-id.css", "some css content\n on 2 lines");
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(1);
+    Issue issue = context.allIssues().iterator().next();
+    assertThat(issue.primaryLocation().message()).isEqualTo("some message");
+  }
+
+  @Test
+  public void should_stop_execution_when_sensor_context_is_cancelled() throws IOException {
+    addInputFile( "dir/file.css", "some css content\n on 2 lines");
+    context.setCancelled(true);
+    sensor.execute(context);
+    assertThat(context.allIssues()).isEmpty();
+    assertThat(logTester.logs(LoggerLevel.INFO))
+      .contains("java.util.concurrent.CancellationException: Analysis interrupted because the SensorContext is in cancelled state");
+  }
+
+  @Test
   public void test_old_property_is_provided() {
-    CssRuleSensor sensor = createCssRuleSensor();
     context.settings().setProperty(CssPlugin.FORMER_NODE_EXECUTABLE, "foo");
+    addInputFile( "dir/file.css", "some css content\n on 2 lines");
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.WARN)).contains("Property 'sonar.css.node' is ignored, 'sonar.nodejs.executable' should be used instead");
@@ -114,33 +143,17 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void test_execute_with_analysisWarnings() throws IOException {
-    CssRuleSensor sensor = createCssRuleSensor();
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(1);
-    Issue issue = context.allIssues().iterator().next();
-    assertThat(issue.primaryLocation().message()).isEqualTo("some message");
-
-    Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "css-bundle/stylelintconfig.json");
-    assertThat(Files.readAllLines(configPath)).containsOnly("{\"rules\":{\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
-    verifyZeroInteractions(analysisWarnings);
-  }
-
-  @Test
   public void test_not_execute_rules_if_nothing_enabled() {
-    CssRuleSensor sensor = new CssRuleSensor(new CheckFactory(new TestActiveRules()), cssAnalyzerBridgeServer, analysisWarnings);
-    sensor.execute(context);
+    CssRuleSensor sensorWithoutRules = new CssRuleSensor(new CheckFactory(new TestActiveRules()), cssAnalyzerBridgeServer, analysisWarnings);
+    addInputFile( "dir/file.css", "some css content\n on 2 lines");
+    sensorWithoutRules.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.WARN)).contains("No rules are activated in CSS Quality Profile");
   }
 
   @Test
   public void test_syntax_error() {
-    SensorContextTester context = SensorContextTester.create(BASE_DIR);
-    context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
-    DefaultInputFile inputFile = createInputFile(context, "some css content\n on 2 lines", "syntax-error.css");
-    CssRuleSensor sensor = createCssRuleSensor();
+    InputFile inputFile = addInputFile( "syntax-error.css", "some css content\n on 2 lines");
     sensor.execute(context);
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri() + ", line 2, Missed semicolon");
@@ -148,31 +161,24 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_unknown_rule() {
-    SensorContextTester context = SensorContextTester.create(BASE_DIR);
-    context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
-    createInputFile(context, "some css content\n on 2 lines", "unknown-rule.css");
-    CssRuleSensor sensor = createCssRuleSensor();
+    addInputFile( "unknown-rule.css", "some css content");
     sensor.execute(context);
 
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Unknown stylelint rule or rule not enabled: 'unknown-rule-key'");
   }
 
-  private static DefaultInputFile createInputFile(SensorContextTester sensorContext, String content, String relativePath) {
+  private DefaultInputFile addInputFile(String relativePath,  String content) {
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
-      .setModuleBaseDir(sensorContext.fileSystem().baseDirPath())
+      .setModuleBaseDir(context.fileSystem().baseDirPath())
       .setType(Type.MAIN)
       .setLanguage(CssLanguage.KEY)
       .setCharset(StandardCharsets.UTF_8)
       .setContents(content)
       .build();
 
-    sensorContext.fileSystem().add(inputFile);
+    context.fileSystem().add(inputFile);
     return inputFile;
-  }
-
-  private CssRuleSensor createCssRuleSensor() {
-    return new CssRuleSensor(checkFactory, cssAnalyzerBridgeServer, analysisWarnings);
   }
 
 }

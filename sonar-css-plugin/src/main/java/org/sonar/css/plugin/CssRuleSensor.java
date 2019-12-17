@@ -49,7 +49,7 @@ import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
-import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.AnalysisRequest;
+import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.analyzer.commons.ProgressReport;
 import org.sonarsource.nodejs.NodeCommandException;
@@ -152,7 +152,7 @@ public class CssRuleSensor implements Sensor {
     if (!"file".equalsIgnoreCase(inputFile.uri().getScheme())) {
       return;
     }
-    AnalysisRequest request = new AnalysisRequest(new File(inputFile.uri()).getAbsolutePath(), configFile.toString());
+    Request request = new Request(new File(inputFile.uri()).getAbsolutePath(), configFile.toString());
     CssAnalyzerBridgeServer.Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     saveIssues(context, inputFile, issues);
   }
