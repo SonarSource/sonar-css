@@ -9,40 +9,50 @@ const requestHandler = (request, response) => {
     data.push(chunk);
   });
   request.on('end', () => {
-    let filePath = null;
+    let fileName = null;
     if (data.length > 0) {
       const analysisRequest = JSON.parse(data.join());
-      filePath = analysisRequest.filePath;
+      fileName = analysisRequest.filePath.replace(/.*[\/\\]/g,"");
     }
     if (request.url === '/status') {
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.end('OK!');
-    } else if (filePath !== null && filePath.endsWith("foo.css")) {
-      response.end("[ {'line': 42, rule: 'block-no-empty', 'text': 'Unexpected empty block'} ]");
-    } else if (filePath !== null && filePath.endsWith("file.css")) {
-      response.end("[ {'line': 2, rule: 'color-no-invalid-hex', 'text': 'some message (color-no-invalid-hex)'} ]");
-    } else if (filePath !== null && filePath.endsWith("message-without-rule-id.css")) {
-      response.end("[ {'line': 2, rule: 'color-no-invalid-hex', 'text': 'some message'} ]");
-    } else if (filePath !== null && filePath.endsWith("empty.css")) {
-      response.end("[]");
-    } else if (filePath !== null && filePath.endsWith("syntax-error.css")) {
-      response.end(JSON.stringify([
-      {
-        text: "Missed semicolon (CssSyntaxError)",
-        line: 2,
-        rule: "CssSyntaxError"
-      }]));
-    } else if (filePath !== null && filePath.endsWith("unknown-rule.css")) {
-      response.end(JSON.stringify([
-            {
-              text: "some message",
-              line: 2,
-              rule: "unknown-rule-key"
-            }]));
-    } else if (filePath !== null && filePath.endsWith("invalid-json-response.css")) {
-      response.end("[");
     } else {
-      throw "Unexpected filePath: " + filePath;
+      switch (fileName) {
+        case "foo.css":
+          response.end(JSON.stringify([
+            {line: 42, rule: "block-no-empty", text: "Unexpected empty block"}
+          ]));
+          break;
+        case "file.css":
+          response.end(JSON.stringify([
+            {line: 2, rule: "color-no-invalid-hex", text: "some message (color-no-invalid-hex)"}
+          ]));
+          break;
+        case "message-without-rule-id.css":
+          response.end(JSON.stringify([
+            {line: 2, rule: "color-no-invalid-hex", text: "some message"}
+          ]));
+          break;
+        case "empty.css":
+          response.end(JSON.stringify([]));
+          break;
+        case "syntax-error.css":
+          response.end(JSON.stringify([
+            {line: 2, rule: "CssSyntaxError", text: "Missed semicolon (CssSyntaxError)"}
+          ]));
+          break;
+        case "unknown-rule.css":
+          response.end(JSON.stringify([
+            {line: 2, rule: "unknown-rule-key", text: "some message"}
+          ]));
+          break;
+        case "invalid-json-response.css":
+          response.end("[");
+          break;
+        default:
+          throw "Unexpected fileName: " + fileName;
+      }
     }
   });
 };

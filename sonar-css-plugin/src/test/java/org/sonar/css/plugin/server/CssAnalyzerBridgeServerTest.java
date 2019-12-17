@@ -224,11 +224,11 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void should_fail_if_bad_json_response() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("badResponse.js");
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
     cssAnalyzerBridgeServer.deploy();
     cssAnalyzerBridgeServer.startServerLazily(context);
 
-    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
+    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "invalid-json-response.css")
       .setContents("a { }")
       .build();
     Request request = new Request(inputFile.absolutePath(), null);
