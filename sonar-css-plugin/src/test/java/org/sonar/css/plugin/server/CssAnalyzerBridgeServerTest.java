@@ -82,6 +82,14 @@ public class CssAnalyzerBridgeServerTest {
   }
 
   @Test
+  public void issue_constructor() {
+    Issue issue = new Issue(2, "r", "t");
+    assertThat(issue.line).isEqualTo(2);
+    assertThat(issue.rule).isEqualTo("r");
+    assertThat(issue.text).isEqualTo("t");
+  }
+
+  @Test
   public void should_throw_when_not_existing_script() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("NOT_EXISTING.js");
     cssAnalyzerBridgeServer.deploy();
@@ -255,8 +263,6 @@ public class CssAnalyzerBridgeServerTest {
     @Override
     public void deploy() {
       // no-op for unit test
-      // css-bundle
-
     }
 
     @Override
