@@ -194,6 +194,17 @@
                             <arguments>prepare-package</arguments>
                         </configuration>
                     </execution>
+                    <execution>
+                        <!--required for typescript being available during analysis-->
+                        <id>yarn install</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
