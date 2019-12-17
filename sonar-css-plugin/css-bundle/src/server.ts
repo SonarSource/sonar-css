@@ -5,9 +5,20 @@ import * as stylelint from "stylelint";
 import * as fs from "fs";
 import * as bodyParser from "body-parser";
 
+let log = console.log;
+let logError = console.error;
+
+export function setLogHandlersForTests(
+  logHandler: typeof console.log,
+  errorHandler: typeof console.error
+) {
+  log = logHandler;
+  logError = errorHandler;
+}
+
 export function start(port = 0): Promise<Server> {
   return new Promise(resolve => {
-    console.log("DEBUG starting stylelint-bridge server at port", port);
+    log("DEBUG starting stylelint-bridge server at port", port);
     const app = express();
     app.use(bodyParser.json());
     app.post("/analyze", analyzeWithStylelint);
@@ -15,15 +26,14 @@ export function start(port = 0): Promise<Server> {
       resp.send("OK!")
     );
     app.use(
-      (err: any, _req: express.Request, res: express.Response, next: any) => {
-        console.error(err.message);
-        console.log(err.stack);
-        res.send([]);
+      (err: any, _req: express.Request, res: express.Response, _next: any) => {
+        logError(err);
+        res.json([]);
       }
     );
 
     const server = app.listen(port, () => {
-      console.log(
+      log(
         "DEBUG stylelint-bridge server is running at port",
         (server.address() as AddressInfo).port
       );
@@ -50,7 +60,8 @@ function analyzeWithStylelint(
     .lint(options)
     .then(result => response.json(toIssues(result.results, filePath)))
     .catch(error => {
-      throw error;
+      logError(error);
+      response.json([]);
     });
 }
 
@@ -60,7 +71,7 @@ function toIssues(results: stylelint.LintResult[], filePath: string): Issue[] {
   results.forEach(result => {
     // to avoid reporting of "fake" source like <input ccs 1>
     if (result.source !== filePath) {
-      console.log(
+      log(
         `DEBUG For file [${filePath}] received issues with [${result.source}] as a source.`
       );
       return;

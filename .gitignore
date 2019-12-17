@@ -24,7 +24,6 @@ out/
 .project
 .settings/
 .classpath
-bin/
 
 # --- SonarQube
 .sonar/
@@ -46,4 +45,5 @@ node_modules/
 
 # coverage
 sonar-css-plugin/css-bundle/test-report.xml
-css-bungle/coverage
+css-bundle/coverage
+lib/

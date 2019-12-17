@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "yarn install && yarn check-format && yarn clear && yarn compile",
-    "clear": "tsc -b src tests --clean",
+    "clear": "tsc -b . --clean",
+    "compile": "tsc -b .",
     "check-format": "prettier --list-different \"{src,tests}/**/*.ts\"",
-    "test": "jest",
-    "format": "prettier --write \"{src,tests}/**/!(*.lint).ts\"",
-    "compile": "tsc -b src tests"
+    "format": "prettier --write \"{src,tests}/**/*.ts\"",
+    "test": "jest"
   },
   "author": "",
   "license": "LGPL-3.0",
@@ -23,6 +23,7 @@
     "@types/stylelint": "9.10.1",
     "jest": "24.9.0",
     "jest-sonar-reporter": "1.3.0",
+    "prettier": "^1.19.1",
     "ts-jest": "24.1.0",
     "typescript": "3.7.3"
   },
