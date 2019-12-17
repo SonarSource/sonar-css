@@ -48,6 +48,7 @@ import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
+import org.sonar.css.plugin.server.AnalyzerBridgeServer.Issue;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
 import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
@@ -121,7 +122,7 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private void analyzeFiles(SensorContext context, List<InputFile> inputFiles, File configFile) throws InterruptedException, IOException {
+  void analyzeFiles(SensorContext context, List<InputFile> inputFiles, File configFile) throws InterruptedException, IOException {
     ProgressReport progressReport = new ProgressReport("Analysis progress", TimeUnit.SECONDS.toMillis(10));
     boolean success = false;
     try {
@@ -131,7 +132,11 @@ public class CssRuleSensor implements Sensor {
           throw new CancellationException("Analysis interrupted because the SensorContext is in cancelled state");
         }
         if (cssAnalyzerBridgeServer.isAlive()) {
-          analyzeFile(context, inputFile, configFile);
+          try {
+            analyzeFile(context, inputFile, configFile);
+          } catch (IOException | RuntimeException e) {
+            throw new IOException("Failure during analysis of " + inputFile.uri() + ": " + e.getMessage());
+          }
           progressReport.nextFile();
         } else {
           throw new IllegalStateException("stylelint-bridge server is not answering");
@@ -148,18 +153,18 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  private void analyzeFile(SensorContext context, InputFile inputFile, File configFile) throws IOException {
+  void analyzeFile(SensorContext context, InputFile inputFile, File configFile) throws IOException {
     if (!"file".equalsIgnoreCase(inputFile.uri().getScheme())) {
       return;
     }
     Request request = new Request(new File(inputFile.uri()).getAbsolutePath(), configFile.toString());
     LOG.debug("Analyzing " + request.filePath);
-    CssAnalyzerBridgeServer.Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
+    Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     saveIssues(context, inputFile, issues);
   }
 
-  private void saveIssues(SensorContext context, InputFile inputFile, CssAnalyzerBridgeServer.Issue[] issues) {
-    for (CssAnalyzerBridgeServer.Issue issue : issues) {
+  private void saveIssues(SensorContext context, InputFile inputFile, Issue[] issues) {
+    for (Issue issue : issues) {
       NewIssue sonarIssue = context.newIssue();
 
       RuleKey ruleKey = cssRules.getActiveSonarKey(issue.rule);

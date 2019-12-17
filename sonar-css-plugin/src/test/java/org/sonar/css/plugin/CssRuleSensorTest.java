@@ -21,12 +21,13 @@ package org.sonar.css.plugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
-import org.awaitility.Awaitility;
+import java.util.Collections;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -53,6 +54,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 import static org.sonar.css.plugin.server.CssAnalyzerBridgeServerTest.createCssAnalyzerBridgeServer;
 
 public class CssRuleSensorTest {
@@ -78,7 +80,6 @@ public class CssRuleSensorTest {
   @Before
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
-    Awaitility.setDefaultTimeout(5, TimeUnit.MINUTES);
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
     sensor = new CssRuleSensor(checkFactory, cssAnalyzerBridgeServer, analysisWarnings);
   }
@@ -174,6 +175,29 @@ public class CssRuleSensorTest {
     assertThatThrownBy(() -> sensor.execute(context))
       .isInstanceOf(IllegalStateException.class)
       .hasMessageContaining("Analysis failed");
+  }
+
+  @Test
+  public void should_not_analyze_http_files() throws URISyntaxException, IOException {
+    File configFile = new File("config.json");
+    InputFile httpFile = mock(InputFile.class);
+    when(httpFile.filename()).thenReturn("file2.css");
+    when(httpFile.uri()).thenReturn(new URI("http://lost-on-earth.com/file2.css"));
+    sensor.analyzeFile(context, httpFile, configFile);
+    assertThat(String.join("\n", logTester.logs(LoggerLevel.DEBUG)))
+      .doesNotMatch("(?s).*\nAnalyzing \\S*file2.css.*");
+  }
+
+  @Test
+  public void analysis_stop_when_server_is_not_anymore_alive() throws IOException, InterruptedException {
+    File configFile = new File("config.json");
+    DefaultInputFile inputFile = addInputFile("dir/file.css", "some css content\n on 2 lines");
+    sensor.execute(context);
+    cssAnalyzerBridgeServer.setPort(43);
+
+    assertThatThrownBy(() -> sensor.analyzeFiles(context, Collections.singletonList(inputFile), configFile))
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("stylelint-bridge server is not answering");
   }
 
   @Test

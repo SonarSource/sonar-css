@@ -20,7 +20,6 @@
 package org.sonar.css.plugin.server;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 import org.sonar.api.Startable;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.scanner.ScannerSide;
@@ -42,19 +41,24 @@ public interface AnalyzerBridgeServer extends Startable {
 
   class Request {
     public final String filePath;
-    @Nullable
     public final String configFile;
 
-    public Request(String filePath, @Nullable String configFile) {
+    public Request(String filePath, String configFile) {
       this.filePath = filePath;
       this.configFile = configFile;
     }
   }
 
   class Issue {
-    public Integer line;
-    public String rule;
-    public String text;
+    public final Integer line;
+    public final String rule;
+    public final String text;
+
+    public Issue(Integer line, String rule, String text) {
+      this.line = line;
+      this.rule = rule;
+      this.text = text;
+    }
   }
 
 }

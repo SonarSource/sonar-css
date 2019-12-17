@@ -30,8 +30,8 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.css.plugin.bundle.Bundle;
-import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
 import org.sonar.css.plugin.server.AnalyzerBridgeServer.Issue;
+import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandBuilder;
@@ -61,6 +61,7 @@ public class CssAnalyzerBridgeServerTest {
   private SensorContextTester context;
   private CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
   private TestBundle testBundle = new TestBundle(START_SERVER_SCRIPT);
+  private String configFile = "config.json";
 
   @Before
   public void setUp() throws Exception {
@@ -130,7 +131,7 @@ public class CssAnalyzerBridgeServerTest {
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
       .setContents("a { }")
       .build();
-    Request request = new Request(inputFile.absolutePath(), null);
+    Request request = new Request(inputFile.absolutePath(), configFile);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).hasSize(1);
     assertThat(issues[0].line).isEqualTo(42);
@@ -146,7 +147,7 @@ public class CssAnalyzerBridgeServerTest {
 
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "empty.css")
       .build();
-    Request request = new Request(inputFile.absolutePath(), null);
+    Request request = new Request(inputFile.absolutePath(), configFile);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).isEmpty();
   }
@@ -231,14 +232,16 @@ public class CssAnalyzerBridgeServerTest {
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "invalid-json-response.css")
       .setContents("a { }")
       .build();
-    Request request = new Request(inputFile.absolutePath(), null);
+    Request request = new Request(inputFile.absolutePath(), configFile);
     assertThatThrownBy(() -> cssAnalyzerBridgeServer.analyze(request)).isInstanceOf(IllegalStateException.class);
     assertThat(context.allIssues()).isEmpty();
   }
 
 
   public static CssAnalyzerBridgeServer createCssAnalyzerBridgeServer(String startServerScript) {
-    return new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript));
+    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript));
+    server.start();
+    return server;
   }
 
   static class TestBundle implements Bundle {

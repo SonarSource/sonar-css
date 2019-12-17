@@ -77,7 +77,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     bundle.deploy();
   }
 
-  public void startServer(SensorContext context) throws IOException, NodeCommandException {
+  public void startServer(SensorContext context) throws IOException {
     PROFILER.startDebug("Starting server");
     port = NetUtils.findOpenPort();
 
@@ -97,7 +97,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     PROFILER.stopDebug();
   }
 
-  private void initNodeCommand(SensorContext context, File scriptFile) throws IOException {
+  private void initNodeCommand(SensorContext context, File scriptFile) {
     nodeCommandBuilder
       .outputConsumer(message -> {
         if (message.startsWith("DEBUG")) {
@@ -121,7 +121,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
   }
 
   @Override
-  public void startServerLazily(SensorContext context) throws IOException, ServerAlreadyFailedException, NodeCommandException {
+  public void startServerLazily(SensorContext context) throws IOException {
     // required for SonarLint context to avoid restarting already failed server
     if (failedToStart) {
       throw new ServerAlreadyFailedException();
@@ -162,7 +162,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     try {
       return GSON.fromJson(result, Issue[].class);
     } catch (JsonSyntaxException e) {
-      String msg = "Failed to parse response for file " + /*TODO*/ ": \n-----\n" + result + "\n-----\n";
+      String msg = "Failed to parse response: \n-----\n" + result + "\n-----\n";
       LOG.error(msg, e);
       throw new IllegalStateException("Failed to parse response", e);
     }
@@ -222,6 +222,10 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       .port(port)
       .addPathSegment(endpoint)
       .build();
+  }
+
+  public void setPort(int port) {
+    this.port = port;
   }
 
 }
