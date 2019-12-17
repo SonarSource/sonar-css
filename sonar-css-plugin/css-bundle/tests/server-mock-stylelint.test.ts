@@ -1,12 +1,15 @@
 import { start, setLogHandlersForTests } from "../src/server";
 import { Server } from "http";
+import * as path from "path";
 import { promisify } from "util";
 import * as stylelint from "stylelint";
 import { postToServer } from "./utils";
 
+const filePath = path.join(__dirname, "fixtures", "file.css");
+
 const request = JSON.stringify({
-  filePath: __dirname + "/fixtures/file.css",
-  configFile: __dirname + "/fixtures/stylelintconfig.json"
+  filePath,
+  configFile: path.join(__dirname, "fixtures", "stylelintconfig.json")
 });
 
 jest.mock("stylelint");
@@ -42,7 +45,7 @@ describe("server", () => {
     );
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        "sonar-css-plugin/css-bundle/tests/fixtures/file.css] received issues with [foo.bar] as a source."
+        `[${filePath}] received issues with [foo.bar] as a source.`
       )
     );
   });

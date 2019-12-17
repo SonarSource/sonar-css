@@ -4,11 +4,9 @@ import { Server } from "http";
 import { promisify } from "util";
 import { AddressInfo } from "net";
 import { postToServer } from "./utils";
+import * as path from "path";
 
-const request = JSON.stringify({
-  filePath: __dirname + "/fixtures/file.css",
-  configFile: __dirname + "/fixtures/stylelintconfig.json"
-});
+const configFile = path.join(__dirname, "fixtures", "stylelintconfig.json");
 
 describe("server", () => {
   let server: Server;
@@ -32,6 +30,10 @@ describe("server", () => {
 
   it("should respond to analysis request", async () => {
     expect(server.listening).toEqual(true);
+    const request = JSON.stringify({
+      filePath: path.join(__dirname, "fixtures", "file.css"),
+      configFile
+    });
     const response = await post(request, "/analyze");
     expect(JSON.parse(response)).toEqual([
       {
@@ -47,8 +49,8 @@ describe("server", () => {
   it("should respond to analysis request for html and php", async () => {
     expect(server.listening).toEqual(true);
     const requestPhp = JSON.stringify({
-      filePath: __dirname + "/fixtures/file.php",
-      configFile: __dirname + "/fixtures/stylelintconfig.json"
+      filePath: path.join(__dirname, "fixtures", "file.php"),
+      configFile
     });
     const responsePhp = await post(requestPhp, "/analyze");
     expect(JSON.parse(responsePhp)).toEqual([
@@ -59,8 +61,8 @@ describe("server", () => {
       }
     ]);
     const requestHtml = JSON.stringify({
-      filePath: __dirname + "/fixtures/file.html",
-      configFile: __dirname + "/fixtures/stylelintconfig.json"
+      filePath: path.join(__dirname, "fixtures", "file.html"),
+      configFile
     });
     const responseHtml = await post(requestHtml, "/analyze");
     expect(JSON.parse(responseHtml)).toEqual([
@@ -76,8 +78,8 @@ describe("server", () => {
     expect(server.listening).toEqual(true);
     const response = await post(
       JSON.stringify({
-        filePath: __dirname + "/fixtures/file-bom.css",
-        configFile: __dirname + "/fixtures/stylelintconfig.json"
+        filePath: path.join(__dirname, "fixtures", "file-bom.css"),
+        configFile
       }),
       "/analyze"
     );
