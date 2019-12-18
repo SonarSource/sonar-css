@@ -61,7 +61,6 @@ public class IssuesTest {
     SonarScanner scanner = Tests.createScanner(PROJECT_KEY);
     scanner.setProperty("sonar.exclusions", "**/file-with-parsing-error-excluded.css");
     scanner.setProperty("sonar.html.file.suffixes", ".htm");
-    scanner.setDebugLogs(true);
     buildResult = orchestrator.executeBuild(scanner);
   }
 
@@ -155,7 +154,6 @@ public class IssuesTest {
       tuple("css:S4661", "issues-project:src/file3.scss"),
       tuple("css:S1116", "issues-project:src/file5.htm")
     );
-
   }
 
 }

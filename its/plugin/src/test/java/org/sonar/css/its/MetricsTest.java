@@ -44,6 +44,7 @@ public class MetricsTest {
   public void test() {
     assertThat(getProjectMeasureAsDouble("lines", PROJECT_KEY)).isEqualTo(43);
     assertThat(getProjectMeasureAsDouble("ncloc", PROJECT_KEY)).isEqualTo(32);
+    assertThat(getMeasure("ncloc_language_distribution", PROJECT_KEY).getValue()).isEqualTo("css=22;web=10");
     assertThat(getProjectMeasureAsDouble("comment_lines", PROJECT_KEY)).isEqualTo(4);
 
     assertThat(getMeasure("ncloc_data", PROJECT_KEY + ":src/file1.css").getValue())

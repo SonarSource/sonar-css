@@ -20,7 +20,6 @@
 package org.sonar.css.its;
 
 import com.sonar.orchestrator.Orchestrator;
-import com.sonar.orchestrator.build.BuildResult;
 import com.sonar.orchestrator.build.SonarScanner;
 import java.util.Collections;
 import java.util.List;
@@ -41,13 +40,12 @@ public class NoCssFileProjectTest {
 
   @ClassRule
   public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
-  public static BuildResult buildResult;
 
   @BeforeClass
   public static void prepare() {
     orchestrator.getServer().provisionProject(PROJECT_KEY, PROJECT_KEY);
     SonarScanner scanner = Tests.createScanner(PROJECT_KEY);
-    buildResult = orchestrator.executeBuild(scanner);
+    orchestrator.executeBuild(scanner);
   }
 
   @Test
