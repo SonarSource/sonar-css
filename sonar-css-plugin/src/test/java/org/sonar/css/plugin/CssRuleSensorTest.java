@@ -125,6 +125,21 @@ public class CssRuleSensorTest {
   }
 
   @Test
+  public void test_non_css_files() {
+    DefaultInputFile fileCss = addInputFile("file.css");
+    DefaultInputFile fileHtml = addInputFile("file.web");
+    DefaultInputFile filePhp = addInputFile("file.php");
+    addInputFile("file.js");
+
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(3);
+    assertThat(context.allIssues())
+      .extracting("primaryLocation.component")
+      .containsOnly(fileCss, fileHtml, filePhp);
+  }
+
+  @Test
   public void test_no_file_to_analyze() throws IOException {
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(0);
@@ -249,7 +264,7 @@ public class CssRuleSensorTest {
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
       .setModuleBaseDir(context.fileSystem().baseDirPath())
       .setType(Type.MAIN)
-      .setLanguage(CssLanguage.KEY)
+      .setLanguage(relativePath.split("\\.")[1])
       .setCharset(StandardCharsets.UTF_8)
       .setContents("some css content\n on 2 lines")
       .build();
