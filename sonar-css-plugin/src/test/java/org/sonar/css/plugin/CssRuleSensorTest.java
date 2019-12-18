@@ -41,8 +41,6 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.batch.sensor.issue.Issue;
-import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.notifications.AnalysisWarnings;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
@@ -53,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonar.css.plugin.server.CssAnalyzerBridgeServerTest.createCssAnalyzerBridgeServer;
@@ -68,7 +67,7 @@ public class CssRuleSensorTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
-  private static CheckFactory checkFactory = new CheckFactory(new TestActiveRules("S4647", "S4656", "S4658"));
+  private static final CheckFactory CHECK_FACTORY = new CheckFactory(new TestActiveRules("S4647", "S4656", "S4658"));
 
   private static final File BASE_DIR = new File("src/test/resources").getAbsoluteFile();
 
@@ -81,7 +80,7 @@ public class CssRuleSensorTest {
   public void setUp() {
     context.fileSystem().setWorkDir(tmpDir.getRoot().toPath());
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
-    sensor = new CssRuleSensor(checkFactory, cssAnalyzerBridgeServer, analysisWarnings);
+    sensor = new CssRuleSensor(CHECK_FACTORY, cssAnalyzerBridgeServer, analysisWarnings);
   }
 
   @After
@@ -97,20 +96,31 @@ public class CssRuleSensorTest {
     sensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
     assertThat(sensorDescriptor.languages()).isEmpty();
+    assertThat(sensorDescriptor.configurationPredicate()).isNull();
+    assertThat(sensorDescriptor.ruleRepositories()).containsOnly("css");
   }
 
   @Test
   public void test_execute() throws IOException {
-    addInputFile("dir/file.css", "some css content\n on 2 lines");
+    addInputFile("file.css");
+    addInputFile("file-with-rule-id-message.css");
     sensor.execute(context);
 
-    assertThat(context.allIssues()).hasSize(1);
-    Issue issue = context.allIssues().iterator().next();
-    assertThat(issue.primaryLocation().message()).isEqualTo("Unexpected empty block");
+    assertThat(context.allIssues()).hasSize(2);
+    assertThat(context.allIssues()).extracting("primaryLocation.message")
+      .containsOnly("some message", "Unexpected empty block");
+
+    assertThat(String.join("\n", logTester.logs(LoggerLevel.DEBUG)))
+      .matches("(?s).*Analyzing \\S*file\\.css.*")
+      .matches("(?s).*Found 1 issue\\(s\\).*");
 
     Path configPath = Paths.get(context.fileSystem().workDir().getAbsolutePath(), "css-bundle", "stylelintconfig.json");
     assertThat(Files.readAllLines(configPath)).containsOnly(
-      "{\"rules\":{\"block-no-empty\":true,\"color-no-invalid-hex\":true,\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]}}");
+      "{\"rules\":{" +
+        "\"block-no-empty\":true," +
+        "\"color-no-invalid-hex\":true," +
+        "\"declaration-block-no-duplicate-properties\":[true,{\"ignore\":[\"consecutive-duplicates-with-different-values\"]}]" +
+      "}}");
     verifyZeroInteractions(analysisWarnings);
   }
 
@@ -119,26 +129,16 @@ public class CssRuleSensorTest {
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(0);
     assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
-  }
-
-  @Test
-  public void test_stylelint_message_without_rule_id() throws IOException {
-    addInputFile("message-without-rule-id.css", "some css content\n on 2 lines");
-    sensor.execute(context);
-
-    assertThat(context.allIssues()).hasSize(1);
-    Issue issue = context.allIssues().iterator().next();
-    assertThat(issue.primaryLocation().message()).isEqualTo("some message");
+    assertThat(logTester.logs(LoggerLevel.INFO)).contains("No CSS, PHP or HTML files are found in the project. CSS analysis is skipped.");
   }
 
   @Test
   public void bridge_server_fail_to_start() {
-    CssAnalyzerBridgeServer bad_server = createCssAnalyzerBridgeServer("throw.js");
-    sensor = new CssRuleSensor(checkFactory, bad_server, analysisWarnings);
-    addInputFile("file.css", "some css content\n on 2 lines");
+    CssAnalyzerBridgeServer badServer = createCssAnalyzerBridgeServer("throw.js");
+    sensor = new CssRuleSensor(CHECK_FACTORY, badServer, analysisWarnings);
+    addInputFile("file.css");
     sensor.execute(context);
-    assertThat(logTester.logs(LoggerLevel.ERROR))
-      .contains("Failed to start server (1s timeout)");
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to start server (1s timeout)");
 
     assertThat(logTester.logs(LoggerLevel.DEBUG))
       .doesNotContain("Skipping start of css-bundle server due to the failure during first analysis");
@@ -149,18 +149,20 @@ public class CssRuleSensorTest {
 
   @Test
   public void should_log_when_bridge_server_receives_invalid_response() {
-    addInputFile("dir/invalid-json-response.css", "some css content");
+    addInputFile("invalid-json-response.css");
+    addInputFile("file.css");
     sensor.execute(context);
     assertThat(String.join("\n", logTester.logs(LoggerLevel.ERROR)))
       .contains("Failed to parse response");
+    assertThat(context.allIssues()).hasSize(1);
   }
 
   @Test
   public void should_fail_fast_when_server_fail_to_start() {
-    context.setSettings(new MapSettings().appendProperty("sonar.internal.analysis.failFast", "true"));
-    CssAnalyzerBridgeServer bad_server = createCssAnalyzerBridgeServer("throw.js");
-    sensor = new CssRuleSensor(checkFactory, bad_server, analysisWarnings);
-    addInputFile("dir/file.css", "some css content\n on 2 lines");
+    context.settings().setProperty("sonar.internal.analysis.failFast", "true");
+    CssAnalyzerBridgeServer badServer = createCssAnalyzerBridgeServer("throw.js");
+    sensor = new CssRuleSensor(CHECK_FACTORY, badServer, analysisWarnings);
+    addInputFile("file.css");
 
     assertThatThrownBy(() -> sensor.execute(context))
       .isInstanceOf(IllegalStateException.class)
@@ -169,8 +171,8 @@ public class CssRuleSensorTest {
 
   @Test
   public void should_fail_fast_when_bridge_server_receives_invalid_response() {
-    context.setSettings(new MapSettings().appendProperty("sonar.internal.analysis.failFast", "true"));
-    addInputFile("dir/invalid-json-response.css", "some css content");
+    context.settings().setProperty("sonar.internal.analysis.failFast", "true");
+    addInputFile("invalid-json-response.css");
 
     assertThatThrownBy(() -> sensor.execute(context))
       .isInstanceOf(IllegalStateException.class)
@@ -178,20 +180,20 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void should_not_analyze_http_files() throws URISyntaxException, IOException {
-    File configFile = new File("config.json");
+  public void should_not_analyze_files_with_not_file_uri() throws URISyntaxException, IOException {
     InputFile httpFile = mock(InputFile.class);
-    when(httpFile.filename()).thenReturn("file2.css");
-    when(httpFile.uri()).thenReturn(new URI("http://lost-on-earth.com/file2.css"));
-    sensor.analyzeFile(context, httpFile, configFile);
+    when(httpFile.filename()).thenReturn("file.css");
+    when(httpFile.uri()).thenReturn(new URI("http://lost-on-earth.com/file.css"));
+    sensor.analyzeFile(context, httpFile, new File("config.json"));
     assertThat(String.join("\n", logTester.logs(LoggerLevel.DEBUG)))
-      .doesNotMatch("(?s).*\nAnalyzing \\S*file2.css.*");
+      .matches("(?s).*Skipping \\S*file.css as it has not 'file' scheme.*")
+      .doesNotMatch("(?s).*\nAnalyzing \\S*file.css.*");
   }
 
   @Test
   public void analysis_stop_when_server_is_not_anymore_alive() throws IOException, InterruptedException {
     File configFile = new File("config.json");
-    DefaultInputFile inputFile = addInputFile("dir/file.css", "some css content\n on 2 lines");
+    DefaultInputFile inputFile = addInputFile("dir/file.css");
     sensor.execute(context);
     cssAnalyzerBridgeServer.setPort(43);
 
@@ -202,7 +204,7 @@ public class CssRuleSensorTest {
 
   @Test
   public void should_stop_execution_when_sensor_context_is_cancelled() throws IOException {
-    addInputFile("dir/file.css", "some css content\n on 2 lines");
+    addInputFile("file.css");
     context.setCancelled(true);
     sensor.execute(context);
     assertThat(context.allIssues()).isEmpty();
@@ -213,27 +215,22 @@ public class CssRuleSensorTest {
   @Test
   public void test_old_property_is_provided() {
     context.settings().setProperty(CssPlugin.FORMER_NODE_EXECUTABLE, "foo");
-    addInputFile("file.css", "some css content\n on 2 lines");
+    addInputFile("file.css");
     sensor.execute(context);
 
     assertThat(logTester.logs(LoggerLevel.WARN)).contains("Property 'sonar.css.node' is ignored, 'sonar.nodejs.executable' should be used instead");
     verify(analysisWarnings).addUnique(eq("Property 'sonar.css.node' is ignored, 'sonar.nodejs.executable' should be used instead"));
 
     assertThat(context.allIssues()).hasSize(1);
-  }
 
-  @Test
-  public void test_not_execute_rules_if_nothing_enabled() {
-    CssRuleSensor sensorWithoutRules = new CssRuleSensor(new CheckFactory(new TestActiveRules()), cssAnalyzerBridgeServer, analysisWarnings);
-    addInputFile("dir/file.css", "some css content\n on 2 lines");
-    sensorWithoutRules.execute(context);
-
-    assertThat(logTester.logs(LoggerLevel.INFO)).contains("No rules are activated in CSS Quality Profile");
+    sensor = new CssRuleSensor(CHECK_FACTORY, cssAnalyzerBridgeServer, null);
+    sensor.execute(context);
+    verifyNoMoreInteractions(analysisWarnings);
   }
 
   @Test
   public void test_syntax_error() {
-    InputFile inputFile = addInputFile("syntax-error.css", "some css content\n on 2 lines");
+    InputFile inputFile = addInputFile("syntax-error.css");
     sensor.execute(context);
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri() + ", line 2, Missed semicolon");
@@ -241,20 +238,20 @@ public class CssRuleSensorTest {
 
   @Test
   public void test_unknown_rule() {
-    addInputFile("unknown-rule.css", "some css content");
+    addInputFile("unknown-rule.css");
     sensor.execute(context);
 
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Unknown stylelint rule or rule not enabled: 'unknown-rule-key'");
   }
 
-  private DefaultInputFile addInputFile(String relativePath, String content) {
+  private DefaultInputFile addInputFile(String relativePath) {
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
       .setModuleBaseDir(context.fileSystem().baseDirPath())
       .setType(Type.MAIN)
       .setLanguage(CssLanguage.KEY)
       .setCharset(StandardCharsets.UTF_8)
-      .setContents(content)
+      .setContents("some css content\n on 2 lines")
       .build();
 
     context.fileSystem().add(inputFile);

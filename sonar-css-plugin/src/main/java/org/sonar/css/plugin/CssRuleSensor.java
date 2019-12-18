@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -79,17 +80,13 @@ public class CssRuleSensor implements Sensor {
   @Override
   public void describe(SensorDescriptor descriptor) {
     descriptor
+      .createIssuesForRuleRepository("css")
       .name("SonarCSS Rules");
   }
 
   @Override
   public void execute(SensorContext context) {
     reportOldNodeProperty(context);
-
-    if (cssRules.isEmpty()) {
-      LOG.info("No rules are activated in CSS Quality Profile");
-      return;
-    }
 
     boolean failFast = context.config().getBoolean("sonar.internal.analysis.failFast").orElse(false);
 
@@ -162,13 +159,15 @@ public class CssRuleSensor implements Sensor {
   }
 
   void analyzeFile(SensorContext context, InputFile inputFile, File configFile) throws IOException {
-    if (!"file".equalsIgnoreCase(inputFile.uri().getScheme())) {
+    URI uri = inputFile.uri();
+    if (!"file".equalsIgnoreCase(uri.getScheme())) {
+      LOG.debug("Skipping {} as it has not 'file' scheme", uri);
       return;
     }
-    Request request = new Request(new File(inputFile.uri()).getAbsolutePath(), configFile.toString());
+    Request request = new Request(new File(uri).getAbsolutePath(), configFile.toString());
     LOG.debug("Analyzing " + request.filePath);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
-    LOG.debug("Found {} issues", issues.length);
+    LOG.debug("Found {} issue(s)", issues.length);
     saveIssues(context, inputFile, issues);
   }
 

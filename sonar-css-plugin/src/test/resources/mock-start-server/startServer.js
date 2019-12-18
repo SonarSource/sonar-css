@@ -28,9 +28,9 @@ const requestHandler = (request, response) => {
             {line: 2, rule: "block-no-empty", text: "Unexpected empty block"}
           ]));
           break;
-        case "message-without-rule-id.css":
+        case "file-with-rule-id-message.css":
           response.end(JSON.stringify([
-            {line: 2, rule: "color-no-invalid-hex", text: "some message"}
+            {line: 2, rule: "color-no-invalid-hex", text: "some message (color-no-invalid-hex)"}
           ]));
           break;
         case "empty.css":
