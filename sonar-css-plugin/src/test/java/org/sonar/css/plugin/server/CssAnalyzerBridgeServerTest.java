@@ -111,19 +111,17 @@ public class CssAnalyzerBridgeServerTest {
     });
 
     cssAnalyzerBridgeServer = new CssAnalyzerBridgeServer(nodeCommandBuilder, TEST_TIMEOUT_SECONDS, new TestBundle(START_SERVER_SCRIPT));
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
 
     thrown.expect(NodeCommandException.class);
     thrown.expectMessage("msg");
 
-    cssAnalyzerBridgeServer.startServer(context);
+    cssAnalyzerBridgeServer.startServerLazily(context);
   }
 
   @Test
   public void should_forward_process_streams() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("logging.js");
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
-    cssAnalyzerBridgeServer.startServer(context);
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
+    cssAnalyzerBridgeServer.startServerLazily(context);
 
     assertThat(logTester.logs(DEBUG)).contains("testing debug log");
     assertThat(logTester.logs(WARN)).contains("testing warn log");
@@ -132,76 +130,56 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void should_get_answer_from_server() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
-    cssAnalyzerBridgeServer.startServer(context);
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
+    cssAnalyzerBridgeServer.startServerLazily(context);
 
-    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
-      .setContents("a { }")
-      .build();
-    Request request = new Request(inputFile.absolutePath(), CONFIG_FILE);
+    Request request = new Request("/absolute/path/file.css", CONFIG_FILE);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).hasSize(1);
-    assertThat(issues[0].line).isEqualTo(42);
+    assertThat(issues[0].line).isEqualTo(2);
     assertThat(issues[0].rule).isEqualTo("block-no-empty");
     assertThat(issues[0].text).isEqualTo("Unexpected empty block");
-  }
 
-  @Test
-  public void should_get_empty_answer_from_server() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
-    cssAnalyzerBridgeServer.startServer(context);
-
-    DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "empty.css")
-      .build();
-    Request request = new Request(inputFile.absolutePath(), CONFIG_FILE);
-    Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
+    request = new Request("/absolute/path/empty.css", CONFIG_FILE);
+    issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).isEmpty();
   }
 
   @Test
   public void should_throw_if_failed_to_start() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("throw.js");
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
 
     thrown.expect(NodeCommandException.class);
     thrown.expectMessage("Failed to start server (" + TEST_TIMEOUT_SECONDS + "s timeout)");
 
-    cssAnalyzerBridgeServer.startServer(context);
+    cssAnalyzerBridgeServer.startServerLazily(context);
   }
 
   @Test
   public void should_return_command_info() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start css-bundle server was not built yet.");
 
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
-    cssAnalyzerBridgeServer.startServer(context);
-
+    cssAnalyzerBridgeServer.startServerLazily(context);
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).contains("Node.js command to start css-bundle was: ", "node", START_SERVER_SCRIPT);
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).doesNotContain("--max-old-space-size");
   }
 
   @Test
   public void should_set_max_old_space_size() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
-    assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start css-bundle server was not built yet.");
-
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
     context.setSettings(new MapSettings().setProperty("sonar.css.node.maxspace", 2048));
-    cssAnalyzerBridgeServer.startServer(context);
-
+    cssAnalyzerBridgeServer.startServerLazily(context);
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).contains("--max-old-space-size=2048");
   }
 
   @Test
   public void test_isAlive() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
     assertThat(cssAnalyzerBridgeServer.isAlive()).isFalse();
     cssAnalyzerBridgeServer.startServerLazily(context);
     assertThat(cssAnalyzerBridgeServer.isAlive()).isTrue();
-    cssAnalyzerBridgeServer.clean();
+    cssAnalyzerBridgeServer.stop();
     assertThat(cssAnalyzerBridgeServer.isAlive()).isFalse();
   }
 
@@ -209,7 +187,7 @@ public class CssAnalyzerBridgeServerTest {
   public void test_lazy_start() throws Exception {
     String alreadyStarted = "css-bundle server is up, no need to start.";
     String starting = "Starting Node.js process to start css-bundle server at port";
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
     cssAnalyzerBridgeServer.startServerLazily(context);
     assertThat(logTester.logs(DEBUG).stream().anyMatch(s -> s.startsWith(starting))).isTrue();
     assertThat(logTester.logs(DEBUG)).doesNotContain(alreadyStarted);
@@ -238,7 +216,6 @@ public class CssAnalyzerBridgeServerTest {
     cssAnalyzerBridgeServer.startServerLazily(context);
 
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "invalid-json-response.css")
-      .setContents("a { }")
       .build();
     Request request = new Request(inputFile.absolutePath(), CONFIG_FILE);
     assertThatThrownBy(() -> cssAnalyzerBridgeServer.analyze(request)).isInstanceOf(IllegalStateException.class);
@@ -250,6 +227,10 @@ public class CssAnalyzerBridgeServerTest {
     CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript));
     server.start();
     return server;
+  }
+
+  public static CssAnalyzerBridgeServer createCssAnalyzerBridgeServer() {
+    return createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
   }
 
   static class TestBundle implements Bundle {
