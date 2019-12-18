@@ -141,10 +141,10 @@ public class CssRuleSensorTest {
       .contains("Failed to start server (1s timeout)");
 
     assertThat(logTester.logs(LoggerLevel.DEBUG))
-      .doesNotContain("Skipping start of stylelint-bridge server due to the failure during first analysis");
+      .doesNotContain("Skipping start of css-bundle server due to the failure during first analysis");
     sensor.execute(context);
     assertThat(logTester.logs(LoggerLevel.DEBUG))
-      .contains("Skipping start of stylelint-bridge server due to the failure during first analysis");
+      .contains("Skipping start of css-bundle server due to the failure during first analysis");
   }
 
   @Test
@@ -197,7 +197,7 @@ public class CssRuleSensorTest {
 
     assertThatThrownBy(() -> sensor.analyzeFiles(context, Collections.singletonList(inputFile), configFile))
       .isInstanceOf(IllegalStateException.class)
-      .hasMessageContaining("stylelint-bridge server is not answering");
+      .hasMessageContaining("css-bundle server is not answering");
   }
 
   @Test
@@ -228,7 +228,7 @@ public class CssRuleSensorTest {
     addInputFile("dir/file.css", "some css content\n on 2 lines");
     sensorWithoutRules.execute(context);
 
-    assertThat(logTester.logs(LoggerLevel.WARN)).contains("No rules are activated in CSS Quality Profile");
+    assertThat(logTester.logs(LoggerLevel.INFO)).contains("No rules are activated in CSS Quality Profile");
   }
 
   @Test

@@ -33,6 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
@@ -68,7 +69,7 @@ public class CssRuleSensor implements Sensor {
   public CssRuleSensor(
     CheckFactory checkFactory,
     CssAnalyzerBridgeServer cssAnalyzerBridgeServer,
-    AnalysisWarnings analysisWarnings
+    @Nullable AnalysisWarnings analysisWarnings
   ) {
     this.cssRules = new CssRules(checkFactory);
     this.cssAnalyzerBridgeServer = cssAnalyzerBridgeServer;
@@ -83,21 +84,20 @@ public class CssRuleSensor implements Sensor {
 
   @Override
   public void execute(SensorContext context) {
-    if (context.config().hasKey(CssPlugin.FORMER_NODE_EXECUTABLE)) {
-      String msg = "Property '" + CssPlugin.FORMER_NODE_EXECUTABLE + "' is ignored, 'sonar.nodejs.executable' should be used instead";
-      LOG.warn(msg);
-      analysisWarnings.addUnique(msg);
-    }
+    reportOldNodeProperty(context);
 
     if (cssRules.isEmpty()) {
-      LOG.warn("No rules are activated in CSS Quality Profile");
+      LOG.info("No rules are activated in CSS Quality Profile");
       return;
     }
 
     boolean failFast = context.config().getBoolean("sonar.internal.analysis.failFast").orElse(false);
+
     try {
       List<InputFile> inputFiles = getInputFiles(context);
-      if (!inputFiles.isEmpty()) {
+      if (inputFiles.isEmpty()) {
+        LOG.info("No CSS, PHP or HTML files are found in the project. CSS analysis is skipped.");
+      } else {
         cssAnalyzerBridgeServer.startServerLazily(context);
         File configFile = createLinterConfig(context);
         analyzeFiles(context, inputFiles, configFile);
@@ -106,11 +106,11 @@ public class CssRuleSensor implements Sensor {
       // do not propagate the exception
       LOG.info(e.toString());
     } catch (ServerAlreadyFailedException e) {
-      LOG.debug("Skipping start of stylelint-bridge server due to the failure during first analysis");
-      LOG.debug("Skipping execution of stylelint-based rules due to the problems with stylelint-bridge server");
+      LOG.debug("Skipping start of css-bundle server due to the failure during first analysis");
+      LOG.debug("Skipping execution of CSS rules due to the problems with css-bundle server");
     } catch (NodeCommandException e) {
       LOG.error(e.getMessage(), e);
-      analysisWarnings.addUnique("CSS rules were not executed. " + e.getMessage());
+      reportAnalysisWarning("CSS rules were not executed. " + e.getMessage());
       if (failFast) {
         throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
       }
@@ -119,6 +119,14 @@ public class CssRuleSensor implements Sensor {
       if (failFast) {
         throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
       }
+    }
+  }
+
+  private void reportOldNodeProperty(SensorContext context) {
+    if (context.config().hasKey(CssPlugin.FORMER_NODE_EXECUTABLE)) {
+      String msg = "Property '" + CssPlugin.FORMER_NODE_EXECUTABLE + "' is ignored, 'sonar.nodejs.executable' should be used instead";
+      LOG.warn(msg);
+      reportAnalysisWarning(msg);
     }
   }
 
@@ -139,7 +147,7 @@ public class CssRuleSensor implements Sensor {
           }
           progressReport.nextFile();
         } else {
-          throw new IllegalStateException("stylelint-bridge server is not answering");
+          throw new IllegalStateException("css-bundle server is not answering");
         }
       }
       success = true;
@@ -160,6 +168,7 @@ public class CssRuleSensor implements Sensor {
     Request request = new Request(new File(inputFile.uri()).getAbsolutePath(), configFile.toString());
     LOG.debug("Analyzing " + request.filePath);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
+    LOG.debug("Found {} issues", issues.length);
     saveIssues(context, inputFile, issues);
   }
 
@@ -224,4 +233,9 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
+  private void reportAnalysisWarning(String message) {
+    if (analysisWarnings != null) {
+      analysisWarnings.addUnique(message);
+    }
+  }
 }

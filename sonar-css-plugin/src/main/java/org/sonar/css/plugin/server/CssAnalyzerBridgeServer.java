@@ -73,6 +73,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       .build();
   }
 
+  // for testing purposes
   public void deploy(File deployLocation) throws IOException {
     bundle.deploy(deployLocation.toPath());
   }
@@ -223,6 +224,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       .build();
   }
 
+  // for testing purposes
   public void setPort(int port) {
     this.port = port;
   }
