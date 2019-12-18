@@ -20,17 +20,14 @@ describe("server", () => {
   const logSpy = jest.fn();
   const errorSpy = jest.fn();
 
-  beforeAll(() => {
+  beforeAll(async () => {
     setLogHandlersForTests(logSpy, errorSpy);
-  });
-
-  beforeEach(async () => {
     server = await start();
     close = promisify(server.close.bind(server));
   });
 
-  afterEach(async () => {
-    jest.resetAllMocks();
+  afterAll(async () => {
+    jest.restoreAllMocks();
     await close();
   });
 
@@ -41,12 +38,7 @@ describe("server", () => {
     const response = await postToServer(request, "/analyze", server);
     expect(JSON.parse(response)).toEqual([]);
     expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining("DEBUG For file [")
-    );
-    expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        `[${filePath}] received issues with [foo.bar] as a source.`
-      )
+      `DEBUG For file [${filePath}] received issues with [foo.bar] as a source. They will not be reported.`
     );
   });
 

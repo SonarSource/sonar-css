@@ -5,6 +5,7 @@ import * as stylelint from "stylelint";
 import * as fs from "fs";
 import * as bodyParser from "body-parser";
 
+// for testing purposes
 let log = console.log;
 let logError = console.error;
 
@@ -25,11 +26,16 @@ export function start(port = 0): Promise<Server> {
     app.get("/status", (_: express.Request, resp: express.Response) =>
       resp.send("OK!")
     );
+
+    // every time something is wrong we log error and send empty response (with 0 issues)
+    // it's important to keep this call last in configuring "app"
     app.use(
-      (err: any, _req: express.Request, res: express.Response, _next: any) => {
-        logError(err);
-        res.json([]);
-      }
+      (
+        error: any,
+        _req: express.Request,
+        response: express.Response,
+        _next: any
+      ) => processError(error, response)
     );
 
     const server = app.listen(port, () => {
@@ -59,20 +65,22 @@ function analyzeWithStylelint(
   stylelint
     .lint(options)
     .then(result => response.json(toIssues(result.results, filePath)))
-    .catch(error => {
-      logError(error);
-      response.json([]);
-    });
+    .catch(error => processError(error, response));
+}
+
+function processError(error: any, response: express.Response) {
+  logError(error);
+  response.json([]);
 }
 
 function toIssues(results: stylelint.LintResult[], filePath: string): Issue[] {
   const analysisResponse: Issue[] = [];
   // we should have only one element in 'results' as we are analyzing only 1 file
   results.forEach(result => {
-    // to avoid reporting of "fake" source like <input ccs 1>
+    // to avoid reporting on "fake" source like <input ccs 1>
     if (result.source !== filePath) {
       log(
-        `DEBUG For file [${filePath}] received issues with [${result.source}] as a source.`
+        `DEBUG For file [${filePath}] received issues with [${result.source}] as a source. They will not be reported.`
       );
       return;
     }
@@ -89,14 +97,11 @@ function toIssues(results: stylelint.LintResult[], filePath: string): Issue[] {
 
 function getFileContent(filePath: string) {
   const fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
-  return stripBom(fileContent);
-}
-
-function stripBom(s: string) {
-  if (s.charCodeAt(0) === 0xfeff) {
-    return s.slice(1);
+  // strip BOM
+  if (fileContent.charCodeAt(0) === 0xfeff) {
+    return fileContent.slice(1);
   }
-  return s;
+  return fileContent;
 }
 
 export interface AnalysisInput {

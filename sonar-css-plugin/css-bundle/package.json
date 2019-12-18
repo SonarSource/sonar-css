@@ -28,9 +28,5 @@
     "prettier": "1.19.1",
     "ts-jest": "24.1.0",
     "typescript": "3.7.3"
-  },
-  "files": [
-    "lib/",
-    "bin/"
-  ]
+  }
 }

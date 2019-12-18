@@ -14,22 +14,32 @@ describe("server", () => {
   const logSpy = jest.fn();
   const errorSpy = jest.fn();
 
-  beforeAll(() => {
+  beforeAll(async () => {
     setLogHandlersForTests(logSpy, errorSpy);
-  });
-
-  beforeEach(async () => {
     server = await start();
     close = promisify(server.close.bind(server));
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     jest.restoreAllMocks();
     await close();
   });
 
-  it("should respond to analysis request", async () => {
+  it("should log with debug server start", async () => {
     expect(server.listening).toEqual(true);
+    expect(logSpy).toBeCalledTimes(2);
+    expect(logSpy).toBeCalledWith(
+      "DEBUG starting stylelint-bridge server at port",
+      0
+    );
+    expect(logSpy).toBeCalledWith(
+      "DEBUG stylelint-bridge server is running at port",
+      (<AddressInfo>server.address()).port
+    );
+    expect(errorSpy).toBeCalledTimes(0);
+  });
+
+  it("should respond to analysis request", async () => {
     const request = JSON.stringify({
       filePath: path.join(__dirname, "fixtures", "file.css"),
       configFile
@@ -42,12 +52,9 @@ describe("server", () => {
         text: "Unexpected empty block (block-no-empty)"
       }
     ]);
-    expect(logSpy).toBeCalledTimes(2);
-    expect(errorSpy).toBeCalledTimes(0);
   });
 
-  it("should respond to analysis request for html and php", async () => {
-    expect(server.listening).toEqual(true);
+  it("should respond to analysis request for php", async () => {
     const requestPhp = JSON.stringify({
       filePath: path.join(__dirname, "fixtures", "file.php"),
       configFile
@@ -60,6 +67,9 @@ describe("server", () => {
         text: "Unexpected empty block (block-no-empty)"
       }
     ]);
+  });
+
+  it("should respond to analysis request for html", async () => {
     const requestHtml = JSON.stringify({
       filePath: path.join(__dirname, "fixtures", "file.html"),
       configFile
@@ -75,7 +85,6 @@ describe("server", () => {
   });
 
   it("should cut BOM", async () => {
-    expect(server.listening).toEqual(true);
     const response = await post(
       JSON.stringify({
         filePath: path.join(__dirname, "fixtures", "file-bom.css"),
@@ -93,7 +102,6 @@ describe("server", () => {
   });
 
   it("should respond OK! when started", done => {
-    expect(server.listening).toEqual(true);
     const req = http.request(
       {
         host: "localhost",
@@ -115,7 +123,7 @@ describe("server", () => {
     req.end();
   });
 
-  it("should return empty list of issues when invalid json", async () => {
+  it("should return empty list of issues when request not json", async () => {
     const response = await post("invalid json", "/analyze");
     expect(JSON.parse(response)).toEqual([]);
     expect(errorSpy).toHaveBeenCalledWith(
