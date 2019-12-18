@@ -46,7 +46,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
 
   private static final int DEFAULT_TIMEOUT_SECONDS = 60;
   // internal property to set "--max-old-space-size" for Node process running this server
-  private static final String MAX_OLD_SPACE_SIZE_PROPERTY = "sonar.javascript.node.maxspace";
+  private static final String MAX_OLD_SPACE_SIZE_PROPERTY = "sonar.css.node.maxspace";
   private static final Gson GSON = new Gson();
 
   private final OkHttpClient client;
@@ -144,7 +144,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
   @Override
   public Issue[] analyze(Request request) throws IOException {
     String json = GSON.toJson(request);
-    return response(request(json));
+    return parseResponse(request(json));
   }
 
   private String request(String json) throws IOException {
@@ -159,7 +159,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  private static Issue[] response(String result) {
+  private static Issue[] parseResponse(String result) {
     try {
       return GSON.fromJson(result, Issue[].class);
     } catch (JsonSyntaxException e) {

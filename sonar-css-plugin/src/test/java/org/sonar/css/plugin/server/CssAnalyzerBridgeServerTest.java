@@ -48,6 +48,7 @@ import static org.sonar.api.utils.log.LoggerLevel.WARN;
 public class CssAnalyzerBridgeServerTest {
 
   private static final String START_SERVER_SCRIPT = "startServer.js";
+  private static final String CONFIG_FILE = "config.json";
   private static final int TEST_TIMEOUT_SECONDS = 1;
 
   @org.junit.Rule
@@ -61,8 +62,6 @@ public class CssAnalyzerBridgeServerTest {
 
   private SensorContextTester context;
   private CssAnalyzerBridgeServer cssAnalyzerBridgeServer;
-  private TestBundle testBundle = new TestBundle(START_SERVER_SCRIPT);
-  private String configFile = "config.json";
 
   @Before
   public void setUp() throws Exception {
@@ -92,12 +91,11 @@ public class CssAnalyzerBridgeServerTest {
   }
 
   @Test
-  public void should_throw_when_not_existing_script() throws Exception {
+  public void should_throw_when_not_existing_start_script() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("NOT_EXISTING.js");
-    cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
 
     thrown.expect(NodeCommandException.class);
-    thrown.expectMessage("Node.js script to start css-bundle server doesn't exist:");
+    thrown.expectMessage("Node.js script to start css-bundle server doesn't exist");
 
     cssAnalyzerBridgeServer.startServer(context);
   }
@@ -112,7 +110,7 @@ public class CssAnalyzerBridgeServerTest {
       }
     });
 
-    cssAnalyzerBridgeServer = new CssAnalyzerBridgeServer(nodeCommandBuilder, TEST_TIMEOUT_SECONDS, testBundle);
+    cssAnalyzerBridgeServer = new CssAnalyzerBridgeServer(nodeCommandBuilder, TEST_TIMEOUT_SECONDS, new TestBundle(START_SERVER_SCRIPT));
     cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
 
     thrown.expect(NodeCommandException.class);
@@ -141,7 +139,7 @@ public class CssAnalyzerBridgeServerTest {
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "foo.css")
       .setContents("a { }")
       .build();
-    Request request = new Request(inputFile.absolutePath(), configFile);
+    Request request = new Request(inputFile.absolutePath(), CONFIG_FILE);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).hasSize(1);
     assertThat(issues[0].line).isEqualTo(42);
@@ -157,7 +155,7 @@ public class CssAnalyzerBridgeServerTest {
 
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "empty.css")
       .build();
-    Request request = new Request(inputFile.absolutePath(), configFile);
+    Request request = new Request(inputFile.absolutePath(), CONFIG_FILE);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).isEmpty();
   }
@@ -191,7 +189,7 @@ public class CssAnalyzerBridgeServerTest {
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).isEqualTo("Node.js command to start css-bundle server was not built yet.");
 
     cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
-    context.setSettings(new MapSettings().setProperty("sonar.javascript.node.maxspace", 2048));
+    context.setSettings(new MapSettings().setProperty("sonar.css.node.maxspace", 2048));
     cssAnalyzerBridgeServer.startServer(context);
 
     assertThat(cssAnalyzerBridgeServer.getCommandInfo()).contains("--max-old-space-size=2048");
@@ -211,7 +209,7 @@ public class CssAnalyzerBridgeServerTest {
   public void test_lazy_start() throws Exception {
     String alreadyStarted = "css-bundle server is up, no need to start.";
     String starting = "Starting Node.js process to start css-bundle server at port";
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
     cssAnalyzerBridgeServer.startServerLazily(context);
     assertThat(logTester.logs(DEBUG).stream().anyMatch(s -> s.startsWith(starting))).isTrue();
     assertThat(logTester.logs(DEBUG)).doesNotContain(alreadyStarted);
@@ -235,14 +233,14 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void should_fail_if_bad_json_response() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("startServer.js");
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
     cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());
     cssAnalyzerBridgeServer.startServerLazily(context);
 
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "invalid-json-response.css")
       .setContents("a { }")
       .build();
-    Request request = new Request(inputFile.absolutePath(), configFile);
+    Request request = new Request(inputFile.absolutePath(), CONFIG_FILE);
     assertThatThrownBy(() -> cssAnalyzerBridgeServer.analyze(request)).isInstanceOf(IllegalStateException.class);
     assertThat(context.allIssues()).isEmpty();
   }
@@ -269,7 +267,7 @@ public class CssAnalyzerBridgeServerTest {
 
     @Override
     public String startServerScript() {
-      return "src/test/resources/mock-css-analyzer-bridge/" + startServerScript;
+      return "src/test/resources/mock-start-server/" + startServerScript;
     }
   }
 }
