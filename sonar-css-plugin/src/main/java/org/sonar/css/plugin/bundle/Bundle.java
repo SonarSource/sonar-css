@@ -20,11 +20,15 @@
 package org.sonar.css.plugin.bundle;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
-public interface Bundle  {
+public interface Bundle {
 
-  void deploy() throws IOException;
+  void deploy(Path deployLocation) throws IOException;
 
+  /**
+   * should be called after deploy(Path deployLocation)
+   */
   String startServerScript();
 
 }

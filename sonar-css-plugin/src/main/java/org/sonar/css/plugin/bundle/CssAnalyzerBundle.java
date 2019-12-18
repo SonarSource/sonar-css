@@ -21,8 +21,9 @@ package org.sonar.css.plugin.bundle;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.sonar.api.internal.google.common.annotations.VisibleForTesting;
 import org.sonar.api.scanner.ScannerSide;
-import org.sonar.api.utils.TempFolder;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.api.utils.log.Profiler;
@@ -40,22 +41,23 @@ public class CssAnalyzerBundle implements Bundle {
 
   // this archive is created in css-bundle module
   private static final String DEFAULT_BUNDLE_LOCATION = "/css-bundle.zip";
-  private static final String DEFAULT_STARTUP_SCRIPT = "css-bundle/bin/server";
+  private static final Path DEFAULT_STARTUP_SCRIPT = Paths.get("css-bundle", "bin", "server");
 
   final String bundleLocation;
-  final Path deployLocation;
 
-  public CssAnalyzerBundle(TempFolder tempFolder) {
-    this(DEFAULT_BUNDLE_LOCATION, tempFolder);
+  private String startServerScript = DEFAULT_STARTUP_SCRIPT.toString();
+
+  public CssAnalyzerBundle() {
+    this(DEFAULT_BUNDLE_LOCATION);
   }
 
-  CssAnalyzerBundle(String bundleLocation, TempFolder tempFolder) {
+  @VisibleForTesting
+  CssAnalyzerBundle(String bundleLocation) {
     this.bundleLocation = bundleLocation;
-    this.deployLocation = tempFolder.newDir("bundles").toPath();
   }
 
   @Override
-  public void deploy() {
+  public void deploy(Path deployLocation) {
     PROFILER.startDebug("Deploying bundle");
     LOG.debug("Deploying css-bundle into {}", deployLocation);
     InputStream bundle = getClass().getResourceAsStream(bundleLocation);
@@ -65,6 +67,7 @@ public class CssAnalyzerBundle implements Bundle {
     try {
       LOG.debug("Deploying css-bundle to {}", deployLocation.toAbsolutePath());
       Zip.extract(bundle, deployLocation.toFile());
+      startServerScript = deployLocation.resolve(DEFAULT_STARTUP_SCRIPT).toAbsolutePath().toString();
     } catch (Exception e) {
       throw new IllegalStateException("Failed to deploy css-bundle (with classpath '" + bundleLocation + "')", e);
     }
@@ -73,7 +76,7 @@ public class CssAnalyzerBundle implements Bundle {
 
   @Override
   public String startServerScript() {
-    return deployLocation.resolve(DEFAULT_STARTUP_SCRIPT).toAbsolutePath().toString();
+    return startServerScript;
   }
 
 }

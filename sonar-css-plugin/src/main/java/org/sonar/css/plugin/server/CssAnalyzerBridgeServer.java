@@ -73,8 +73,8 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       .build();
   }
 
-  public void deploy() throws IOException {
-    bundle.deploy();
+  public void deploy(File deployLocation) throws IOException {
+    bundle.deploy(deployLocation.toPath());
   }
 
   public void startServer(SensorContext context) throws IOException {
@@ -132,7 +132,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
         LOG.debug("css-bundle server is up, no need to start.");
         return;
       }
-      deploy();
+      deploy(context.fileSystem().workDir());
       startServer(context);
     } catch (NodeCommandException e) {
       failedToStart = true;
@@ -141,7 +141,7 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
   }
 
   @Override
-  public  Issue[] analyze(Request request) throws IOException {
+  public Issue[] analyze(Request request) throws IOException {
     String json = GSON.toJson(request);
     return response(request(json));
   }
@@ -167,7 +167,6 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       throw new IllegalStateException("Failed to parse response", e);
     }
   }
-
 
   public boolean isAlive() {
     if (nodeCommand == null) {

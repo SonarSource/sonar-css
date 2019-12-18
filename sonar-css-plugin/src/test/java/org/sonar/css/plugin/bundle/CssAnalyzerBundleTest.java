@@ -22,6 +22,8 @@ package org.sonar.css.plugin.bundle;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.api.utils.internal.JUnitTempFolder;
@@ -37,16 +39,18 @@ public class CssAnalyzerBundleTest {
 
   @Test
   public void default_css_bundle_location() throws Exception {
-    CssAnalyzerBundle bundle = new CssAnalyzerBundle(tempFolder);
+    CssAnalyzerBundle bundle = new CssAnalyzerBundle();
     assertThat(bundle.bundleLocation).isEqualTo("/css-bundle.zip");
-    assertThat(bundle.deployLocation.toString()).endsWith("bundles");
   }
 
   @Test
   public void almost_empty_css_bundle() throws Exception {
-    Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip", tempFolder);
-    bundle.deploy();
+    Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip");
+    Path deployLocation = tempFolder.newDir().toPath();
+    String expectedStartServer = deployLocation.resolve(Paths.get("css-bundle", "bin", "server")).toString();
+    bundle.deploy(deployLocation);
     String script = bundle.startServerScript();
+    assertThat(script).isEqualTo(expectedStartServer);
     File scriptFile = new File(script);
     assertThat(scriptFile).exists();
     String content = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
@@ -55,26 +59,27 @@ public class CssAnalyzerBundleTest {
 
   @Test
   public void missing_bundle() throws Exception {
-    Bundle bundle = new CssAnalyzerBundle("/bundle/invalid-bundle-path.zip", tempFolder);
-    assertThatThrownBy(bundle::deploy)
+    Bundle bundle = new CssAnalyzerBundle("/bundle/invalid-bundle-path.zip");
+    assertThatThrownBy(() -> bundle.deploy(tempFolder.newDir().toPath()))
       .isInstanceOf(IllegalStateException.class)
       .hasMessage("css-bundle not found in /bundle/invalid-bundle-path.zip");
   }
 
   @Test
   public void invalid_bundle_zip() throws Exception {
-    Bundle bundle = new CssAnalyzerBundle("/bundle/invalid-zip-file.zip", tempFolder);
-    assertThatThrownBy(bundle::deploy)
+    Bundle bundle = new CssAnalyzerBundle("/bundle/invalid-zip-file.zip");
+    assertThatThrownBy(() -> bundle.deploy(tempFolder.newDir().toPath()))
       .isInstanceOf(IllegalStateException.class)
       .hasMessage("Failed to deploy css-bundle (with classpath '/bundle/invalid-zip-file.zip')");
   }
 
   @Test
   public void should_not_fail_when_deployed_twice() throws Exception {
-    Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip", tempFolder);
+    Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip");
+    Path deployLocation = tempFolder.newDir().toPath();
     assertThatCode(() -> {
-      bundle.deploy();
-      bundle.deploy();
+      bundle.deploy(deployLocation);
+      bundle.deploy(deployLocation);
     }).doesNotThrowAnyException();
   }
 }
