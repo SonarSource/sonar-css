@@ -90,7 +90,7 @@
         <maven.compiler.release>8</maven.compiler.release>
 
         <sonar.sources>css-bundle/src,src/main/java</sonar.sources>
-        <sonar.exclusions>tests/fixtures/**/*</sonar.exclusions>
+        <sonar.test.exclusions>**/fixtures/**/*</sonar.test.exclusions>
         <sonar.tests>css-bundle/tests,src/test/java</sonar.tests>
         <sonar.testExecutionReportPaths>sonar-css-plugin/css-bundle/test-report.xml</sonar.testExecutionReportPaths>
         <sonar.javascript.lcov.reportPaths>css-bundle/coverage/lcov.info</sonar.javascript.lcov.reportPaths>
