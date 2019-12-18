@@ -24,7 +24,6 @@ out/
 .project
 .settings/
 .classpath
-bin/
 
 # --- SonarQube
 .sonar/
@@ -43,3 +42,8 @@ node_modules/
 
 # Visual Studio
 .vs/
+
+# CSS-bundle
+sonar-css-plugin/css-bundle/test-report.xml
+sonar-css-plugin/css-bundle/coverage/
+sonar-css-plugin/css-bundle/lib/

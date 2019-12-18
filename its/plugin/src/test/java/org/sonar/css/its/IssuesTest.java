@@ -20,6 +20,7 @@
 package org.sonar.css.its;
 
 import com.sonar.orchestrator.Orchestrator;
+import com.sonar.orchestrator.build.BuildResult;
 import com.sonar.orchestrator.build.SonarScanner;
 import com.sonar.orchestrator.locator.FileLocation;
 import java.io.File;
@@ -45,6 +46,8 @@ public class IssuesTest {
   @ClassRule
   public static Orchestrator orchestrator = Tests.ORCHESTRATOR;
 
+  private static BuildResult buildResult;
+
   @BeforeClass
   public static void prepare() {
     RulesConfiguration rulesConfiguration = new RulesConfiguration();
@@ -56,12 +59,20 @@ public class IssuesTest {
     orchestrator.getServer().associateProjectToQualityProfile(PROJECT_KEY, "css", "rules");
 
     SonarScanner scanner = Tests.createScanner(PROJECT_KEY);
+    scanner.setProperty("sonar.exclusions", "**/file-with-parsing-error-excluded.css");
     scanner.setProperty("sonar.html.file.suffixes", ".htm");
-    orchestrator.executeBuild(scanner);
+    buildResult = orchestrator.executeBuild(scanner);
   }
 
   @Test
-  public void test() {
+  public void parsing_error_not_on_excluded_files() {
+    assertThat(buildResult.getLogs())
+      .doesNotMatch("(?s).*ERROR: Failed to parse file:\\S*file-with-parsing-error-excluded\\.css.*")
+      .matches("(?s).*ERROR: Failed to parse file:\\S*file-with-parsing-error\\.css, line 1, Unclosed block.*");
+  }
+
+  @Test
+  public void issue_list() {
     SearchRequest request = new SearchRequest();
     request.setComponentKeys(Collections.singletonList(PROJECT_KEY));
     List<Issue> issuesList = newWsClient().issues().search(request).getIssuesList().stream()

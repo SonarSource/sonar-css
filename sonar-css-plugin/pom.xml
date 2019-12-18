@@ -76,6 +76,10 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.squareup.okhttp3</groupId>
+          <artifactId>okhttp</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -132,7 +136,7 @@
                             <rules>
                                 <requireFilesSize>
                                     <minsize>6800000</minsize>
-                                    <maxsize>8000000</maxsize>
+                                    <maxsize>9000000</maxsize>
                                     <files>
                                         <file>${project.build.directory}/${project.build.finalName}.jar</file>
                                     </files>
@@ -147,25 +151,59 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.4</version>
+                <version>1.6</version>
                 <configuration>
                     <workingDirectory>css-bundle</workingDirectory>
                     <installDirectory>target</installDirectory>
                     <nodeVersion>v8.9.4</nodeVersion>
-                    <npmVersion>5.6.0</npmVersion>
+                    <yarnVersion>v1.21.0</yarnVersion>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>install node and npm</id>
+                        <id>install node and yarn</id>
                         <goals>
-                            <goal>install-node-and-npm</goal>
+                            <goal>install-node-and-yarn</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>npm install</id>
+                        <id>yarn build</id>
                         <goals>
-                            <goal>npm</goal>
+                            <goal>yarn</goal>
                         </goals>
+                        <configuration>
+                            <arguments>build</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>yarn test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>test --coverage</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>yarn prepare-package</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>prepare-package</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!--required for typescript being available during analysis-->
+                        <id>yarn install</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -19,37 +19,16 @@
  */
 package org.sonar.css.plugin.bundle;
 
-import java.io.File;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+import java.io.IOException;
+import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public interface Bundle {
 
-public class CssBundleHandlerTest {
+  void deploy(Path deployLocation) throws IOException;
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  private File DEPLOY_DESTINATION;
-
-  @Before
-  public void setUp() throws Exception {
-    DEPLOY_DESTINATION = temporaryFolder.newFolder("deployDestination");
-  }
-
-  @Test
-  public void test() {
-    CssBundleHandler bundleHandler = new CssBundleHandler();
-    bundleHandler.bundleLocation = "/bundle/test-bundle.zip";
-    bundleHandler.deployBundle(DEPLOY_DESTINATION);
-
-    assertThat(new File(DEPLOY_DESTINATION, "test-bundle.js").exists()).isTrue();
-  }
+  /**
+   * should be called after deploy(Path deployLocation)
+   */
+  String startServerScript();
 
 }

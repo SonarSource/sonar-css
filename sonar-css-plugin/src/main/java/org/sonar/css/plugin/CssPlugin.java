@@ -20,16 +20,12 @@
 package org.sonar.css.plugin;
 
 import org.sonar.api.Plugin;
-import org.sonar.api.SonarProduct;
-import org.sonar.api.SonarRuntime;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
-import org.sonar.api.utils.Version;
-import org.sonar.css.plugin.bundle.CssBundleHandler;
+import org.sonar.css.plugin.bundle.CssAnalyzerBundle;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
 
 public class CssPlugin implements Plugin {
-
-  private static final Version ANALYSIS_WARNINGS_MIN_SUPPORTED_SQ_VERSION = Version.create(7, 4);
 
   static final String FILE_SUFFIXES_KEY = "sonar.css.file.suffixes";
   public static final String FILE_SUFFIXES_DEFVALUE = ".css,.less,.scss";
@@ -45,16 +41,14 @@ public class CssPlugin implements Plugin {
 
   @Override
   public void define(Context context) {
-    boolean externalIssuesSupported = context.getSonarQubeVersion().isGreaterThanOrEqual(Version.create(7, 2));
-
     context.addExtensions(
       MetricSensor.class,
       CssLanguage.class,
       SonarWayProfile.class,
-      new CssRulesDefinition(externalIssuesSupported),
-      CssBundleHandler.class,
+      CssRulesDefinition.class,
+      CssAnalyzerBundle.class,
+      CssAnalyzerBridgeServer.class,
       CssRuleSensor.class,
-      StylelintCommandProvider.class,
       StylelintReportSensor.class,
       MinifiedFilesFilter.class,
 
@@ -69,30 +63,16 @@ public class CssPlugin implements Plugin {
         .build()
     );
 
-
-    if (externalIssuesSupported) {
-      context.addExtension(
-        PropertyDefinition.builder(STYLELINT_REPORT_PATHS)
-          .defaultValue(STYLELINT_REPORT_PATHS_DEFAULT_VALUE)
-          .name("Stylelint Report Files")
-          .description("Paths (absolute or relative) to the JSON files with stylelint issues.")
-          .onQualifiers(Qualifiers.PROJECT)
-          .subCategory(LINTER_SUBCATEGORY)
-          .category(CSS_CATEGORY)
-          .multiValues(true)
-          .build());
-    }
-
-    if (isAnalysisWarningsSupported(context.getRuntime())) {
-      context.addExtension(AnalysisWarningsWrapper.class);
-    }
+    context.addExtension(
+      PropertyDefinition.builder(STYLELINT_REPORT_PATHS)
+        .defaultValue(STYLELINT_REPORT_PATHS_DEFAULT_VALUE)
+        .name("Stylelint Report Files")
+        .description("Paths (absolute or relative) to the JSON files with stylelint issues.")
+        .onQualifiers(Qualifiers.PROJECT)
+        .subCategory(LINTER_SUBCATEGORY)
+        .category(CSS_CATEGORY)
+        .multiValues(true)
+        .build());
   }
 
-  /**
-   * Drop this and related when the minimum supported version of SonarQube API reaches 7.4.
-   */
-  private static boolean isAnalysisWarningsSupported(SonarRuntime runtime) {
-    return runtime.getApiVersion().isGreaterThanOrEqual(ANALYSIS_WARNINGS_MIN_SUPPORTED_SQ_VERSION)
-      && runtime.getProduct() != SonarProduct.SONARLINT;
-  }
 }

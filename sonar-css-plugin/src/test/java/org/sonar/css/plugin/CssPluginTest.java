@@ -33,16 +33,7 @@ public class CssPluginTest {
 
   @Test
   public void count_extensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(6, 7), SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin underTest = new CssPlugin();
-    underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(10);
-  }
-
-  @Test
-  public void count_extensions_7_2() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(7, 2), SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
+    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(7, 9), SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin underTest = new CssPlugin();
     underTest.define(context);
@@ -50,17 +41,8 @@ public class CssPluginTest {
   }
 
   @Test
-  public void count_extensions_7_4() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(Version.create(7, 4), SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin underTest = new CssPlugin();
-    underTest.define(context);
-    assertThat(context.getExtensions()).hasSize(12);
-  }
-
-  @Test
-  public void count_extensions_7_4_sonarlint() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarLint(Version.create(7, 4));
+  public void count_extensions_sonarlint() {
+    SonarRuntime runtime = SonarRuntimeImpl.forSonarLint(Version.create(7, 9));
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin underTest = new CssPlugin();
     underTest.define(context);

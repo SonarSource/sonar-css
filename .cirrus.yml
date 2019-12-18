@@ -38,9 +38,15 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 
 build_task:
   gke_container:
-    <<: *CONTAINER_DEFINITION
+    dockerfile: .cirrus/nodejs-lts.Dockerfile
+    builder_image_project: language-team
+    builder_image_name: docker-builder-lt-v1
+    cluster_name: cirrus-ci-lt-cluster
+    zone: us-central1-a
+    namespace: default
     cpu: 2
     memory: 2G
+
   env:
     GITHUB_TOKEN: ENCRYPTED[!a4048528b1a03f194719e3295c10e46c1e197c706b3d7c71dfc93540535aa9012ae61c3b66d0d6c6901b6a5e0bd84c68!]
     # analysis on next
