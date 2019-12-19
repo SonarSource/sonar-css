@@ -20,6 +20,7 @@
 package org.sonar.css.plugin.server;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 import org.sonar.api.Startable;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.scanner.ScannerSide;
@@ -41,10 +42,18 @@ public interface AnalyzerBridgeServer extends Startable {
 
   class Request {
     public final String filePath;
+    /**
+     * The fileContent is sent only in the SonarLint context or when the encoding
+     * of the file is not utf-8. Otherwise, for performance reason, it's more efficient to
+     * not have the fileContent and let the server getting it using filePath.
+     */
+    @Nullable
+    public final String fileContent;
     public final String configFile;
 
-    public Request(String filePath, String configFile) {
+    public Request(String filePath, @Nullable String fileContent, String configFile) {
       this.filePath = filePath;
+      this.fileContent = fileContent;
       this.configFile = configFile;
     }
   }

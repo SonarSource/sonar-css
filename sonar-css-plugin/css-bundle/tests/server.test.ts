@@ -147,6 +147,22 @@ describe("server", () => {
     );
   });
 
+  it("should use fileContent from the request and not from the filesystem", async () => {
+    const request = JSON.stringify({
+      filePath: path.join(__dirname, "fixtures", "file.css"),
+      fileContent: "\n\n\n\n\n\na { }", // move the issue on line 7
+      configFile
+    });
+    const response = await post(request, "/analyze");
+    expect(JSON.parse(response)).toEqual([
+      {
+        line: 7,
+        rule: "block-no-empty",
+        text: "Unexpected empty block (block-no-empty)"
+      }
+    ]);
+  });
+
   function post(data: string, endpoint: string): Promise<string> {
     return postToServer(data, endpoint, server);
   }

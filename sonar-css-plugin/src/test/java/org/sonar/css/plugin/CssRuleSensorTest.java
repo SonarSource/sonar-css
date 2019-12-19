@@ -41,7 +41,9 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.notifications.AnalysisWarnings;
+import org.sonar.api.utils.Version;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
@@ -258,6 +260,60 @@ public class CssRuleSensorTest {
 
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Unknown stylelint rule or rule not enabled: 'unknown-rule-key'");
+  }
+
+  @Test
+  public void should_not_send_file_content_if_encoding_is_utf8_and_context_is_not_sonarlint() throws IOException {
+    String filePath = "copy-file-content-into-issue-message.css";
+    DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", filePath)
+      .setModuleBaseDir(context.fileSystem().baseDirPath())
+      .setType(Type.MAIN)
+      .setLanguage(CssLanguage.KEY)
+      .setCharset(StandardCharsets.UTF_8)
+      .setContents("css content")
+      .build();
+    context.fileSystem().add(inputFile);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(1);
+    assertThat(context.allIssues()).extracting("primaryLocation.message")
+      .containsOnly("undefined");
+  }
+
+  @Test
+  public void should_send_file_content_if_encoding_is_not_utf8() throws IOException {
+    String filePath = "copy-file-content-into-issue-message.css";
+    DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", filePath)
+      .setModuleBaseDir(context.fileSystem().baseDirPath())
+      .setType(Type.MAIN)
+      .setLanguage(CssLanguage.KEY)
+      .setCharset(StandardCharsets.ISO_8859_1)
+      .setContents("css content")
+      .build();
+    context.fileSystem().add(inputFile);
+    sensor.execute(context);
+
+    assertThat(context.allIssues()).hasSize(1);
+    assertThat(context.allIssues()).extracting("primaryLocation.message")
+      .containsOnly("css content");
+  }
+
+  @Test
+  public void should_send_file_content_if_context_is_sonarlint() throws IOException {
+    String filePath = "copy-file-content-into-issue-message.css";
+    DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", filePath)
+      .setModuleBaseDir(context.fileSystem().baseDirPath())
+      .setType(Type.MAIN)
+      .setLanguage(CssLanguage.KEY)
+      .setCharset(StandardCharsets.UTF_8)
+      .setContents("css content")
+      .build();
+    context.fileSystem().add(inputFile);
+    context.setRuntime(SonarRuntimeImpl.forSonarLint(Version.create(7, 9)));
+    sensor.execute(context);
+    assertThat(context.allIssues()).hasSize(1);
+    assertThat(context.allIssues()).extracting("primaryLocation.message")
+      .containsOnly("css content");
   }
 
   private DefaultInputFile addInputFile(String relativePath) {

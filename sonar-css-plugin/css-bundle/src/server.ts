@@ -53,9 +53,9 @@ function analyzeWithStylelint(
   response: express.Response
 ) {
   const parsedRequest = request.body as AnalysisInput;
-  const { filePath, configFile } = parsedRequest;
-  const code = getFileContent(filePath);
-
+  const { filePath, fileContent, configFile } = parsedRequest;
+  const code =
+    typeof fileContent == "string" ? fileContent : getFileContent(filePath);
   const options = {
     code,
     codeFilename: filePath,
@@ -106,6 +106,7 @@ function getFileContent(filePath: string) {
 
 export interface AnalysisInput {
   filePath: string;
+  fileContent: string | undefined;
   configFile: string;
 }
 
