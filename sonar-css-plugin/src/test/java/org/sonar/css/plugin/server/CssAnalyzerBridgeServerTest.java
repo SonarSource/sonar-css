@@ -22,6 +22,7 @@ package org.sonar.css.plugin.server;
 import java.nio.file.Path;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
@@ -37,6 +38,7 @@ import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandBuilder;
 import org.sonarsource.nodejs.NodeCommandException;
+import org.testit.testutils.logsuppressor.junit4.LogbackSuppressorRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,13 +53,16 @@ public class CssAnalyzerBridgeServerTest {
   private static final String CONFIG_FILE = "config.json";
   private static final int TEST_TIMEOUT_SECONDS = 1;
 
-  @org.junit.Rule
-  public LogTester logTester = new LogTester();
+  @Rule
+  public final LogbackSuppressorRule logSuppressor = new LogbackSuppressorRule();
 
-  @org.junit.Rule
+  @Rule
+  public final LogTester logTester = new LogTester();
+
+  @Rule
   public final ExpectedException thrown = ExpectedException.none();
 
-  @org.junit.Rule
+  @Rule
   public JUnitTempFolder tempFolder = new JUnitTempFolder();
 
   private SensorContextTester context;

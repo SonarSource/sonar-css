@@ -80,6 +80,20 @@
           <groupId>com.squareup.okhttp3</groupId>
           <artifactId>okhttp</artifactId>
         </dependency>
+
+        <!-- test dependencies to suppress console logging when tests succeed using LogbackSuppressorRule -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>info.novatec.testit</groupId>
+          <artifactId>testutils-logsuppressor-logback</artifactId>
+          <version>0.3.4</version>
+           <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

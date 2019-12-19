@@ -44,6 +44,7 @@ import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.Version;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
+import org.testit.testutils.logsuppressor.junit4.LogbackSuppressorRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,6 +52,9 @@ public class StylelintReportSensorTest {
 
   @Rule
   public TemporaryFolder tmpDir = new TemporaryFolder();
+
+  @Rule
+  public final LogbackSuppressorRule logSuppressor = new LogbackSuppressorRule();
 
   @Rule
   public final LogTester logTester = new LogTester();

@@ -45,6 +45,7 @@ import org.sonar.api.notifications.AnalysisWarnings;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.api.utils.log.LoggerLevel;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
+import org.testit.testutils.logsuppressor.junit4.LogbackSuppressorRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -57,6 +58,9 @@ import static org.mockito.Mockito.when;
 import static org.sonar.css.plugin.server.CssAnalyzerBridgeServerTest.createCssAnalyzerBridgeServer;
 
 public class CssRuleSensorTest {
+
+  @Rule
+  public final LogbackSuppressorRule logSuppressor = new LogbackSuppressorRule();
 
   @Rule
   public final LogTester logTester = new LogTester();
