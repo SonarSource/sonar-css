@@ -71,6 +71,10 @@ mat-form-field {                                              /* Angular Materia
   width: 100%;
 }
 
+md-button {                                                   /* AngularJS Material, ignored by S4670 | selector-type-no-unknown */
+  width: 100%;
+}
+
 fa-icon {                                                     /* Font Awesome, ignored by S4670 | selector-type-no-unknown due to parameter */
   width: 100%;
 }
