@@ -211,6 +211,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <environmentVariables>
                         <!-- modify the path to include node installed with frontend plugin -->
                         <PATH>target${file.separator}node${path.separator}${env.PATH}</PATH>
