@@ -120,7 +120,7 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void should_forward_process_streams() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("testLogs.js");
     cssAnalyzerBridgeServer.startServerLazily(context);
 
     assertThat(logTester.logs(DEBUG)).contains("testing debug log");
@@ -133,14 +133,14 @@ public class CssAnalyzerBridgeServerTest {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
     cssAnalyzerBridgeServer.startServerLazily(context);
 
-    Request request = new Request("/absolute/path/file.css", CONFIG_FILE);
+    Request request = new Request("/absolute/path/file.css", null, CONFIG_FILE);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).hasSize(1);
     assertThat(issues[0].line).isEqualTo(2);
     assertThat(issues[0].rule).isEqualTo("block-no-empty");
     assertThat(issues[0].text).isEqualTo("Unexpected empty block");
 
-    request = new Request("/absolute/path/empty.css", CONFIG_FILE);
+    request = new Request("/absolute/path/empty.css", null, CONFIG_FILE);
     issues = cssAnalyzerBridgeServer.analyze(request);
     assertThat(issues).isEmpty();
   }
@@ -217,7 +217,7 @@ public class CssAnalyzerBridgeServerTest {
 
     DefaultInputFile inputFile = TestInputFileBuilder.create("foo", "invalid-json-response.css")
       .build();
-    Request request = new Request(inputFile.absolutePath(), CONFIG_FILE);
+    Request request = new Request(inputFile.absolutePath(), null, CONFIG_FILE);
     assertThatThrownBy(() -> cssAnalyzerBridgeServer.analyze(request)).isInstanceOf(IllegalStateException.class);
     assertThat(context.allIssues()).isEmpty();
   }

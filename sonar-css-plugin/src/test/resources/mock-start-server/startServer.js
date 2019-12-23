@@ -3,10 +3,6 @@
 const http = require('http');
 const port = process.argv[2];
 
-console.log(`DEBUG testing debug log`)
-console.log(`WARN testing warn log`)
-console.log(`testing info log`)
-
 const requestHandler = (request, response) => {
   let data = [];
   request.on('data', chunk => {
@@ -14,9 +10,11 @@ const requestHandler = (request, response) => {
   });
   request.on('end', () => {
     let fileName = null;
+    let fileContent = null;
     if (data.length > 0) {
       const analysisRequest = JSON.parse(data.join());
       fileName = analysisRequest.filePath.replace(/.*[\/\\]/g,"");
+      fileContent = analysisRequest.fileContent;
     }
     if (request.url === '/status') {
       response.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -51,6 +49,11 @@ const requestHandler = (request, response) => {
           break;
         case "invalid-json-response.css":
           response.end("[");
+          break;
+        case "copy-file-content-into-issue-message.css":
+          response.end(JSON.stringify([
+            {line: 1, rule: "block-no-empty", text: "" + fileContent}
+          ]));
           break;
         default:
           throw "Unexpected fileName: " + fileName;

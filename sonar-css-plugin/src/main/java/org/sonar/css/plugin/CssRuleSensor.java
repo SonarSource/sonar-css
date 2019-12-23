@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
@@ -51,8 +52,8 @@ import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
 import org.sonar.css.plugin.server.AnalyzerBridgeServer.Issue;
-import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
 import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.analyzer.commons.ProgressReport;
 import org.sonarsource.nodejs.NodeCommandException;
@@ -140,7 +141,7 @@ public class CssRuleSensor implements Sensor {
           try {
             analyzeFile(context, inputFile, configFile);
           } catch (IOException | RuntimeException e) {
-            throw new IOException("Failure during analysis of " + inputFile.uri() + ": " + e.getMessage());
+            throw new IOException("Failure during analysis of " + inputFile.uri() + ": " + e.getMessage(), e);
           }
           progressReport.nextFile();
         } else {
@@ -164,11 +165,17 @@ public class CssRuleSensor implements Sensor {
       LOG.debug("Skipping {} as it has not 'file' scheme", uri);
       return;
     }
-    Request request = new Request(new File(uri).getAbsolutePath(), configFile.toString());
+    String fileContent = shouldSendFileContent(context, inputFile) ? inputFile.contents() : null;
+    Request request = new Request(new File(uri).getAbsolutePath(), fileContent, configFile.toString());
     LOG.debug("Analyzing " + request.filePath);
     Issue[] issues = cssAnalyzerBridgeServer.analyze(request);
     LOG.debug("Found {} issue(s)", issues.length);
     saveIssues(context, inputFile, issues);
+  }
+
+  private static boolean shouldSendFileContent(SensorContext context, InputFile file) {
+    return context.runtime().getProduct() == SonarProduct.SONARLINT
+      || !StandardCharsets.UTF_8.equals(file.charset());
   }
 
   private void saveIssues(SensorContext context, InputFile inputFile, Issue[] issues) {
