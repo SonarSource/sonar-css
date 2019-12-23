@@ -74,7 +74,7 @@ public class CssRuleTest {
   @Test
   public void selector_type_no_unknown_default() {
     String optionsAsJson = new Gson().toJson(new SelectorTypeNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^(mat|md)-/\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^(mat|md|fa)-/\"]}]");
   }
 
   @Test

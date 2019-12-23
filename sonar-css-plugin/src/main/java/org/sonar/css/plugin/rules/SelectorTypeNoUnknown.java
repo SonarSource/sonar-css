@@ -29,7 +29,8 @@ import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
 @Rule(key = "S4670")
 public class SelectorTypeNoUnknown implements CssRule {
 
-  private static final String DEFAULT_IGNORED_TYPES = "/^(mat|md)-/";
+  // prefixes for Angular Material (mat, md), Font Awesome (fa)
+  private static final String DEFAULT_IGNORED_TYPES = "/^(mat|md|fa)-/";
 
   @RuleProperty(
     key = "ignoreTypes",
