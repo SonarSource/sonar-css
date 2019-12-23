@@ -35,7 +35,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.InputFile.Type;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -266,8 +265,6 @@ public class CssRuleSensorTest {
   public void should_not_send_file_content_if_encoding_is_utf8_and_context_is_not_sonarlint() throws IOException {
     String filePath = "copy-file-content-into-issue-message.css";
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", filePath)
-      .setModuleBaseDir(context.fileSystem().baseDirPath())
-      .setType(Type.MAIN)
       .setLanguage(CssLanguage.KEY)
       .setCharset(StandardCharsets.UTF_8)
       .setContents("css content")
@@ -284,8 +281,6 @@ public class CssRuleSensorTest {
   public void should_send_file_content_if_encoding_is_not_utf8() throws IOException {
     String filePath = "copy-file-content-into-issue-message.css";
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", filePath)
-      .setModuleBaseDir(context.fileSystem().baseDirPath())
-      .setType(Type.MAIN)
       .setLanguage(CssLanguage.KEY)
       .setCharset(StandardCharsets.ISO_8859_1)
       .setContents("css content")
@@ -302,8 +297,6 @@ public class CssRuleSensorTest {
   public void should_send_file_content_if_context_is_sonarlint() throws IOException {
     String filePath = "copy-file-content-into-issue-message.css";
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", filePath)
-      .setModuleBaseDir(context.fileSystem().baseDirPath())
-      .setType(Type.MAIN)
       .setLanguage(CssLanguage.KEY)
       .setCharset(StandardCharsets.UTF_8)
       .setContents("css content")
@@ -318,8 +311,6 @@ public class CssRuleSensorTest {
 
   private DefaultInputFile addInputFile(String relativePath) {
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
-      .setModuleBaseDir(context.fileSystem().baseDirPath())
-      .setType(Type.MAIN)
       .setLanguage(relativePath.split("\\.")[1])
       .setCharset(StandardCharsets.UTF_8)
       .setContents("some css content\n on 2 lines")

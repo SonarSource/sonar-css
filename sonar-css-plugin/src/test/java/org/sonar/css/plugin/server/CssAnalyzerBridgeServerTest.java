@@ -120,7 +120,7 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void should_forward_process_streams() throws Exception {
-    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer();
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("testLogs.js");
     cssAnalyzerBridgeServer.startServerLazily(context);
 
     assertThat(logTester.logs(DEBUG)).contains("testing debug log");
