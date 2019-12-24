@@ -6,6 +6,7 @@ const port = process.argv[2];
 console.log(`DEBUG testing debug log`)
 console.log(`WARN testing warn log`)
 console.log(`testing info log`)
+console.error(`testing error log`)
 
 
 const server = http.createServer(() => {});
