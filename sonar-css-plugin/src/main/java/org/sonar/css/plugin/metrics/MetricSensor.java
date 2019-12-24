@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.metrics;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -36,6 +36,7 @@ import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
+import org.sonar.css.plugin.CssLanguage;
 
 public class MetricSensor implements Sensor {
 

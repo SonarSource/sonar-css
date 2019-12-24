@@ -17,36 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.css.plugin;
+package org.sonar.css.plugin.server.bundle;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import org.apache.commons.io.FileUtils;
+import java.nio.file.Path;
 
-public class Zip {
+public interface Bundle {
 
-  private Zip() {
-    // utility class
-  }
+  void deploy(Path deployLocation) throws IOException;
 
-  public static void extract(InputStream bundle, File destination) throws IOException {
-    ZipInputStream zip = new ZipInputStream(bundle);
-    ZipEntry entry = zip.getNextEntry();
-    if (entry == null) {
-      throw new IllegalStateException("At least one entry expected.");
-    }
-    while (entry != null) {
-      File entryDestination = new File(destination, entry.getName());
-      if (entry.isDirectory()) {
-        entryDestination.mkdirs();
-      } else {
-        FileUtils.copyToFile(zip, entryDestination);
-      }
-      zip.closeEntry();
-      entry = zip.getNextEntry();
-    }
-  }
+  /**
+   * should be called after deploy(Path deployLocation)
+   */
+  String startServerScript();
+
 }
