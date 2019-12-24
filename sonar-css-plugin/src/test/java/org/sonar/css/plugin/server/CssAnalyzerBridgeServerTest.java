@@ -42,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.sonar.api.utils.log.LoggerLevel.DEBUG;
+import static org.sonar.api.utils.log.LoggerLevel.ERROR;
 import static org.sonar.api.utils.log.LoggerLevel.INFO;
 import static org.sonar.api.utils.log.LoggerLevel.WARN;
 
@@ -126,6 +127,7 @@ public class CssAnalyzerBridgeServerTest {
     assertThat(logTester.logs(DEBUG)).contains("testing debug log");
     assertThat(logTester.logs(WARN)).contains("testing warn log");
     assertThat(logTester.logs(INFO)).contains("testing info log");
+    assertThat(logTester.logs(ERROR)).contains("testing error log");
   }
 
   @Test
