@@ -155,7 +155,7 @@
                 <configuration>
                     <workingDirectory>css-bundle</workingDirectory>
                     <installDirectory>target</installDirectory>
-                    <nodeVersion>v8.9.4</nodeVersion>
+                    <nodeVersion>v10.18.0</nodeVersion>
                     <yarnVersion>v1.21.0</yarnVersion>
                 </configuration>
                 <executions>
