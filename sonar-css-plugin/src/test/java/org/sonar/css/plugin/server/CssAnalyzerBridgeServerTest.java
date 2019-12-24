@@ -30,7 +30,7 @@ import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 import org.sonar.api.utils.log.LogTester;
-import org.sonar.css.plugin.bundle.Bundle;
+import org.sonar.css.plugin.server.bundle.Bundle;
 import org.sonar.css.plugin.server.AnalyzerBridgeServer.Issue;
 import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
 import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
