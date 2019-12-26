@@ -38,6 +38,7 @@ const requestHandler = (request, response) => {
           response.end(JSON.stringify([]));
           break;
         case "syntax-error.css":
+        case "syntax-error.web":
           response.end(JSON.stringify([
             {line: 2, rule: "CssSyntaxError", text: "Missed semicolon (CssSyntaxError)"}
           ]));

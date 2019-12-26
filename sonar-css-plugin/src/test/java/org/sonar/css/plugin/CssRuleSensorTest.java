@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -149,28 +148,13 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void bridge_server_fail_to_start() {
-    CssAnalyzerBridgeServer badServer = createCssAnalyzerBridgeServer("throw.js");
-    sensor = new CssRuleSensor(CHECK_FACTORY, badServer, analysisWarnings);
-    addInputFile("file.css");
-    sensor.execute(context);
-    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to start server (1s timeout)");
-
-    assertThat(logTester.logs(LoggerLevel.DEBUG))
-      .doesNotContain("Skipping start of css-bundle server due to the failure during first analysis");
-    sensor.execute(context);
-    assertThat(logTester.logs(LoggerLevel.DEBUG))
-      .contains("Skipping start of css-bundle server due to the failure during first analysis");
-  }
-
-  @Test
   public void should_log_when_bridge_server_receives_invalid_response() {
     addInputFile("invalid-json-response.css");
-    addInputFile("file.css");
     sensor.execute(context);
-    assertThat(String.join("\n", logTester.logs(LoggerLevel.ERROR)))
+    assertThat(String.join("\n", logTester.logs(LoggerLevel.DEBUG)))
       .contains("Failed to parse response");
-    assertThat(context.allIssues()).hasSize(1);
+    assertThat(String.join("\n", logTester.logs(LoggerLevel.ERROR)))
+      .contains("Failure during CSS analysis");
   }
 
   @Test
@@ -183,6 +167,32 @@ public class CssRuleSensorTest {
     assertThatThrownBy(() -> sensor.execute(context))
       .isInstanceOf(IllegalStateException.class)
       .hasMessageContaining("Analysis failed");
+    assertThat(logTester.logs(LoggerLevel.ERROR)).contains("CSS rules were not executed. Failed to start server (1s timeout)");
+  }
+
+  @Test
+  public void should_fail_fast_when_server_fail_to_start_no_css() {
+    context.settings().setProperty("sonar.internal.analysis.failFast", "true");
+    CssAnalyzerBridgeServer badServer = createCssAnalyzerBridgeServer("throw.js");
+    sensor = new CssRuleSensor(CHECK_FACTORY, badServer, analysisWarnings);
+    addInputFile("file.web");
+
+    assertThatThrownBy(() -> sensor.execute(context))
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("Analysis failed");
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains("CSS rules were not executed. Failed to start server (1s timeout)");
+  }
+
+  @Test
+  public void should_not_fail_fast_when_server_fail_to_start_without_property() {
+    context.settings().setProperty("sonar.internal.analysis.failFast", "false");
+    CssAnalyzerBridgeServer badServer = createCssAnalyzerBridgeServer("throw.js");
+    sensor = new CssRuleSensor(CHECK_FACTORY, badServer, analysisWarnings);
+    addInputFile("file.web");
+
+    sensor.execute(context);
+    // log as Warning level is there is no CSS files
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains("CSS rules were not executed. Failed to start server (1s timeout)");
   }
 
   @Test
@@ -207,13 +217,13 @@ public class CssRuleSensorTest {
   }
 
   @Test
-  public void analysis_stop_when_server_is_not_anymore_alive() throws IOException, InterruptedException {
+  public void analysis_stop_when_server_is_not_anymore_alive() {
     File configFile = new File("config.json");
     DefaultInputFile inputFile = addInputFile("dir/file.css");
     sensor.execute(context);
     cssAnalyzerBridgeServer.setPort(43);
 
-    assertThatThrownBy(() -> sensor.analyzeFiles(context, Collections.singletonList(inputFile), configFile))
+    assertThatThrownBy(() -> sensor.analyzeFileWithContextCheck(inputFile, context, configFile))
       .isInstanceOf(IllegalStateException.class)
       .hasMessageContaining("css-bundle server is not answering");
   }
@@ -247,9 +257,11 @@ public class CssRuleSensorTest {
   @Test
   public void test_syntax_error() {
     InputFile inputFile = addInputFile("syntax-error.css");
+    InputFile inputFileNotCss = addInputFile("syntax-error.web");
     sensor.execute(context);
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs(LoggerLevel.ERROR)).contains("Failed to parse " + inputFile.uri() + ", line 2, Missed semicolon");
+    assertThat(logTester.logs(LoggerLevel.DEBUG)).contains("Failed to parse " + inputFileNotCss.uri() + ", line 2, Missed semicolon");
   }
 
   @Test

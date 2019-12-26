@@ -28,12 +28,12 @@ import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
+import org.sonar.api.notifications.AnalysisWarnings;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 import org.sonar.api.utils.log.LogTester;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Issue;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Request;
 import org.sonar.css.plugin.server.bundle.Bundle;
-import org.sonar.css.plugin.server.AnalyzerBridgeServer.Issue;
-import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
-import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandBuilder;
 import org.sonarsource.nodejs.NodeCommandException;
@@ -41,6 +41,7 @@ import org.sonarsource.nodejs.NodeCommandException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.sonar.api.utils.log.LoggerLevel.DEBUG;
 import static org.sonar.api.utils.log.LoggerLevel.ERROR;
 import static org.sonar.api.utils.log.LoggerLevel.INFO;
@@ -79,7 +80,7 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void default_timeout() {
-    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(mock(Bundle.class));
+    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(mock(Bundle.class), null);
     assertThat(server.timeoutSeconds).isEqualTo(60);
   }
 
@@ -102,7 +103,11 @@ public class CssAnalyzerBridgeServerTest {
   }
 
   @Test
-  public void should_throw_if_failed_to_build_node_command() throws Exception {
+  public void should_return_false_if_failed_to_build_node_command() throws Exception {
+    context.fileSystem().add(new TestInputFileBuilder("moduleKey", "file.css")
+      .setLanguage("css")
+      .build());
+
     NodeCommandBuilder nodeCommandBuilder = mock(NodeCommandBuilder.class, invocation -> {
       if (NodeCommandBuilder.class.equals(invocation.getMethod().getReturnType())) {
         return invocation.getMock();
@@ -111,12 +116,11 @@ public class CssAnalyzerBridgeServerTest {
       }
     });
 
-    cssAnalyzerBridgeServer = new CssAnalyzerBridgeServer(nodeCommandBuilder, TEST_TIMEOUT_SECONDS, new TestBundle(START_SERVER_SCRIPT));
-
-    thrown.expect(NodeCommandException.class);
-    thrown.expectMessage("msg");
-
-    cssAnalyzerBridgeServer.startServerLazily(context);
+    AnalysisWarnings analysisWarnings = mock(AnalysisWarnings.class);
+    cssAnalyzerBridgeServer = new CssAnalyzerBridgeServer(nodeCommandBuilder, TEST_TIMEOUT_SECONDS, new TestBundle(START_SERVER_SCRIPT), analysisWarnings);
+    assertThat(cssAnalyzerBridgeServer.startServerLazily(context)).isFalse();
+    assertThat(logTester.logs(ERROR)).contains("CSS rules were not executed. msg");
+    verify(analysisWarnings).addUnique("CSS rules were not executed. msg");
   }
 
   @Test
@@ -150,11 +154,8 @@ public class CssAnalyzerBridgeServerTest {
   @Test
   public void should_throw_if_failed_to_start() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("throw.js");
-
-    thrown.expect(NodeCommandException.class);
-    thrown.expectMessage("Failed to start server (" + TEST_TIMEOUT_SECONDS + "s timeout)");
-
-    cssAnalyzerBridgeServer.startServerLazily(context);
+    assertThat(cssAnalyzerBridgeServer.startServerLazily(context)).isFalse();
+    assertThat(logTester.logs(WARN)).contains("CSS rules were not executed. Failed to start server (" + TEST_TIMEOUT_SECONDS + "s timeout)");
   }
 
   @Test
@@ -200,15 +201,16 @@ public class CssAnalyzerBridgeServerTest {
   }
 
   @Test
-  public void should_throw_special_exception_when_failed_already() throws Exception {
+  public void should_return_false_and_log_when_failed_already() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("throw.js");
-    String failedToStartExceptionMessage = "Failed to start server (" + TEST_TIMEOUT_SECONDS + "s timeout)";
-    assertThatThrownBy(() -> cssAnalyzerBridgeServer.startServerLazily(context))
-      .isInstanceOf(NodeCommandException.class)
-      .hasMessage(failedToStartExceptionMessage);
+    String failedToStartExceptionMessage = "CSS rules were not executed. Failed to start server (" + TEST_TIMEOUT_SECONDS + "s timeout)";
 
-    assertThatThrownBy(() -> cssAnalyzerBridgeServer.startServerLazily(context))
-      .isInstanceOf(ServerAlreadyFailedException.class);
+    assertThat(cssAnalyzerBridgeServer.startServerLazily(context)).isFalse();
+    assertThat(logTester.logs(WARN)).contains(failedToStartExceptionMessage);
+
+    assertThat(cssAnalyzerBridgeServer.startServerLazily(context)).isFalse();
+    assertThat(logTester.logs(DEBUG)).contains("Skipping start of css-bundle server due to the failure during first analysis",
+      "Skipping execution of CSS rules due to the problems with css-bundle server");
   }
 
   @Test
@@ -226,7 +228,7 @@ public class CssAnalyzerBridgeServerTest {
 
 
   public static CssAnalyzerBridgeServer createCssAnalyzerBridgeServer(String startServerScript) {
-    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript));
+    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript), null);
     server.start();
     return server;
   }

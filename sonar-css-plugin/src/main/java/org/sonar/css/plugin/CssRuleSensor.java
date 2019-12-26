@@ -37,7 +37,6 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -51,12 +50,10 @@ import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.css.plugin.CssRules.StylelintConfig;
-import org.sonar.css.plugin.server.AnalyzerBridgeServer.Issue;
-import org.sonar.css.plugin.server.AnalyzerBridgeServer.Request;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
-import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Issue;
+import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Request;
 import org.sonarsource.analyzer.commons.ProgressReport;
-import org.sonarsource.nodejs.NodeCommandException;
 
 public class CssRuleSensor implements Sensor {
 
@@ -89,34 +86,34 @@ public class CssRuleSensor implements Sensor {
   public void execute(SensorContext context) {
     reportOldNodeProperty(context);
 
-    boolean failFast = context.config().getBoolean("sonar.internal.analysis.failFast").orElse(false);
+    List<InputFile> inputFiles = getInputFiles(context);
+    if (inputFiles.isEmpty()) {
+      LOG.info("No CSS, PHP or HTML files are found in the project. CSS analysis is skipped.");
+      return;
+    }
+
+    File configFile = null;
+    boolean serverRunning = false;
 
     try {
-      List<InputFile> inputFiles = getInputFiles(context);
-      if (inputFiles.isEmpty()) {
-        LOG.info("No CSS, PHP or HTML files are found in the project. CSS analysis is skipped.");
-      } else {
-        cssAnalyzerBridgeServer.startServerLazily(context);
-        File configFile = createLinterConfig(context);
-        analyzeFiles(context, inputFiles, configFile);
-      }
-    } catch (CancellationException e) {
-      // do not propagate the exception
-      LOG.info(e.toString());
-    } catch (ServerAlreadyFailedException e) {
-      LOG.debug("Skipping start of css-bundle server due to the failure during first analysis");
-      LOG.debug("Skipping execution of CSS rules due to the problems with css-bundle server");
-    } catch (NodeCommandException e) {
-      LOG.error(e.getMessage(), e);
-      reportAnalysisWarning("CSS rules were not executed. " + e.getMessage());
-      if (failFast) {
-        throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
-      }
+      serverRunning = cssAnalyzerBridgeServer.startServerLazily(context);
+      configFile = createLinterConfig(context);
     } catch (Exception e) {
-      LOG.error("Failure during analysis, " + cssAnalyzerBridgeServer.getCommandInfo(), e);
-      if (failFast) {
-        throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
-      }
+      // we can end up here in the following cases: problem during bundle unpacking, or config file creation, or socket creation
+      String msg = "Failure during CSS analysis preparation, " + cssAnalyzerBridgeServer.getCommandInfo();
+      logErrorOrWarn(context, msg, e);
+      throwFailFast(context, e);
+    }
+
+    if (serverRunning && configFile != null) {
+      analyzeFiles(context, inputFiles, configFile);
+    }
+  }
+
+  public static void throwFailFast(SensorContext context, Exception e) {
+    boolean failFast = context.config().getBoolean("sonar.internal.analysis.failFast").orElse(false);
+    if (failFast) {
+      throw new IllegalStateException("Analysis failed (\"sonar.internal.analysis.failFast\"=true)", e);
     }
   }
 
@@ -128,34 +125,58 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
-  void analyzeFiles(SensorContext context, List<InputFile> inputFiles, File configFile) throws InterruptedException, IOException {
+  private void analyzeFiles(SensorContext context, List<InputFile> inputFiles, File configFile) {
     ProgressReport progressReport = new ProgressReport("Analysis progress", TimeUnit.SECONDS.toMillis(10));
     boolean success = false;
+
     try {
       progressReport.start(inputFiles.stream().map(InputFile::toString).collect(Collectors.toList()));
       for (InputFile inputFile : inputFiles) {
-        if (context.isCancelled()) {
-          throw new CancellationException("Analysis interrupted because the SensorContext is in cancelled state");
-        }
-        if (cssAnalyzerBridgeServer.isAlive()) {
-          try {
-            analyzeFile(context, inputFile, configFile);
-          } catch (IOException | RuntimeException e) {
-            throw new IOException("Failure during analysis of " + inputFile.uri() + ": " + e.getMessage(), e);
-          }
-          progressReport.nextFile();
-        } else {
-          throw new IllegalStateException("css-bundle server is not answering");
-        }
+        analyzeFileWithContextCheck(inputFile, context, configFile);
+        progressReport.nextFile();
       }
       success = true;
+
+    } catch (CancellationException e) {
+      // do not propagate the exception
+      LOG.info(e.toString());
+
+    } catch (Exception e) {
+      // we can end up here in the following cases: file analysis request sending, or response parsing, server is not answering
+      // or some unpredicted state
+      String msg = "Failure during CSS analysis, " + cssAnalyzerBridgeServer.getCommandInfo();
+      logErrorOrWarn(context, msg, e);
+      throwFailFast(context, e);
     } finally {
-      if (success) {
-        progressReport.stop();
-      } else {
-        progressReport.cancel();
-      }
+      finishProgressReport(progressReport, success);
+    }
+  }
+
+  private static void finishProgressReport(ProgressReport progressReport, boolean success) {
+    if (success) {
+      progressReport.stop();
+    } else {
+      progressReport.cancel();
+    }
+    try {
       progressReport.join();
+    } catch (InterruptedException e) {
+      LOG.error(e.getMessage(), e);
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  void analyzeFileWithContextCheck(InputFile inputFile, SensorContext context, File configFile) throws IOException {
+    if (context.isCancelled()) {
+      throw new CancellationException("Analysis interrupted because the SensorContext is in cancelled state");
+    }
+    if (!cssAnalyzerBridgeServer.isAlive()) {
+      throw new IllegalStateException("css-bundle server is not answering");
+    }
+    try {
+      analyzeFile(context, inputFile, configFile);
+    } catch (IOException | RuntimeException e) {
+      throw new IllegalStateException("Failure during analysis of " + inputFile.uri(), e);
     }
   }
 
@@ -187,9 +208,9 @@ public class CssRuleSensor implements Sensor {
       if (ruleKey == null) {
         if ("CssSyntaxError".equals(issue.rule)) {
           String errorMessage = issue.text.replace("(CssSyntaxError)", "").trim();
-          LOG.error("Failed to parse {}, line {}, {}", inputFile.uri(), issue.line, errorMessage);
+          logErrorOrDebug(inputFile, "Failed to parse {}, line {}, {}", inputFile.uri(), issue.line, errorMessage);
         } else {
-          LOG.error("Unknown stylelint rule or rule not enabled: '" + issue.rule + "'");
+          logErrorOrDebug(inputFile,"Unknown stylelint rule or rule not enabled: '" + issue.rule + "'");
         }
 
       } else {
@@ -206,14 +227,37 @@ public class CssRuleSensor implements Sensor {
     }
   }
 
+  private static void logErrorOrDebug(InputFile file, String msg, Object ... arguments) {
+    if (CssLanguage.KEY.equals(file.language())) {
+      LOG.error(msg, arguments);
+    } else {
+      LOG.debug(msg, arguments);
+    }
+  }
+
+  private static void logErrorOrWarn(SensorContext context, String msg, Throwable e) {
+    if (hasCssFiles(context)) {
+      LOG.error(msg, e);
+    } else {
+      LOG.warn(msg);
+    }
+  }
+
   private static List<InputFile> getInputFiles(SensorContext context) {
     FileSystem fileSystem = context.fileSystem();
-    FilePredicates predicates = context.fileSystem().predicates();
-    FilePredicate mainFilePredicate = predicates.and(
+    FilePredicate mainFilePredicate = fileSystem.predicates().and(
       fileSystem.predicates().hasType(InputFile.Type.MAIN),
       fileSystem.predicates().hasLanguages(CssLanguage.KEY, "php", "web"));
     return StreamSupport.stream(fileSystem.inputFiles(mainFilePredicate).spliterator(), false)
       .collect(Collectors.toList());
+  }
+
+  public static boolean hasCssFiles(SensorContext context) {
+    FileSystem fileSystem = context.fileSystem();
+    FilePredicate mainFilePredicate = fileSystem.predicates().and(
+      fileSystem.predicates().hasType(InputFile.Type.MAIN),
+      fileSystem.predicates().hasLanguages(CssLanguage.KEY));
+    return fileSystem.inputFiles(mainFilePredicate).iterator().hasNext();
   }
 
   private File createLinterConfig(SensorContext context) throws IOException {
