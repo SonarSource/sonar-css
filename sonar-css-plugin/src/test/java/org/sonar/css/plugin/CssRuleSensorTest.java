@@ -145,7 +145,7 @@ public class CssRuleSensorTest {
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(0);
     assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
-    assertThat(logTester.logs(LoggerLevel.INFO)).contains("No CSS, PHP or HTML files are found in the project. CSS analysis is skipped.");
+    assertThat(logTester.logs(LoggerLevel.INFO)).contains("No CSS, PHP, HTML or VueJS files are found in the project. CSS analysis is skipped.");
   }
 
   @Test

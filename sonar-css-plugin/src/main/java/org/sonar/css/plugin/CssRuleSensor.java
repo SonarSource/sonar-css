@@ -88,7 +88,7 @@ public class CssRuleSensor implements Sensor {
 
     List<InputFile> inputFiles = getInputFiles(context);
     if (inputFiles.isEmpty()) {
-      LOG.info("No CSS, PHP or HTML files are found in the project. CSS analysis is skipped.");
+      LOG.info("No CSS, PHP, HTML or VueJS files are found in the project. CSS analysis is skipped.");
       return;
     }
 
