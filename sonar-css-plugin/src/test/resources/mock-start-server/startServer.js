@@ -24,6 +24,7 @@ const requestHandler = (request, response) => {
         case "file.css":
         case "file.web":
         case "file.php":
+        case "file.vue":
         case "file.js": // to test that we will not save this issue even if it's provided by response
           response.end(JSON.stringify([
             {line: 2, rule: "block-no-empty", text: "Unexpected empty block"}

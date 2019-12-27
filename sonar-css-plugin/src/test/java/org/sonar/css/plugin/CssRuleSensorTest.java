@@ -129,14 +129,15 @@ public class CssRuleSensorTest {
     DefaultInputFile fileCss = addInputFile("file.css");
     DefaultInputFile fileHtml = addInputFile("file.web");
     DefaultInputFile filePhp = addInputFile("file.php");
+    DefaultInputFile fileVue = addInputFile("file.vue");
     addInputFile("file.js");
 
     sensor.execute(context);
 
-    assertThat(context.allIssues()).hasSize(3);
+    assertThat(context.allIssues()).hasSize(4);
     assertThat(context.allIssues())
       .extracting("primaryLocation.component")
-      .containsOnly(fileCss, fileHtml, filePhp);
+      .containsOnly(fileCss, fileHtml, filePhp, fileVue);
   }
 
   @Test
@@ -322,8 +323,10 @@ public class CssRuleSensorTest {
   }
 
   private DefaultInputFile addInputFile(String relativePath) {
+    String extension = relativePath.split("\\.")[1];
+    String language = extension.equals("vue") ? "js" : extension;
     DefaultInputFile inputFile = new TestInputFileBuilder("moduleKey", relativePath)
-      .setLanguage(relativePath.split("\\.")[1])
+      .setLanguage(language)
       .setCharset(StandardCharsets.UTF_8)
       .setContents("some css content\n on 2 lines")
       .build();

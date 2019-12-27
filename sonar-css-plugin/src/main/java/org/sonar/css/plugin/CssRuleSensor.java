@@ -142,8 +142,8 @@ public class CssRuleSensor implements Sensor {
       LOG.info(e.toString());
 
     } catch (Exception e) {
-      // we can end up here in the following cases: file analysis request sending, or response parsing, server is not answering
-      // or some unpredicted state
+      // we can end up here in the following cases: fail to send file analysis request, fail to parse the response, server is not answering
+      // or some other unpredicted state
       String msg = "Failure during CSS analysis, " + cssAnalyzerBridgeServer.getCommandInfo();
       logErrorOrWarn(context, msg, e);
       throwFailFast(context, e);
@@ -245,10 +245,18 @@ public class CssRuleSensor implements Sensor {
 
   private static List<InputFile> getInputFiles(SensorContext context) {
     FileSystem fileSystem = context.fileSystem();
+
     FilePredicate mainFilePredicate = fileSystem.predicates().and(
       fileSystem.predicates().hasType(InputFile.Type.MAIN),
       fileSystem.predicates().hasLanguages(CssLanguage.KEY, "php", "web"));
-    return StreamSupport.stream(fileSystem.inputFiles(mainFilePredicate).spliterator(), false)
+
+    FilePredicate vueFilePredicate = fileSystem.predicates().and(
+      fileSystem.predicates().hasType(InputFile.Type.MAIN),
+      fileSystem.predicates().hasExtension("vue"),
+      // by default 'vue' extension is defined for JS language, but 'vue' files can contain TS code and thus language can be changed
+      fileSystem.predicates().hasLanguages("js", "ts"));
+
+    return StreamSupport.stream(fileSystem.inputFiles(fileSystem.predicates().or(mainFilePredicate, vueFilePredicate)).spliterator(), false)
       .collect(Collectors.toList());
   }
 
