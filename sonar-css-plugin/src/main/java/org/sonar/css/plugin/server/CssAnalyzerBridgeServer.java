@@ -24,22 +24,31 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import javax.annotation.Nullable;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.notifications.AnalysisWarnings;
+import org.sonar.api.scanner.ScannerSide;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.api.utils.log.Profiler;
 import org.sonar.css.plugin.server.bundle.Bundle;
-import org.sonar.css.plugin.server.exception.ServerAlreadyFailedException;
+import org.sonarsource.api.sonarlint.SonarLintSide;
 import org.sonarsource.nodejs.NodeCommand;
 import org.sonarsource.nodejs.NodeCommandBuilder;
 import org.sonarsource.nodejs.NodeCommandException;
 
-public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
+import static org.sonar.css.plugin.CssRuleSensor.hasCssFiles;
+import static org.sonar.css.plugin.CssRuleSensor.throwFailFast;
+import static org.sonarsource.api.sonarlint.SonarLintSide.MULTIPLE_ANALYSES;
+
+@ScannerSide
+@SonarLintSide(lifespan = MULTIPLE_ANALYSES)
+public class CssAnalyzerBridgeServer {
 
   private static final Logger LOG = Loggers.get(CssAnalyzerBridgeServer.class);
   private static final Profiler PROFILER = Profiler.createIfDebug(LOG);
@@ -53,28 +62,29 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
   private final NodeCommandBuilder nodeCommandBuilder;
   final int timeoutSeconds;
   private final Bundle bundle;
+  private final AnalysisWarnings analysisWarnings;
   private int port;
   private NodeCommand nodeCommand;
   private boolean failedToStart;
 
   // Used by pico container for dependency injection
   @SuppressWarnings("unused")
-  public CssAnalyzerBridgeServer(Bundle bundle) {
-    this(NodeCommand.builder(), DEFAULT_TIMEOUT_SECONDS, bundle);
+  public CssAnalyzerBridgeServer(Bundle bundle, @Nullable AnalysisWarnings analysisWarnings) {
+    this(NodeCommand.builder(), DEFAULT_TIMEOUT_SECONDS, bundle, analysisWarnings);
   }
 
-  protected CssAnalyzerBridgeServer(NodeCommandBuilder nodeCommandBuilder, int timeoutSeconds, Bundle bundle) {
+  protected CssAnalyzerBridgeServer(NodeCommandBuilder nodeCommandBuilder, int timeoutSeconds, Bundle bundle, @Nullable AnalysisWarnings analysisWarnings) {
     this.nodeCommandBuilder = nodeCommandBuilder;
     this.timeoutSeconds = timeoutSeconds;
     this.bundle = bundle;
+    this.analysisWarnings = analysisWarnings;
     this.client = new OkHttpClient.Builder()
       .callTimeout(Duration.ofSeconds(timeoutSeconds))
       .readTimeout(Duration.ofSeconds(timeoutSeconds))
       .build();
   }
 
-  // for testing purposes
-  public void deploy(File deployLocation) throws IOException {
+  public void deploy(File deployLocation) {
     bundle.deploy(deployLocation.toPath());
   }
 
@@ -121,27 +131,45 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     nodeCommand = nodeCommandBuilder.build();
   }
 
-  @Override
-  public void startServerLazily(SensorContext context) throws IOException {
+  /**
+   * @return true when server is up and running normally, false otherwise
+   */
+  public boolean startServerLazily(SensorContext context) throws IOException {
     // required for SonarLint context to avoid restarting already failed server
     if (failedToStart) {
-      throw new ServerAlreadyFailedException();
+      LOG.debug("Skipping start of css-bundle server due to the failure during first analysis");
+      LOG.debug("Skipping execution of CSS rules due to the problems with css-bundle server");
+      return false;
     }
 
     try {
       if (isAlive()) {
         LOG.debug("css-bundle server is up, no need to start.");
-        return;
+        return true;
       }
       deploy(context.fileSystem().workDir());
       startServer(context);
+      return true;
     } catch (NodeCommandException e) {
       failedToStart = true;
-      throw e;
+      processNodeCommandException(e, context);
+      return false;
     }
   }
 
-  @Override
+  // happens for example when NodeJS is not available, or version is too old
+  private void processNodeCommandException(NodeCommandException e, SensorContext context) {
+    String message = "CSS rules were not executed. " + e.getMessage();
+    if (hasCssFiles(context)) {
+      LOG.error(message, e);
+      reportAnalysisWarning(message);
+    } else {
+      // error logs are often blocking (esp. in Azure), so we log at warning level if there is no CSS files in the project
+      LOG.warn(message);
+    }
+    throwFailFast(context, e);
+  }
+
   public Issue[] analyze(Request request) throws IOException {
     String json = GSON.toJson(request);
     return parseResponse(request(json));
@@ -164,8 +192,8 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       return GSON.fromJson(result, Issue[].class);
     } catch (JsonSyntaxException e) {
       String msg = "Failed to parse response: \n-----\n" + result + "\n-----\n";
-      LOG.error(msg, e);
-      throw new IllegalStateException("Failed to parse response", e);
+      LOG.debug(msg);
+      throw new IllegalStateException("Failed to parse response (check DEBUG logs for the response content)", e);
     }
   }
 
@@ -183,12 +211,11 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
       // in this case response.body() is never null (according to docs)
       return "OK!".equals(body);
     } catch (IOException e) {
-      LOG.error("Error requesting server status. Server is probably dead.", e);
+      LOG.warn("Error requesting server status. Server is probably dead.", e);
       return false;
     }
   }
 
-  @Override
   public String getCommandInfo() {
     if (nodeCommand == null) {
       return "Node.js command to start css-bundle server was not built yet.";
@@ -197,12 +224,10 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     }
   }
 
-  @Override
   public void start() {
     // Server is started lazily by the sensor
   }
 
-  @Override
   public void stop() {
     clean();
   }
@@ -229,4 +254,39 @@ public class CssAnalyzerBridgeServer implements AnalyzerBridgeServer {
     this.port = port;
   }
 
+  private void reportAnalysisWarning(String message) {
+    if (analysisWarnings != null) {
+      analysisWarnings.addUnique(message);
+    }
+  }
+
+  public static class Request {
+    public final String filePath;
+    /**
+     * The fileContent is sent only in the SonarLint context or when the encoding
+     * of the file is not utf-8. Otherwise, for performance reason, it's more efficient to
+     * not have the fileContent and let the server getting it using filePath.
+     */
+    @Nullable
+    public final String fileContent;
+    public final String configFile;
+
+    public Request(String filePath, @Nullable String fileContent, String configFile) {
+      this.filePath = filePath;
+      this.fileContent = fileContent;
+      this.configFile = configFile;
+    }
+  }
+
+  public static class Issue {
+    public final Integer line;
+    public final String rule;
+    public final String text;
+
+    public Issue(Integer line, String rule, String text) {
+      this.line = line;
+      this.rule = rule;
+      this.text = text;
+    }
+  }
 }

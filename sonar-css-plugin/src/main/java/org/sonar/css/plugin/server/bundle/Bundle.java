@@ -19,12 +19,11 @@
  */
 package org.sonar.css.plugin.server.bundle;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 public interface Bundle {
 
-  void deploy(Path deployLocation) throws IOException;
+  void deploy(Path deployLocation);
 
   /**
    * should be called after deploy(Path deployLocation)
