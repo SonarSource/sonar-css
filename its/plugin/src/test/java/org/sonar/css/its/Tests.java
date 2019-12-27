@@ -84,7 +84,10 @@ public class Tests {
 
   public static SonarScanner createScanner(String projectKey) {
     File projectDir = FileLocation.of("projects" + File.separator + projectKey).getFile();
+    return createScanner(projectKey, projectDir);
+  }
 
+  public static SonarScanner createScanner(String projectKey, File projectDir) {
     return SonarScanner.create()
       .setSourceEncoding("UTF-8")
       .setProjectDir(projectDir)

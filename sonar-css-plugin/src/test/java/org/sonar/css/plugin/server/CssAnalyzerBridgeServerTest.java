@@ -19,6 +19,7 @@
  */
 package org.sonar.css.plugin.server;
 
+import java.io.File;
 import java.nio.file.Path;
 import org.junit.After;
 import org.junit.Before;
@@ -253,6 +254,12 @@ public class CssAnalyzerBridgeServerTest {
     @Override
     public String startServerScript() {
       return "src/test/resources/mock-start-server/" + startServerScript;
+    }
+
+    @Override
+    public String resolve(String relativePath) {
+      File file = new File("src/test/resources");
+      return new File(file.getAbsoluteFile(), relativePath).getAbsolutePath();
     }
   }
 }
