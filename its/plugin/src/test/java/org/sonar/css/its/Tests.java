@@ -43,7 +43,8 @@ import org.sonarqube.ws.client.measures.ComponentRequest;
   IssuesTest.class,
   NoCssFileProjectTest.class,
   StylelintReportTest.class,
-  MinifiedTest.class
+  MinifiedTest.class,
+  NonStandardPathTest.class
 })
 public class Tests {
 
