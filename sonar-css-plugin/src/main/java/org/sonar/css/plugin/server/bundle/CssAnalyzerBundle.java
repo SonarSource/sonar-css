@@ -45,6 +45,7 @@ public class CssAnalyzerBundle implements Bundle {
   final String bundleLocation;
 
   private String startServerScript = DEFAULT_STARTUP_SCRIPT.toString();
+  private Path deployLocation;
 
   public CssAnalyzerBundle() {
     this(DEFAULT_BUNDLE_LOCATION);
@@ -57,6 +58,7 @@ public class CssAnalyzerBundle implements Bundle {
 
   @Override
   public void deploy(Path deployLocation) {
+    this.deployLocation = deployLocation;
     PROFILER.startDebug("Deploying bundle");
     LOG.debug("Deploying css-bundle into {}", deployLocation);
     InputStream bundle = getClass().getResourceAsStream(bundleLocation);
@@ -78,4 +80,8 @@ public class CssAnalyzerBundle implements Bundle {
     return startServerScript;
   }
 
+  @Override
+  public String resolve(String relativePath) {
+    return deployLocation.resolve("css-bundle").resolve(relativePath).toString();
+  }
 }

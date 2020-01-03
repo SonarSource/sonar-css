@@ -108,7 +108,7 @@ public class CssAnalyzerBridgeServer {
     PROFILER.stopDebug();
   }
 
-  private void initNodeCommand(SensorContext context, File scriptFile) {
+  private void initNodeCommand(SensorContext context, File scriptFile) throws IOException {
     nodeCommandBuilder
       .outputConsumer(message -> {
         if (message.startsWith("DEBUG")) {
@@ -122,6 +122,7 @@ public class CssAnalyzerBridgeServer {
       .minNodeVersion(8)
       .configuration(context.config())
       .script(scriptFile.getAbsolutePath())
+      .pathResolver(bundle)
       .scriptArgs(String.valueOf(port));
 
     context.config()

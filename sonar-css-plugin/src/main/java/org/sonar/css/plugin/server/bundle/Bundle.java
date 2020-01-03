@@ -20,8 +20,9 @@
 package org.sonar.css.plugin.server.bundle;
 
 import java.nio.file.Path;
+import org.sonarsource.nodejs.BundlePathResolver;
 
-public interface Bundle {
+public interface Bundle extends BundlePathResolver {
 
   void deploy(Path deployLocation);
 

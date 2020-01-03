@@ -11,6 +11,8 @@
             <directory>css-bundle</directory>
             <includes>
                 <include>lib/**/*</include>
+                <!-- contains 'run-node', default NodeJS on MacOS -->
+                <include>package/**/*</include>
                 <include>bin/**/*</include>
                 <include>node_modules/**/*</include>
             </includes>

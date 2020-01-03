@@ -82,4 +82,16 @@ public class CssAnalyzerBundleTest {
       bundle.deploy(deployLocation);
     }).doesNotThrowAnyException();
   }
+
+  @Test
+  public void test_resolve() {
+    Bundle bundle = new CssAnalyzerBundle("/bundle/test-css-bundle.zip");
+    Path deployLocation = tempFolder.newDir().toPath();
+    bundle.deploy(deployLocation);
+    assertThat(bundle.resolve("relative/path"))
+      .contains("css-bundle")
+      .endsWith("path")
+      .startsWith(deployLocation.toString());
+
+  }
 }
