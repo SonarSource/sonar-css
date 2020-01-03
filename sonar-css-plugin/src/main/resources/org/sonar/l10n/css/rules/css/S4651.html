@@ -6,6 +6,7 @@ the expected gradient in the latest browser versions that support CSS3.</p>
 <h2>Noncompliant Code Example</h2>
 <pre>
 .foo {
+  background: -webkit-linear-gradient(to top, #fff, #000);
   background: linear-gradient(top, #fff, #000);
 }
 
@@ -16,6 +17,7 @@ the expected gradient in the latest browser versions that support CSS3.</p>
 <h2>Compliant Solution</h2>
 <pre>
 .foo {
+  background: -webkit-linear-gradient(top, #fff, #000);
   background: linear-gradient(to top, #fff, #000);
 }
 
