@@ -30,6 +30,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.sonar.api.Startable;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.notifications.AnalysisWarnings;
 import org.sonar.api.scanner.ScannerSide;
@@ -48,7 +49,7 @@ import static org.sonarsource.api.sonarlint.SonarLintSide.MULTIPLE_ANALYSES;
 
 @ScannerSide
 @SonarLintSide(lifespan = MULTIPLE_ANALYSES)
-public class CssAnalyzerBridgeServer {
+public class CssAnalyzerBridgeServer implements Startable {
 
   private static final Logger LOG = Loggers.get(CssAnalyzerBridgeServer.class);
   private static final Profiler PROFILER = Profiler.createIfDebug(LOG);
@@ -225,10 +226,12 @@ public class CssAnalyzerBridgeServer {
     }
   }
 
+  @Override
   public void start() {
     // Server is started lazily by the sensor
   }
 
+  @Override
   public void stop() {
     clean();
   }
