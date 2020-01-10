@@ -27,6 +27,13 @@ export function start(port = 0): Promise<Server> {
       resp.send("OK!")
     );
 
+    app.post("/close", (_req: express.Request, resp: express.Response) => {
+      console.log("DEBUG server will shutdown");
+      resp.end(() => {
+        server.close();
+      });
+    });
+
     // every time something is wrong we log error and send empty response (with 0 issues)
     // it's important to keep this call last in configuring "app"
     app.use(
