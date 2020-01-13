@@ -238,8 +238,21 @@ public class CssAnalyzerBridgeServer implements Startable {
 
   void clean() {
     if (nodeCommand != null) {
+      callClose();
       nodeCommand.destroy();
       nodeCommand = null;
+    }
+  }
+
+  private void callClose() {
+    okhttp3.Request request = new okhttp3.Request.Builder()
+      .url(url("close"))
+      .post(RequestBody.create(MediaType.get("application/json"), ""))
+      .build();
+    try (Response response = client.newCall(request).execute()) {
+      // nothing to do here
+    } catch (IOException e) {
+      LOG.warn("Failed to close stylelint-bridge server", e);
     }
   }
 
