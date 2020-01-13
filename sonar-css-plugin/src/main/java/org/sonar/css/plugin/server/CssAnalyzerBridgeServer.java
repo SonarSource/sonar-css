@@ -252,7 +252,7 @@ public class CssAnalyzerBridgeServer implements Startable {
     try (Response response = client.newCall(request).execute()) {
       // nothing to do here
     } catch (IOException e) {
-      LOG.warn("Failed to close server", e);
+      LOG.warn("Failed to close stylelint-bridge server", e);
     }
   }
 

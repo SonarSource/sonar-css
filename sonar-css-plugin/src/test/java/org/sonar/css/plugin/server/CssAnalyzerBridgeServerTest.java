@@ -215,6 +215,15 @@ public class CssAnalyzerBridgeServerTest {
   }
 
   @Test
+  public void should_log_warning_when_failed_to_close() throws Exception {
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer("failedClose.js");
+    cssAnalyzerBridgeServer.startServerLazily(context);
+    cssAnalyzerBridgeServer.stop();
+    assertThat(logTester.logs(WARN)).contains("Failed to close stylelint-bridge server");
+  }
+
+
+  @Test
   public void should_fail_if_bad_json_response() throws Exception {
     cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
     cssAnalyzerBridgeServer.deploy(context.fileSystem().workDir());

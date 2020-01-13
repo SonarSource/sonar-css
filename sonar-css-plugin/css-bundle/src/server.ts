@@ -28,7 +28,7 @@ export function start(port = 0): Promise<Server> {
     );
 
     app.post("/close", (_req: express.Request, resp: express.Response) => {
-      console.log("DEBUG server will shutdown");
+      console.log("DEBUG stylelint-bridge server will shutdown");
       resp.end(() => {
         server.close();
       });
