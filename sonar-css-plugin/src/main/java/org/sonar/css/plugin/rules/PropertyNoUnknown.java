@@ -39,6 +39,7 @@ public class PropertyNoUnknown implements CssRule {
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignoreProperties = {"composes", "exportedKey", "localAlias"};
+    private final String[] ignoreProperties = {"composes"};
+    private final String[] ignoreSelectors = {"export", "import"};
   }
 }

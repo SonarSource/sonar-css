@@ -267,7 +267,7 @@ public class CssAnalyzerBridgeServerTest {
 
     @Override
     public String resolve(String relativePath) {
-      File file = new File("src/test/resources");
+      File file = new File("css-bundle");
       return new File(file.getAbsoluteFile(), relativePath).getAbsolutePath();
     }
   }
