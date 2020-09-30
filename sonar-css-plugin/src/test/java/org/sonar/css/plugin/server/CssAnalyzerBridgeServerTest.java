@@ -21,6 +21,8 @@ package org.sonar.css.plugin.server;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +43,7 @@ import org.sonarsource.nodejs.NodeCommandException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.sonar.api.utils.log.LoggerLevel.DEBUG;
@@ -235,6 +238,24 @@ public class CssAnalyzerBridgeServerTest {
     assertThatThrownBy(() -> cssAnalyzerBridgeServer.analyze(request)).isInstanceOf(IllegalStateException.class);
     assertThat(context.allIssues()).isEmpty();
   }
+
+  @Test
+  public void waitServerToStart_can_be_interrupted() throws InterruptedException {
+    cssAnalyzerBridgeServer = createCssAnalyzerBridgeServer(START_SERVER_SCRIPT);
+    // try to connect to a port that does not exists
+    Thread worker = new Thread(() -> cssAnalyzerBridgeServer.waitServerToStart(1000));
+    worker.start();
+    Awaitility.setDefaultTimeout(1, TimeUnit.SECONDS);
+    // wait for the worker thread to start and to be blocked on Thread.sleep(20);
+    await().until(() -> worker.getState() == Thread.State.TIMED_WAITING);
+
+    long start = System.currentTimeMillis();
+    worker.interrupt();
+    worker.join();
+    long timeToInterrupt = System.currentTimeMillis() - start;
+    assertThat(timeToInterrupt).isLessThan(20);
+  }
+
 
 
   public static CssAnalyzerBridgeServer createCssAnalyzerBridgeServer(String startServerScript) {

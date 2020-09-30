@@ -17,7 +17,7 @@ export function setLogHandlersForTests(
   logError = errorHandler;
 }
 
-export function start(port = 0): Promise<Server> {
+export function start(port = 0, host = "127.0.0.1"): Promise<Server> {
   return new Promise(resolve => {
     log("DEBUG starting stylelint-bridge server at port", port);
     const app = express();
@@ -45,7 +45,7 @@ export function start(port = 0): Promise<Server> {
       ) => processError(error, response)
     );
 
-    const server = app.listen(port, () => {
+    const server = app.listen(port, host, () => {
       log(
         "DEBUG stylelint-bridge server is running at port",
         (server.address() as AddressInfo).port
