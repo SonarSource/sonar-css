@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.time.Duration;
 import javax.annotation.Nullable;
 import okhttp3.HttpUrl;
@@ -64,6 +65,7 @@ public class CssAnalyzerBridgeServer implements Startable {
   final int timeoutSeconds;
   private final Bundle bundle;
   private final AnalysisWarnings analysisWarnings;
+  private final String hostAddress;
   private int port;
   private NodeCommand nodeCommand;
   private boolean failedToStart;
@@ -83,6 +85,7 @@ public class CssAnalyzerBridgeServer implements Startable {
       .callTimeout(Duration.ofSeconds(timeoutSeconds))
       .readTimeout(Duration.ofSeconds(timeoutSeconds))
       .build();
+    this.hostAddress = InetAddress.getLoopbackAddress().getHostAddress();
   }
 
   public void deploy(File deployLocation) {
@@ -103,10 +106,27 @@ public class CssAnalyzerBridgeServer implements Startable {
     LOG.debug("Starting Node.js process to start css-bundle server at port " + port);
     nodeCommand.start();
 
-    if (!NetUtils.waitServerToStart("localhost", port, timeoutSeconds * 1000)) {
+    if (!waitServerToStart(timeoutSeconds * 1000)) {
       throw new NodeCommandException("Failed to start server (" + timeoutSeconds + "s timeout)");
     }
     PROFILER.stopDebug();
+  }
+
+  boolean waitServerToStart(int timeoutMs) {
+    int sleepStep = 100;
+    long start = System.currentTimeMillis();
+    try {
+      Thread.sleep(sleepStep);
+      while (!isAlive()) {
+        if (System.currentTimeMillis() - start > timeoutMs) {
+          return false;
+        }
+        Thread.sleep(sleepStep);
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return true;
   }
 
   private void initNodeCommand(SensorContext context, File scriptFile) throws IOException {
@@ -124,7 +144,7 @@ public class CssAnalyzerBridgeServer implements Startable {
       .configuration(context.config())
       .script(scriptFile.getAbsolutePath())
       .pathResolver(bundle)
-      .scriptArgs(String.valueOf(port));
+      .scriptArgs(String.valueOf(port), hostAddress);
 
     context.config()
       .getInt(MAX_OLD_SPACE_SIZE_PROPERTY)
@@ -260,7 +280,7 @@ public class CssAnalyzerBridgeServer implements Startable {
     HttpUrl.Builder builder = new HttpUrl.Builder();
     return builder
       .scheme("http")
-      .host("localhost")
+      .host(hostAddress)
       .port(port)
       .addPathSegment(endpoint)
       .build();
