@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
@@ -51,7 +50,7 @@ public class MetricSensor implements Sensor {
   @Override
   public void describe(SensorDescriptor descriptor) {
     descriptor
-      .name("SonarCSS Metrics")
+      .name("CSS Metrics")
       .onlyOnLanguage(CssLanguage.KEY);
   }
 

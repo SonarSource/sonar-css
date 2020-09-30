@@ -94,7 +94,7 @@ public class CssRuleSensorTest {
   public void test_descriptor() {
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     sensor.describe(sensorDescriptor);
-    assertThat(sensorDescriptor.name()).isEqualTo("SonarCSS Rules");
+    assertThat(sensorDescriptor.name()).isEqualTo("CSS Rules");
     assertThat(sensorDescriptor.languages()).isEmpty();
     assertThat(sensorDescriptor.configurationPredicate()).isNull();
     assertThat(sensorDescriptor.ruleRepositories()).containsOnly("css");

@@ -1,7 +1,7 @@
 {
   "name": "css-bundle",
   "version": "1.0.0",
-  "description": "Simple node project to run stylelint from SonarCSS",
+  "description": "Simple node project to run stylelint",
   "main": "index.js",
   "scripts": {
     "build": "yarn install && yarn check-format && yarn clear && yarn compile",
