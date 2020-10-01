@@ -20,12 +20,9 @@
 package org.sonar.css.plugin.server;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import org.awaitility.Awaitility;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 public class NetUtilsTest {
 
@@ -36,20 +33,5 @@ public class NetUtilsTest {
       .isLessThanOrEqualTo(65535);
   }
 
-  @Test
-  public void waitServerToStart_can_be_interrupted() throws InterruptedException {
-    // try to connect to a port that does not exists
-    Thread worker = new Thread(() -> NetUtils.waitServerToStart("localhost", 8, 1000));
-    worker.start();
-    Awaitility.setDefaultTimeout(1, TimeUnit.SECONDS);
-    // wait for the worker thread to start and to be blocked on Thread.sleep(20);
-    await().until(() -> worker.getState() == Thread.State.TIMED_WAITING);
-
-    long start = System.currentTimeMillis();
-    worker.interrupt();
-    worker.join();
-    long timeToInterrupt = System.currentTimeMillis() - start;
-    assertThat(timeToInterrupt).isLessThan(20);
-  }
 
 }
