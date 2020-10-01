@@ -38,7 +38,8 @@ public class SonarWayProfileTest {
     assertThat(profile.language()).isEqualTo(CssLanguage.KEY);
     assertThat(profile.name()).isEqualTo(SonarWayProfile.PROFILE_NAME);
     assertThat(profile.rules()).extracting("repoKey").containsOnly(CssRulesDefinition.REPOSITORY_KEY);
-    assertThat(profile.rules()).extracting("ruleKey").hasSize(CssRules.getRuleClasses().size() - 1);
+    // org.sonar.css.plugin.rules.FunctionCalcNoUnspacedOperator is not part of SonarWay
+    assertThat(profile.rules()).extracting("ruleKey").hasSize(CssRules.getRuleClasses().size() - 2);
   }
 
 }
