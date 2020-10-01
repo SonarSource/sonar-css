@@ -9,6 +9,8 @@ import * as bodyParser from "body-parser";
 let log = console.log;
 let logError = console.error;
 
+const MAX_REQUEST_SIZE = "50mb";
+
 export function setLogHandlersForTests(
   logHandler: typeof console.log,
   errorHandler: typeof console.error
@@ -21,7 +23,7 @@ export function start(port = 0, host = "127.0.0.1"): Promise<Server> {
   return new Promise(resolve => {
     log("DEBUG starting stylelint-bridge server at port", port);
     const app = express();
-    app.use(bodyParser.json());
+    app.use(bodyParser.json({ limit: MAX_REQUEST_SIZE }));
     app.post("/analyze", analyzeWithStylelint);
     app.get("/status", (_: express.Request, resp: express.Response) =>
       resp.send("OK!")
