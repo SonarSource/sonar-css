@@ -90,7 +90,7 @@
                 <configuration>
                     <pluginKey>cssfamily</pluginKey>
                     <!-- This value shows up in the SonarQube GUI -->
-                    <pluginName>SonarCSS</pluginName>
+                    <pluginName>CSS Code Quality and Security</pluginName>
                     <pluginClass>org.sonar.css.plugin.CssPlugin</pluginClass>
                     <skipDependenciesPackaging>true</skipDependenciesPackaging>
                     <sonarLintSupported>false</sonarLintSupported>

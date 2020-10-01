@@ -79,7 +79,7 @@ public class CssRuleSensor implements Sensor {
   public void describe(SensorDescriptor descriptor) {
     descriptor
       .createIssuesForRuleRepository("css")
-      .name("SonarCSS Rules");
+      .name("CSS Rules");
   }
 
   @Override
