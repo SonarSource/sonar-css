@@ -19,12 +19,13 @@
  */
 package org.sonar.css.plugin.server.bundle;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import org.apache.commons.io.FileUtils;
 
 public class Zip {
 
@@ -32,21 +33,30 @@ public class Zip {
     // utility class
   }
 
-  public static void extract(InputStream bundle, File destination) throws IOException {
-    ZipInputStream zip = new ZipInputStream(bundle);
-    ZipEntry entry = zip.getNextEntry();
-    if (entry == null) {
-      throw new IllegalStateException("At least one entry expected.");
-    }
-    while (entry != null) {
-      File entryDestination = new File(destination, entry.getName());
-      if (entry.isDirectory()) {
-        entryDestination.mkdirs();
-      } else {
-        FileUtils.copyToFile(zip, entryDestination);
+  public static void extract(InputStream bundle, Path destination) throws IOException {
+    try (ZipInputStream zip = new ZipInputStream(bundle)) {
+      ZipEntry entry = zip.getNextEntry();
+      if (entry == null) {
+        throw new IllegalStateException("At least one entry expected.");
       }
-      zip.closeEntry();
-      entry = zip.getNextEntry();
+      while (entry != null) {
+        Path entryDestination = entryPath(destination, entry);
+        if (entry.isDirectory()) {
+          Files.createDirectories(entryDestination);
+        } else {
+          Files.copy(zip, entryDestination, StandardCopyOption.REPLACE_EXISTING);
+        }
+        zip.closeEntry();
+        entry = zip.getNextEntry();
+      }
     }
+  }
+
+  private static Path entryPath(Path targetPath, ZipEntry entry) {
+    Path entryPath = targetPath.resolve(entry.getName()).normalize();
+    if (!entryPath.startsWith(targetPath)) {
+      throw new IllegalStateException("Archive entry " + entry.getName() + " is not within " + targetPath);
+    }
+    return entryPath;
   }
 }
