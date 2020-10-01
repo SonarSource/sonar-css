@@ -67,7 +67,7 @@ public class CssAnalyzerBundle implements Bundle {
     }
     try {
       LOG.debug("Deploying css-bundle to {}", deployLocation.toAbsolutePath());
-      Zip.extract(bundle, deployLocation.toFile());
+      Zip.extract(bundle, deployLocation);
       startServerScript = deployLocation.resolve(DEFAULT_STARTUP_SCRIPT).toAbsolutePath().toString();
     } catch (Exception e) {
       throw new IllegalStateException("Failed to deploy css-bundle (with classpath '" + bundleLocation + "')", e);
