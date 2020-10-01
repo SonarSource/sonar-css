@@ -233,7 +233,6 @@ public class CssAnalyzerBridgeServer implements Startable {
       // in this case response.body() is never null (according to docs)
       return "OK!".equals(body);
     } catch (IOException e) {
-      LOG.warn("Error requesting server status. Server is probably dead.", e);
       return false;
     }
   }
