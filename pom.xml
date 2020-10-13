@@ -73,7 +73,7 @@
 
         <slf4j.version>1.7.25</slf4j.version>
         <assertj.version>3.10.0</assertj.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <sonar.version>7.9</sonar.version>
         <sonar.min.version>7.9</sonar.min.version>
         <sonar-orchestrator.version>3.30.0.2630</sonar-orchestrator.version>
