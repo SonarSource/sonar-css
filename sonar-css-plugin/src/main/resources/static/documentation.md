@@ -1,5 +1,5 @@
 ---
-title: Code Quality and Security for CSS
+title: CSS
 key: css
 ---
 
