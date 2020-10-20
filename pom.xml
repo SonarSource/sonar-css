@@ -11,7 +11,7 @@
 
     <groupId>org.sonarsource.css</groupId>
     <artifactId>css</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.3.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Code Quality and Security for CSS</name>
