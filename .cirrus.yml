@@ -38,7 +38,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 
 build_task:
   gke_container:
-    dockerfile: .cirrus/nodejs-lts.Dockerfile
+    dockerfile: .cirrus/nodejs-8.Dockerfile
     builder_image_project: language-team
     builder_image_name: docker-builder-lt-v1
     cluster_name: cirrus-ci-lt-cluster
@@ -78,7 +78,7 @@ plugin_qa_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
-    dockerfile: .cirrus/nodejs-lts.Dockerfile
+    dockerfile: .cirrus/nodejs-8.Dockerfile
     builder_image_project: language-team
     builder_image_name: docker-builder-lt-v1
     cluster_name: cirrus-ci-lt-cluster
