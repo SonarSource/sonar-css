@@ -16,6 +16,7 @@ jobs:
       - name: LT release
         id: lt_release
         with:
+          distribute: true
           publish_to_binaries: true
           run_rules_cov: true
           slack_channel: lang-js-ts
