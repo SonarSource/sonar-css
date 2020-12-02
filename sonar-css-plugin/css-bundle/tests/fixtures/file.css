@@ -1,1 +1,6 @@
 p { }
+
+body {
+    content-visibility: hidden;
+    contain-intrinsic-size: 5000px;
+}
