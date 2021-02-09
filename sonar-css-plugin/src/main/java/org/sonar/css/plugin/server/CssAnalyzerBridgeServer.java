@@ -68,15 +68,17 @@ public class CssAnalyzerBridgeServer implements Startable {
   private final String hostAddress;
   private int port;
   private NodeCommand nodeCommand;
+  private final NodeDeprecationWarning deprecationWarning;
   private boolean failedToStart;
 
   // Used by pico container for dependency injection
   @SuppressWarnings("unused")
-  public CssAnalyzerBridgeServer(Bundle bundle, @Nullable AnalysisWarnings analysisWarnings) {
-    this(NodeCommand.builder(), DEFAULT_TIMEOUT_SECONDS, bundle, analysisWarnings);
+  public CssAnalyzerBridgeServer(Bundle bundle, @Nullable AnalysisWarnings analysisWarnings, NodeDeprecationWarning deprecationWarning) {
+    this(NodeCommand.builder(), DEFAULT_TIMEOUT_SECONDS, bundle, analysisWarnings, deprecationWarning);
   }
 
-  protected CssAnalyzerBridgeServer(NodeCommandBuilder nodeCommandBuilder, int timeoutSeconds, Bundle bundle, @Nullable AnalysisWarnings analysisWarnings) {
+  protected CssAnalyzerBridgeServer(NodeCommandBuilder nodeCommandBuilder, int timeoutSeconds, Bundle bundle,
+                                    @Nullable AnalysisWarnings analysisWarnings, NodeDeprecationWarning deprecationWarning) {
     this.nodeCommandBuilder = nodeCommandBuilder;
     this.timeoutSeconds = timeoutSeconds;
     this.bundle = bundle;
@@ -86,6 +88,7 @@ public class CssAnalyzerBridgeServer implements Startable {
       .readTimeout(Duration.ofSeconds(timeoutSeconds))
       .build();
     this.hostAddress = InetAddress.getLoopbackAddress().getHostAddress();
+    this.deprecationWarning = deprecationWarning;
   }
 
   public void deploy(File deployLocation) {
@@ -110,6 +113,7 @@ public class CssAnalyzerBridgeServer implements Startable {
       throw new NodeCommandException("Failed to start server (" + timeoutSeconds + "s timeout)");
     }
     PROFILER.stopDebug();
+    deprecationWarning.logNodeDeprecation(nodeCommand.getActualNodeVersion());
   }
 
   boolean waitServerToStart(int timeoutMs) {

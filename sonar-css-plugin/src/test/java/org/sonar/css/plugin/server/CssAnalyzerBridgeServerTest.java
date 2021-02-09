@@ -27,11 +27,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.api.SonarEdition;
+import org.sonar.api.SonarQubeSide;
+import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
+import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.notifications.AnalysisWarnings;
+import org.sonar.api.utils.Version;
 import org.sonar.api.utils.internal.JUnitTempFolder;
 import org.sonar.api.utils.log.LogTester;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer.Issue;
@@ -56,6 +61,8 @@ public class CssAnalyzerBridgeServerTest {
   private static final String START_SERVER_SCRIPT = "startServer.js";
   private static final String CONFIG_FILE = "config.json";
   private static final int TEST_TIMEOUT_SECONDS = 1;
+  private static final SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarQube(Version.create(8, 5), SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
+  private static final NodeDeprecationWarning deprecationWarning = new NodeDeprecationWarning(sonarRuntime);
 
   @org.junit.Rule
   public LogTester logTester = new LogTester();
@@ -84,7 +91,7 @@ public class CssAnalyzerBridgeServerTest {
 
   @Test
   public void default_timeout() {
-    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(mock(Bundle.class), null);
+    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(mock(Bundle.class), null, deprecationWarning);
     assertThat(server.timeoutSeconds).isEqualTo(60);
   }
 
@@ -121,7 +128,7 @@ public class CssAnalyzerBridgeServerTest {
     });
 
     AnalysisWarnings analysisWarnings = mock(AnalysisWarnings.class);
-    cssAnalyzerBridgeServer = new CssAnalyzerBridgeServer(nodeCommandBuilder, TEST_TIMEOUT_SECONDS, new TestBundle(START_SERVER_SCRIPT), analysisWarnings);
+    cssAnalyzerBridgeServer = new CssAnalyzerBridgeServer(nodeCommandBuilder, TEST_TIMEOUT_SECONDS, new TestBundle(START_SERVER_SCRIPT), analysisWarnings, deprecationWarning);
     assertThat(cssAnalyzerBridgeServer.startServerLazily(context)).isFalse();
     assertThat(logTester.logs(ERROR)).contains("CSS rules were not executed. msg");
     verify(analysisWarnings).addUnique("CSS rules were not executed. msg");
@@ -259,7 +266,7 @@ public class CssAnalyzerBridgeServerTest {
 
 
   public static CssAnalyzerBridgeServer createCssAnalyzerBridgeServer(String startServerScript) {
-    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript), null);
+    CssAnalyzerBridgeServer server = new CssAnalyzerBridgeServer(NodeCommand.builder(), TEST_TIMEOUT_SECONDS, new TestBundle(startServerScript), null, deprecationWarning);
     server.start();
     return server;
   }
