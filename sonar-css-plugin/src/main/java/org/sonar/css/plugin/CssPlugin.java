@@ -22,6 +22,7 @@ package org.sonar.css.plugin;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
+import org.sonar.css.plugin.server.NodeDeprecationWarning;
 import org.sonar.css.plugin.server.bundle.CssAnalyzerBundle;
 import org.sonar.css.plugin.metrics.MetricSensor;
 import org.sonar.css.plugin.server.CssAnalyzerBridgeServer;
@@ -52,6 +53,7 @@ public class CssPlugin implements Plugin {
       CssRuleSensor.class,
       StylelintReportSensor.class,
       MinifiedFilesFilter.class,
+      NodeDeprecationWarning.class,
 
       PropertyDefinition.builder(FILE_SUFFIXES_KEY)
         .defaultValue(FILE_SUFFIXES_DEFVALUE)
