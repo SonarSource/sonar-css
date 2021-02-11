@@ -114,12 +114,33 @@ plugin_qa_win_task:
     - mvn -f its/plugin verify -Dsonar.runtimeVersion=${SQ_VERSION} -Dmaven.test.redirectTestOutputToFile=false -B -e -V
   cleanup_before_cache_script: cleanup_maven_repository
 
+ruling_task:
+  depends_on:
+    - build
+  only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
+  gke_container:
+    dockerfile: .cirrus/nodejs-8.Dockerfile
+    <<: *CONTAINER_DEFINITION
+    cpu: 4
+    memory: 8G
+  env:
+    SONARSOURCE_QA: true
+  maven_cache:
+    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+  ruling_script:
+    - source cirrus-env QA
+    - source set_maven_build_version $BUILD_NUMBER
+    - cd its/ruling
+    - mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -Dmaven.test.redirectTestOutputToFile=false -B -e -V
+  cleanup_before_cache_script: cleanup_maven_repository
+
 promote_task:
   depends_on:
     - build
     - build_win
     - plugin_qa
     - plugin_qa_win
+    - ruling
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
     <<: *CONTAINER_DEFINITION
