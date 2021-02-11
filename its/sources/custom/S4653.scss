@@ -1,0 +1,8 @@
+$i: 1;
+
+.parent {
+    width: $i/1.3+px; // FP (issue-160)
+    height: $i/1.3+0px; // FP (issue-160)
+
+    height: $i/1.3*1px; // this is OK and no issue is raised, recommended workaround
+}
