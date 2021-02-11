@@ -124,7 +124,6 @@ ruling_task:
     cpu: 4
     memory: 8G
   env:
-    CIRRUS_CLONE_DEPTH: 10
     SONARSOURCE_QA: true
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
@@ -141,6 +140,7 @@ promote_task:
     - build_win
     - plugin_qa
     - plugin_qa_win
+    - ruling
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
     <<: *CONTAINER_DEFINITION
