@@ -1,0 +1,3 @@
+[submodule "its/sources/projects"]
+	path = its/sources/projects
+	url = git@github.com:SonarSource/css-test-sources.git
