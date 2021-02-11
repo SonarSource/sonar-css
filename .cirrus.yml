@@ -38,7 +38,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 
 build_task:
   gke_container:
-    dockerfile: .cirrus/nodejs-8.Dockerfile
+    dockerfile: .cirrus/nodejs-10.Dockerfile
     builder_image_project: language-team
     builder_image_name: docker-builder-lt-v1
     cluster_name: cirrus-ci-lt-cluster
@@ -78,7 +78,7 @@ plugin_qa_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
-    dockerfile: .cirrus/nodejs-8.Dockerfile
+    dockerfile: .cirrus/nodejs-10.Dockerfile
     builder_image_project: language-team
     builder_image_name: docker-builder-lt-v1
     cluster_name: cirrus-ci-lt-cluster
@@ -119,7 +119,7 @@ ruling_task:
     - build
   only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
   gke_container:
-    dockerfile: .cirrus/nodejs-8.Dockerfile
+    dockerfile: .cirrus/nodejs-10.Dockerfile
     <<: *CONTAINER_DEFINITION
     cpu: 4
     memory: 8G
