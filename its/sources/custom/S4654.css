@@ -1,0 +1,5 @@
+a {
+  colr: blue; /* Noncompliant */
+  content-visibility: auto; /* No FP */
+  contain-intrinsic-size: 400px; /* No FP */
+}
