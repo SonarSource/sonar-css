@@ -42,7 +42,9 @@ public class SelectorTypeNoUnknown implements CssRule {
 
   @RuleProperty(
     key = "ignore",
-    description = "Comma-separated list of ignored elements (possible values: \"custom-elements\" and/or \"default-namespace\").",
+    description = "Comma-separated list of ignored elements. The possible values are:\n" +
+      "\"custom-elements\": Allow custom elements (e.g \"x-foo\").\n" +
+      "\"default-namespace\": Allow unknown type selectors if they belong to the default namespace.",
     defaultValue = "" + DEFAULT_IGNORE)
   String ignore = DEFAULT_IGNORE;
 
