@@ -75,15 +75,16 @@ public class CssRuleTest {
   @Test
   public void selector_type_no_unknown_default() {
     String optionsAsJson = new Gson().toJson(new SelectorTypeNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^(mat|md|fa)-/\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^(mat|md|fa)-/\"],\"ignore\":[\"custom-elements\"]}]");
   }
 
   @Test
   public void selector_type_no_unknown_custom() {
     SelectorTypeNoUnknown selectorTypeNoUnknown = new SelectorTypeNoUnknown();
     selectorTypeNoUnknown.ignoreTypes = "/^(mat|md|fa)-/";
+    selectorTypeNoUnknown.ignore = "custom-elements, default-namespace";
     String optionsAsJson = new Gson().toJson(selectorTypeNoUnknown.stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^(mat|md|fa)-/\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreTypes\":[\"/^(mat|md|fa)-/\"],\"ignore\":[\"custom-elements\",\"default-namespace\"]}]");
   }
 
   @Test

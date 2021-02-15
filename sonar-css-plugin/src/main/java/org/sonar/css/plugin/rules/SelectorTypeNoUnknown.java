@@ -32,11 +32,21 @@ public class SelectorTypeNoUnknown implements CssRule {
   // prefixes for Angular Material (mat, md), Font Awesome (fa)
   private static final String DEFAULT_IGNORED_TYPES = "/^(mat|md|fa)-/";
 
+  private static final String DEFAULT_IGNORE = "custom-elements";
+
   @RuleProperty(
     key = "ignoreTypes",
     description = "Comma-separated list of regular expressions for selector types to consider as valid.",
     defaultValue = "" + DEFAULT_IGNORED_TYPES)
   String ignoreTypes = DEFAULT_IGNORED_TYPES;
+
+  @RuleProperty(
+    key = "ignore",
+    description = "Comma-separated list of ignored elements. The possible values are:\n" +
+      "\"custom-elements\": Allow custom elements (e.g \"x-foo\").\n" +
+      "\"default-namespace\": Allow unknown type selectors if they belong to the default namespace.",
+    defaultValue = "" + DEFAULT_IGNORE)
+  String ignore = DEFAULT_IGNORE;
 
   @Override
   public String stylelintKey() {
@@ -45,15 +55,17 @@ public class SelectorTypeNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption(splitAndTrim(ignoreTypes)));
+    return Arrays.asList(true, new StylelintIgnoreOption(splitAndTrim(ignoreTypes), splitAndTrim(ignore)));
   }
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
     private final List<String> ignoreTypes;
+    private final List<String> ignore;
 
-    StylelintIgnoreOption(List<String> ignoreTypes) {
+    StylelintIgnoreOption(List<String> ignoreTypes, List<String> ignore) {
       this.ignoreTypes = ignoreTypes;
+      this.ignore = ignore;
     }
   }
 }
