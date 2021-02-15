@@ -6,3 +6,13 @@ $i: 1;
 
     height: $i/1.3*1px; // this is OK and no issue is raised, recommended workaround
 }
+
+$ee-icons: (
+      1gb                 : "\e06e",
+      3g                  : "\e06d",
+      3gb                 : "\e06c",
+      4g                  : "\e06b",
+      4gee                : "\e06a",
+      4gee-resumptive     : "\e069",
+      4gee-streaming      : "\e068",
+)
