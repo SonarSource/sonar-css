@@ -23,9 +23,21 @@ import org.sonar.check.Rule;
 
 import java.util.Arrays;
 import java.util.List;
+import org.sonar.check.RuleProperty;
+
+import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
+
 
 @Rule(key = "S4654")
 public class PropertyNoUnknown implements CssRule {
+
+  private static final String DEFAULT_IGNORED_PROPERTIES = "composes, exportedKey, localAlias, /^mso-/";
+
+  @RuleProperty(
+    key = "ignoreTypes",
+    description = "Comma-separated list of strings and/or regular expressions for properties to consider as valid.",
+    defaultValue = "" + DEFAULT_IGNORED_PROPERTIES)
+  String ignoreProperties = DEFAULT_IGNORED_PROPERTIES;
 
   @Override
   public String stylelintKey() {
@@ -34,11 +46,15 @@ public class PropertyNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption());
+    return Arrays.asList(true, new StylelintIgnoreOption(splitAndTrim(ignoreProperties)));
   }
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignoreProperties = {"composes", "exportedKey", "localAlias"};
+    private final List<String> ignoreProperties;
+
+    private StylelintIgnoreOption(List<String> ignoreProperties) {
+      this.ignoreProperties = ignoreProperties;
+    }
   }
 }
