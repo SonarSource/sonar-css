@@ -29,7 +29,7 @@ import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
 @Rule(key = "S4660")
 public class SelectorPseudoElementNoUnknown implements CssRule {
 
-  private static final String DEFAULT_IGNORE_PSEUDO_ELEMENTS = "ng-deep";
+  private static final String DEFAULT_IGNORE_PSEUDO_ELEMENTS = "ng-deep,v-deep";
 
   @Override
   public String stylelintKey() {
