@@ -1,0 +1,8 @@
+$light-blue-10: #c0e7f3;
+$light-blue-40: #4bc7e7;
+$teal: #23B8A7;
+:export {
+    lightBlue10: $light-blue-10; /* No FP */
+    lightBlue40: $light-blue-40; /* No FP */
+    teal: $teal; /* No FP */
+}
