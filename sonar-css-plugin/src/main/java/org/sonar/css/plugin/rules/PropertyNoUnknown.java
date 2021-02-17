@@ -32,7 +32,7 @@ import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
 public class PropertyNoUnknown implements CssRule {
 
   private static final String DEFAULT_IGNORED_PROPERTIES = "composes, /^mso-/";
-  private static final String DEFAULT_IGNORED_SELECTORS = "/export/, /import/";
+  private static final String DEFAULT_IGNORED_SELECTORS = "/^:export.*/, /^:import.*/";
 
   @RuleProperty(
     key = "ignoreTypes",

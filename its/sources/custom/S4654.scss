@@ -6,3 +6,9 @@ $teal: #23B8A7;
     lightBlue40: $light-blue-40; /* No FP */
     teal: $teal; /* No FP */
 }
+
+my-export-class {
+    lightBlue10: $light-blue-10; /* Noncompliant */
+    lightBlue40: $light-blue-40; /* Noncompliant */
+    teal: $teal; /* Noncompliant */
+}

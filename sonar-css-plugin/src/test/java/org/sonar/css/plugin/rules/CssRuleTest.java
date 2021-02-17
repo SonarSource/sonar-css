@@ -69,7 +69,7 @@ public class CssRuleTest {
   @Test
   public void property_no_unknown_options() {
     String optionsAsJson = new Gson().toJson(new PropertyNoUnknown().stylelintOptions());
-    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreProperties\":[\"composes\",\"/^mso-/\"],\"ignoreSelectors\":[\"/export/\",\"/import/\"]}]");
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreProperties\":[\"composes\",\"/^mso-/\"],\"ignoreSelectors\":[\"/^:export.*/\",\"/^:import.*/\"]}]");
   }
 
   @Test
