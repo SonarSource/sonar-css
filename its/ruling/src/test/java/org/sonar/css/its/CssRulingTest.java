@@ -24,8 +24,10 @@ import com.sonar.orchestrator.build.SonarScanner;
 import com.sonar.orchestrator.locator.FileLocation;
 import com.sonar.orchestrator.locator.MavenLocation;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -43,22 +45,50 @@ public class CssRulingTest {
   @ClassRule
   public static final Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
     .setSonarVersion(System.getProperty(SQ_VERSION_PROPERTY, DEFAULT_SQ_VERSION))
+    .addPlugin(MavenLocation.of("org.sonarsource.php", "sonar-php-plugin", "LATEST_RELEASE"))
+    .addPlugin(MavenLocation.of("org.sonarsource.html", "sonar-html-plugin", "LATEST_RELEASE"))
+    .addPlugin(MavenLocation.of("org.sonarsource.javascript", "sonar-javascript-plugin", "LATEST_RELEASE"))
+    .addPlugin(MavenLocation.of("org.sonarsource.typescript", "sonar-typescript-plugin", "LATEST_RELEASE"))
     .addPlugin(FileLocation.byWildcardMavenFilename(new File("../../sonar-css-plugin/target"), "sonar-css-plugin-*.jar"))
     .addPlugin(MavenLocation.of("org.sonarsource.sonar-lits-plugin", "sonar-lits-plugin", "0.8.0.1209"))
     .build();
 
   @BeforeClass
-  public static void prepare_quality_profile() {
+  public static void prepare_quality_profile() throws IOException {
     ProfileGenerator.RulesConfiguration parameters = new ProfileGenerator.RulesConfiguration();
     String serverUrl = ORCHESTRATOR.getServer().getUrl();
     File profileFile = ProfileGenerator.generateProfile(serverUrl, "css", "css", parameters, Collections.emptySet());
     ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(profileFile));
+    loadEmptyProfile("php");
+    loadEmptyProfile("web");
+    loadEmptyProfile("js");
+    loadEmptyProfile("ts");
+  }
+
+  private static void loadEmptyProfile(String language) throws IOException {
+    String profile = profile(language);
+    File file = File.createTempFile("profile", ".xml");
+    Files.write(file.toPath(), profile.getBytes());
+    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(file));
+    file.delete();
+  }
+
+  private static String profile(String language) {
+    return "<profile>" +
+      "<name>rules</name>" +
+      "<language>" + language + "</language>" +
+      "<rules></rules>" +
+      "</profile>";
   }
 
   @Test
   public void test() throws Exception {
     ORCHESTRATOR.getServer().provisionProject(PROJECT_KEY, PROJECT_KEY);
     ORCHESTRATOR.getServer().associateProjectToQualityProfile(PROJECT_KEY, "css", "rules");
+    ORCHESTRATOR.getServer().associateProjectToQualityProfile(PROJECT_KEY, "php", "rules");
+    ORCHESTRATOR.getServer().associateProjectToQualityProfile(PROJECT_KEY, "web", "rules");
+    ORCHESTRATOR.getServer().associateProjectToQualityProfile(PROJECT_KEY, "js", "rules");
+    ORCHESTRATOR.getServer().associateProjectToQualityProfile(PROJECT_KEY, "ts", "rules");
     File litsDifferencesFile = FileLocation.of("target/differences").getFile();
     SonarScanner build = SonarScanner.create(FileLocation.of("../sources").getFile())
       .setProjectKey(PROJECT_KEY)
