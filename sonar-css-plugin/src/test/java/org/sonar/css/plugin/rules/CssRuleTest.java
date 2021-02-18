@@ -62,8 +62,12 @@ public class CssRuleTest {
 
   @Test
   public void selector_pseudo_class_options() {
-    String optionsAsJson = new Gson().toJson(new SelectorPseudoClassNoUnknown().stylelintOptions());
+    SelectorPseudoClassNoUnknown selectorPseudoClassNoUnknown = new SelectorPseudoClassNoUnknown();
+    String optionsAsJson = new Gson().toJson(selectorPseudoClassNoUnknown.stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoClasses\":[\"local\",\"global\",\"export\",\"import\"]}]");
+    selectorPseudoClassNoUnknown.ignoredPseudoClasses = "foo,/^bar/";
+    optionsAsJson = new Gson().toJson(selectorPseudoClassNoUnknown.stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignorePseudoClasses\":[\"foo\",\"/^bar/\"]}]");
   }
 
   @Test
