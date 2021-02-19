@@ -22,9 +22,20 @@ package org.sonar.css.plugin.rules;
 import java.util.Arrays;
 import java.util.List;
 import org.sonar.check.Rule;
+import org.sonar.check.RuleProperty;
+
+import static org.sonar.css.plugin.rules.RuleUtils.splitAndTrim;
 
 @Rule(key = "S4659")
 public class SelectorPseudoClassNoUnknown implements CssRule {
+
+  private static final String DEFAULT_IGNORED_PSEUDO_CLASSES = "local,global,export,import";
+
+  @RuleProperty(
+    key = "ignorePseudoClasses",
+    description = "Comma-separated list of strings and/or regular expressions for pseudo classes to consider as valid.",
+    defaultValue = "" + DEFAULT_IGNORED_PSEUDO_CLASSES)
+  String ignoredPseudoClasses = DEFAULT_IGNORED_PSEUDO_CLASSES;
 
   @Override
   public String stylelintKey() {
@@ -33,12 +44,16 @@ public class SelectorPseudoClassNoUnknown implements CssRule {
 
   @Override
   public List<Object> stylelintOptions() {
-    return Arrays.asList(true, new StylelintIgnoreOption());
+    return Arrays.asList(true, new StylelintIgnoreOption(splitAndTrim(ignoredPseudoClasses)));
   }
 
 
   private static class StylelintIgnoreOption {
     // Used by GSON serialization
-    private final String[] ignorePseudoClasses = {"local", "global", "export", "import"};
+    private final List<String> ignorePseudoClasses;
+
+    StylelintIgnoreOption(List<String> ignorePseudoClasses) {
+      this.ignorePseudoClasses = ignorePseudoClasses;
+    }
   }
 }
