@@ -144,7 +144,7 @@ public class CssAnalyzerBridgeServer implements Startable {
           LOG.info(message);
         }
       })
-      .minNodeVersion(8)
+      .minNodeVersion(10)
       .configuration(context.config())
       .script(scriptFile.getAbsolutePath())
       .pathResolver(bundle)
