@@ -69,7 +69,7 @@ public class CssRules {
 
   public CssRules(CheckFactory checkFactory) {
     Checks<CssRule> checks = checkFactory.<CssRule>create(CssRulesDefinition.REPOSITORY_KEY)
-      .addAnnotatedChecks((Iterable) getRuleClasses());
+      .addAnnotatedChecks((Iterable<?>) getRuleClasses());
     Collection<CssRule> enabledRules = checks.all();
     stylelintKeyToRuleKey = new HashMap<>();
     for (CssRule rule : enabledRules) {
@@ -78,7 +78,7 @@ public class CssRules {
     }
   }
 
-  public static List<Class> getRuleClasses() {
+  public static List<Class<?>> getRuleClasses() {
     return Collections.unmodifiableList(Arrays.asList(
       AtRuleNoUnknown.class,
       BlockNoEmpty.class,
