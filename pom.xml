@@ -132,7 +132,7 @@
             <dependency>
                 <groupId>org.sonarsource.javascript</groupId>
                 <artifactId>nodejs-utils</artifactId>
-                <version>7.2.0.14938</version>
+                <version>7.4.0.15472</version>
             </dependency>
             <dependency>
               <groupId>com.squareup.okhttp3</groupId>
