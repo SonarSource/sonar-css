@@ -262,7 +262,7 @@ public class CssAnalyzerBridgeServer implements Startable {
   void clean() {
     if (nodeCommand != null) {
       callClose();
-      nodeCommand.destroy();
+      nodeCommand.waitFor();
       nodeCommand = null;
     }
   }

@@ -158,15 +158,9 @@ public class CssRuleSensor implements Sensor {
     } else {
       progressReport.cancel();
     }
-    try {
-      progressReport.join();
-    } catch (InterruptedException e) {
-      LOG.error(e.getMessage(), e);
-      Thread.currentThread().interrupt();
-    }
   }
 
-  void analyzeFileWithContextCheck(InputFile inputFile, SensorContext context, File configFile) throws IOException {
+  void analyzeFileWithContextCheck(InputFile inputFile, SensorContext context, File configFile) {
     if (context.isCancelled()) {
       throw new CancellationException("Analysis interrupted because the SensorContext is in cancelled state");
     }
