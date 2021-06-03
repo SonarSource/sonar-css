@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class NodeDeprecationWarningTest {
 
   private static final String MSG = "You are using Node.js version 8, which reached end-of-life. Support for this version will be dropped in future release, please upgrade Node.js to more recent version.";
+  private static final String MSG_10 = "You are using Node.js version 10, which reached end-of-life. Support for this version will be dropped in future release, please upgrade Node.js to more recent version.";
 
   @Rule
   public final LogTester logTester = new LogTester();
@@ -49,6 +50,17 @@ public class NodeDeprecationWarningTest {
 
     assertThat(warnings).containsExactly(MSG);
     assertThat(logTester.logs(LoggerLevel.WARN)).contains(MSG);
+  }
+
+  @Test
+  public void test_10() {
+    SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarQube(Version.create(8, 5), SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
+    List<String> warnings = new ArrayList<>();
+    NodeDeprecationWarning deprecationWarning = new NodeDeprecationWarning(sonarRuntime, warnings::add);
+    deprecationWarning.logNodeDeprecation(10);
+
+    assertThat(warnings).containsExactly(MSG_10);
+    assertThat(logTester.logs(LoggerLevel.WARN)).contains(MSG_10);
   }
 
   @Test
