@@ -34,7 +34,7 @@ import org.sonarsource.api.sonarlint.SonarLintSide;
 public class NodeDeprecationWarning {
 
   private static final Logger LOG = Loggers.get(NodeDeprecationWarning.class);
-  private static final int MIN_RECOMMENDED_NODE_VERSION = 10;
+  private static final int MIN_RECOMMENDED_NODE_VERSION = 12;
   private final SonarRuntime sonarRuntime;
   private final AnalysisWarnings analysisWarnings;
 
