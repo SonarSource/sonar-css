@@ -106,9 +106,17 @@ public class CssRuleTest {
   }
 
   @Test
-  public void units_no_unknown_options() {
+  public void units_no_unknown_default() {
     String optionsAsJson = new Gson().toJson(new UnitNoUnknown().stylelintOptions());
     assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreUnits\":[\"x\"]}]");
+  }
+
+   @Test
+  public void units_no_unknown_custom() {
+    UnitNoUnknown instance = new UnitNoUnknown();
+    instance.ignoredUnits = "x, rpx";
+    String optionsAsJson = new Gson().toJson(instance.stylelintOptions());
+    assertThat(optionsAsJson).isEqualTo("[true,{\"ignoreUnits\":[\"x\",\"rpx\"]}]");
   }
 
   @Test
