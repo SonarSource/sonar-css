@@ -59,7 +59,7 @@ public class Tests {
     OrchestratorBuilder orchestratorBuilder = Orchestrator.builderEnv()
       .addPlugin(MavenLocation.of("org.sonarsource.php", "sonar-php-plugin", "LATEST_RELEASE"))
       .addPlugin(MavenLocation.of("org.sonarsource.html", "sonar-html-plugin", "LATEST_RELEASE"))
-      .addPlugin(MavenLocation.of("org.sonarsource.javascript", "sonar-javascript-plugin", "LATEST_RELEASE"))
+      .addPlugin(MavenLocation.of("org.sonarsource.javascript", "sonar-javascript-plugin", "LATEST_RELEASE[8.5]"))
       .addPlugin(PLUGIN_LOCATION)
       .setSonarVersion(System.getProperty("sonar.runtimeVersion", "LATEST_RELEASE"));
     ORCHESTRATOR = orchestratorBuilder.build();
