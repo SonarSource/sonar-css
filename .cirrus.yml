@@ -1,4 +1,4 @@
-gcp_credentials: ENCRYPTED[!149d4005ecdba4cdd78bb5ba22756ebb98bf8e3367ee2e9ab08c5a1608c0d3e3b501904b67a1d67c0b63085e469d7dde!]
+gcp_credentials: ENCRYPTED[!2b1a0b976ff4f99f077bb53b65d4bbdcff864fa8095624de329d625ab272555e16c65a2d8b16356a81b13d595c636e37!]
  
 env:
   CIRRUS_CLONE_DEPTH: 20
@@ -39,7 +39,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 build_task:
   gke_container:
     dockerfile: .cirrus/nodejs-10.Dockerfile
-    builder_image_project: release-engineering-ci-staging
+    builder_image_project: release-engineering-ci-staging 
     builder_image_name: family/pr-87-docker-builder
     cluster_name: cirrus-ci
     zone: europe-west4-b
