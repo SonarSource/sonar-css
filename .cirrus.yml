@@ -26,7 +26,7 @@ container_definition: &CONTAINER_DEFINITION
 win_vm_definition: &WINDOWS_VM_DEFINITION
   gce_instance:
     image_project: release-engineering-ci-staging
-    image_family: lt-base-windows-jdk11
+    image_family: pr-87-lt-base-windows-jdk11
     platform: windows
     zone: europe-west4-b
     preemptible: false
@@ -40,7 +40,7 @@ build_task:
   gke_container:
     dockerfile: .cirrus/nodejs-10.Dockerfile
     builder_image_project: release-engineering-ci-staging
-    builder_image_name: family/docker-builder
+    builder_image_name: family/pr-87-docker-builder
     cluster_name: cirrus-ci
     zone: europe-west4-b
     namespace: default
