@@ -18,7 +18,7 @@ env:
   CIRRUS_SHELL: bash
 
 container_definition: &CONTAINER_DEFINITION
-  image: eu.gcr.io/release-engineering-ci-prod/base:j11-latest
+  image: eu.gcr.io/release-engineering-ci-prod/base:j11-latest-PR87
   cluster_name: cirrus-ci
   zone: europe-west4-b
   namespace: default
