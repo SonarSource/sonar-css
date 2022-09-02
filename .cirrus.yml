@@ -44,6 +44,9 @@ build_win_task:
   build_script:
     - export CIRRUS_ENV_SENSITIVE=false
     - env
-    - source cirrus-env CI
+    - source cirrus-env BUILD
+    - ls $HOME/.m2
+    - echo $HOME
+    - echo $USERPROFILE
     - mvn test
   cleanup_before_cache_script: cleanup_maven_repository
