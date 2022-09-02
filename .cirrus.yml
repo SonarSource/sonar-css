@@ -140,6 +140,8 @@ plugin_qa_win_task:
     #windows cache fails with ${CIRRUS_WORKING_DIR}
     folder: ~/.m2/repository
   qa_script:
+    - export CIRRUS_ENV_SENSITIVE=false
+    - env
     - source cirrus-env QA
     - source set_maven_build_version $BUILD_NUMBER
     - mvn -f its/plugin verify -Dsonar.runtimeVersion=${SQ_VERSION} -Dmaven.test.redirectTestOutputToFile=false -B -e -V
