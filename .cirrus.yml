@@ -130,8 +130,6 @@ plugin_qa_task:
   cleanup_before_cache_script: cleanup_maven_repository
  
 plugin_qa_win_task:
-  depends_on:
-    - build
   <<: *ONLY_SONARSOURCE_QA
   <<: *WINDOWS_VM_DEFINITION
   env:
