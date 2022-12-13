@@ -1,5 +1,3 @@
-gcp_credentials: ENCRYPTED[!149d4005ecdba4cdd78bb5ba22756ebb98bf8e3367ee2e9ab08c5a1608c0d3e3b501904b67a1d67c0b63085e469d7dde!]
- 
 env:
   CIRRUS_VAULT_URL: https://vault.sonar.build:8200
   CIRRUS_VAULT_AUTH_PATH: jwt-cirrusci
@@ -22,35 +20,40 @@ env:
   CIRRUS_SHELL: bash
 
 container_definition: &CONTAINER_DEFINITION
-  image: eu.gcr.io/release-engineering-ci-prod/base:j11-latest
-  cluster_name: cirrus-ci
-  zone: europe-west4-b
+  image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j11-latest
+  cluster_name: ${CIRRUS_CLUSTER_NAME}
+  region: eu-central-1
+  namespace: default
+
+builder_container_definition: &BUILDER_CONTAINER_DEFINITION
+  dockerfile: .cirrus/nodejs-10.Dockerfile
+  docker_arguments:
+    CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
+  cluster_name: ${CIRRUS_CLUSTER_NAME}
+  builder_role: cirrus-builder
+  builder_image: docker-builder-v*
+  builder_instance_type: t2.small
+  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
+  region: eu-central-1
   namespace: default
 
 win_vm_definition: &WINDOWS_VM_DEFINITION
-  gce_instance:
-    image_project: release-engineering-ci-prod
-    image_family: lt-base-windows-jdk11
+  ec2_instance:
+    experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
+    image: base-windows-jdk11-v*
     platform: windows
-    zone: europe-west4-b
-    preemptible: false
-    disk: 80
-    type: n1-standard-4
+    region: eu-central-1
+    type: t3.xlarge
+    subnet_id: ${CIRRUS_AWS_SUBNET}
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
 build_task:
-  gke_container:
-    dockerfile: .cirrus/nodejs-10.Dockerfile
-    builder_image_project: release-engineering-ci-prod
-    builder_image_name: family/docker-builder
-    cluster_name: cirrus-ci
-    zone: europe-west4-b
-    namespace: default
+  eks_container:
+    <<: *BUILDER_CONTAINER_DEFINITION
     cpu: 2
     memory: 2G
-
   env:
     # analysis on next
     SONAR_TOKEN: VAULT[development/kv/data/next data.token]
@@ -70,13 +73,8 @@ build_task:
 ws_scan_task:
   depends_on:
     - build
-  gke_container:
-    dockerfile: .cirrus/nodejs-10.Dockerfile
-    builder_image_project: release-engineering-ci-prod
-    builder_image_name: family/docker-builder
-    cluster_name: cirrus-ci
-    zone: europe-west4-b
-    namespace: default
+  eks_container:
+    <<: *BUILDER_CONTAINER_DEFINITION
     cpu: 2
     memory: 2G
   # run only on master and long-term branches
@@ -111,13 +109,8 @@ plugin_qa_task:
   depends_on:
     - build
   <<: *ONLY_SONARSOURCE_QA
-  gke_container:
-    dockerfile: .cirrus/nodejs-10.Dockerfile
-    builder_image_project: release-engineering-ci-prod
-    builder_image_name: family/docker-builder
-    cluster_name: cirrus-ci
-    zone: europe-west4-b
-    namespace: default
+  eks_container:
+    <<: *BUILDER_CONTAINER_DEFINITION
     cpu: 3
     memory: 8G
   env:
@@ -152,9 +145,8 @@ ruling_task:
   depends_on:
     - build
   only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
-  gke_container:
-    dockerfile: .cirrus/nodejs-10.Dockerfile
-    <<: *CONTAINER_DEFINITION
+  eks_container:
+    <<: *BUILDER_CONTAINER_DEFINITION
     cpu: 4
     memory: 8G
   env:
@@ -178,7 +170,7 @@ promote_task:
     - plugin_qa_win
     - ruling
   <<: *ONLY_SONARSOURCE_QA
-  gke_container:
+  eks_container:
     <<: *CONTAINER_DEFINITION
     cpu: 0.5
     memory: 500M
