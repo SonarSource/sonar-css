@@ -27,6 +27,8 @@ container_definition: &CONTAINER_DEFINITION
 
 builder_container_definition: &BUILDER_CONTAINER_DEFINITION
   dockerfile: .cirrus/nodejs-10.Dockerfile
+  docker_arguments:
+    CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
   cluster_name: ${CIRRUS_CLUSTER_NAME}
   builder_role: cirrus-builder
   builder_image: docker-builder-v*
@@ -41,7 +43,7 @@ win_vm_definition: &WINDOWS_VM_DEFINITION
     image: base-windows-jdk11-v*
     platform: windows
     region: eu-central-1
-    type: t2.xlarge
+    type: t3.xlarge
     subnet_id: ${CIRRUS_AWS_SUBNET}
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
