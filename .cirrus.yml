@@ -37,6 +37,10 @@ builder_container_definition: &BUILDER_CONTAINER_DEFINITION
   region: eu-central-1
   namespace: default
 
+builder_container_definition_java_17: &BUILDER_CONTAINER_DEFINITION_JAVA_17
+  <<: *BUILDER_CONTAINER_DEFINITION
+  dockerfile: .cirrus/nodejs-10.jdk17.Dockerfile
+
 win_vm_definition: &WINDOWS_VM_DEFINITION
   ec2_instance:
     experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
@@ -110,7 +114,7 @@ plugin_qa_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   eks_container:
-    <<: *BUILDER_CONTAINER_DEFINITION
+    <<: *BUILDER_CONTAINER_DEFINITION_JAVA_17
     cpu: 3
     memory: 8G
   env:
@@ -146,7 +150,7 @@ ruling_task:
     - build
   only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
   eks_container:
-    <<: *BUILDER_CONTAINER_DEFINITION
+    <<: *BUILDER_CONTAINER_DEFINITION_JAVA_17
     cpu: 4
     memory: 8G
   env:
