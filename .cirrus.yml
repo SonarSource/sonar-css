@@ -111,6 +111,7 @@ plugin_qa_task:
   <<: *ONLY_SONARSOURCE_QA
   eks_container:
     <<: *BUILDER_CONTAINER_DEFINITION
+    dockerfile: .cirrus/nodejs-10.jdk17.Dockerfile
     cpu: 3
     memory: 8G
   env:
@@ -147,6 +148,7 @@ ruling_task:
   only_if: $CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*"
   eks_container:
     <<: *BUILDER_CONTAINER_DEFINITION
+    dockerfile: .cirrus/nodejs-10.jdk17.Dockerfile
     cpu: 4
     memory: 8G
   env:
