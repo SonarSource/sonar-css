@@ -15,7 +15,7 @@
   "author": "",
   "license": "LGPL-3.0",
   "dependencies": {
-    "express": "4.17.1",
+    "express": "4.17.3",
     "stylelint": "13.10.0",
     "body-parser": "1.19.0"
   },
